@@ -1,0 +1,1313 @@
+module OpenstudioStandards
+  # The CreateTypical module provides methods to create and modify an entire building energy model of a typical building
+  module CreateTypical
+    # @!group CreateTypical
+    # Methods to create typical models
+
+    # create typical building from model
+    # creates a complete energy model from model with defined geometry and standards space type assignments
+    #
+    # @param template [String] standard template
+    # @param climate_zone [String] ASHRAE climate zone, e.g. 'ASHRAE 169-2013-4A'.
+    # @param add_hvac [Boolean] Add HVAC systems to the model
+    # @param hvac_system_type [String] HVAC system type
+    # @param hvac_delivery_type [String] HVAC delivery type, how the system delivers heating or cooling to zones.
+    #   Options are 'Forced Air' or 'Hydronic'.
+    # @param heating_fuel [String] The primary HVAC heating fuel type.
+    #   Options are 'Electricity', 'NaturalGas', 'DistrictHeating', 'DistrictHeatingWater', 'DistrictHeatingSteam', 'DistrictAmbient'
+    # @param service_water_heating_fuel [String] The primary service water heating fuel type.
+    #   Options are 'Inferred', 'Electricity', 'NaturalGas', 'DistrictHeating', 'DistrictHeatingWater', 'DistrictHeatingSteam', 'HeatPump'
+    # @param cooling_fuel [String] The primary HVAC cooling fuel type
+    #   Options are 'Electricity', 'DistrictCooling', 'DistrictAmbient'
+    # @param kitchen_makeup [String] Source of makeup air for kitchen exhaust
+    #   Options are 'None', 'Adjacent'
+    # @param exterior_lighting_zone [String] The exterior lighting zone for exterior lighting allowance.
+    #   Options are '0 - Undeveloped Areas Parks', '1 - Developed Areas Parks', '2 - Neighborhood', '3 - All Other Areas', '4 - High Activity'
+    # @param add_constructions [Boolean] Create and apply default construction set
+    # @param wall_construction_type [String] wall construction type.
+    #  Options are 'Inferred', 'Mass', 'Metal Building', 'WoodFramed', 'SteelFramed'
+    # @param add_space_type_loads [Boolean] Populate existing standards space types in the model with internal loads
+    # @param space_type_load_method [String] Source of the space type internal load definitions. Options are 'standards' or 'typical'.
+    #   'standards' (default) uses the standards space type data for the template via space_type_apply_internal_loads.
+    #   'typical' bypasses the standards space type lookups and instead builds loads from the module-level typical data:
+    #   occupancy from the Occupancy module, interior lighting from the InteriorLighting module, electric and gas
+    #   equipment from the Equipment module, and outdoor air ventilation from the Ventilation module. Occupancy and
+    #   ventilation are looked up by the space type's ventilation space type and the template, from ASHRAE 62.1 where
+    #   the standard covers the space type and from the template's own standards space type data where it does not;
+    #   space types with no entry get neither. Use the load_overrides people and ventilation sections to override the
+    #   resulting values. It expects space types whose standardsSpaceType is one of the
+    #   space types in lib/openstudio-standards/space_type/data/all_level_space_types.json (e.g. 'office', 'classroom/lecture/training').
+    #   Typical service water heating equipment definitions are not yet available.
+    # @param lighting_generation [String] Lighting generation to assume for typical interior lighting.
+    #   Only used with space_type_load_method 'typical'. See InteriorLighting.create_typical_interior_lighting.
+    # @param add_daylighting_controls [Boolean] Add daylighting controls
+    # @param add_infiltration [Boolean] Adds infiltration to the model based on cosntruction
+    # @param add_elevators [Boolean] Apply elevators directly to a space in the model instead of to a space type
+    # @param add_internal_mass [Boolean] Add internal mass to each space
+    # @param add_exterior_lights [Boolean] Add exterior lightings objects to parking, canopies, and facades
+    # @param onsite_parking_fraction [Double] Fraction of allowable exterior parking lighting applied. Set to 0 to add no parking lighting.
+    # @param add_exhaust [Boolean] Add exhaust fans to the models. Primarly kitchen exhaust fans.
+    # @param add_swh [Boolean] Add service water heating supply and demand objects
+    # @param add_thermostat [Boolean] Add thermostats to thermal zones based on the standards space type
+    # @param add_refrigeration [Boolean] Add refrigerated cases and walkin refrigeration
+    # @param refrigeration_template [String] The refrigeration technology level, either 'old', 'new', or 'advanced'
+    # @param schedule_method [String] The method for creating schedules for internal loads and thermostats. Options are 'prototype' or 'parametric'.
+    #   'prototype' uses the default schedules from the legacy DOE Prototype Models. 'parametric' creates schedules based on parametric occupancy
+    #   schedules and derives internal load schedules from those, which results in more realistic schedules and better alignment between internal
+    #   loads and occupancy. When nil (the default), the method follows the space type load method: 'prototype' with the 'standards' load method,
+    #   so existing callers keep the schedules they have always received, and 'parametric' with the 'typical' load method, whose space types have
+    #   no prototype schedule data to draw from.
+    # @param modify_wkdy_op_hrs [Boolean] Modify the default weekday hours of operation
+    # @param wkdy_op_hrs_start_time [Double] Weekday operating hours start time. Enter as a fractional value, e.g. 5:15pm is 17.25. Only used if modify_wkdy_op_hrs is true.
+    # @param wkdy_op_hrs_duration [Double] Weekday operating hours duration from start time. Enter as a fractional value, e.g. 5:15pm is 17.25. Only used if modify_wkdy_op_hrs is true.
+    # @param modify_wknd_op_hrs [Boolean] Modify the default weekend hours of operation
+    # @param wknd_op_hrs_start_time [Double] Weekend operation hours start time. Enter as a fractional value, e.g. 5:15pm is 17.25. Only used if modify_wknd_op_hrs is true.
+    # @param wknd_op_hrs_duration [Double] Weekend operating hours duration from start time. Enter as a fractional value, e.g. 5:15pm is 17.25. Only used if modify_wknd_op_hrs is true.
+    # @param hoo_var_method [String] hours of operation variable method. Options are 'hours' or 'fractional'.
+    # @param enable_dst [Boolean] Enable daylight savings
+    # @param unmet_hours_tolerance_r [Double] Thermostat setpoint tolerance for unmet hours in degrees Rankine
+    # @param remove_objects [Boolean] Clean model of non-geometry objects. Only removes the same objects types as those added to the model.
+    # @param user_hvac_mapping [Hash] Hash defining a mapping of system types to zones.
+    #   Structure is:
+    #     ['systems'][N]['system_type'] = 'MY_CBECS_HVAC_TYPE' as defined in lib/openstudio-standards/hvac/cbecs_hvac.rb
+    #     ['systems'][N]['thermal_zones'] = ['Zone 1', 'Zone 2', ...]
+    # @param load_overrides [Array<Hash>, String] runtime internal load overrides, as a Ruby array or JSON string.
+    #   Each entry is keyed by `space_type` (matched against the schedule set name or standards space type) or `"*"`,
+    #   with optional `people`/`lighting`/`electric_equipment`/`gas_equipment`/`ventilation` field hashes.
+    #   See CreateTypical.space_type_apply_load_overrides for fields and units.
+    # @param thermostat_overrides [Array<Hash>, String] runtime thermostat setpoint overrides, as a Ruby array
+    #   or JSON string. Each entry is keyed by `space_type` (matched against the schedule set name or standards
+    #   space type) or `"*"`, with a `thermostat` hash of `heating_setpoint_c`, `heating_setback_delta_c`,
+    #   `cooling_setpoint_c`, and `cooling_setback_delta_c` fields, in degrees Celsius.
+    # @param service_water_heating_overrides [Array<Hash>, String] runtime service water heating overrides,
+    #   as a Ruby array or JSON string. Each entry is keyed by `space_type` or `"*"`, with an `equipment`
+    #   hash keyed by water use equipment name or `"*"`. See
+    #   ServiceWaterHeating.apply_service_water_heating_overrides for the fields each accepts.
+    # @param exhaust_overrides [Array<Hash>, String] runtime zone exhaust overrides, as a Ruby array or
+    #   JSON string. Each entry is keyed by `space_type` or `"*"`, with an `exhaust` hash whose
+    #   `exhaust_per_area` (cfm/ft2) replaces the space type's own rate. See
+    #   HVAC.apply_exhaust_overrides.
+    # @param ventilation_overrides [Array<Hash>, String] runtime outdoor air ventilation overrides,
+    #   as a Ruby array or JSON string. Each entry is keyed by `space_type` (matched against the
+    #   schedule set name, all-level space type, or ventilation space type) or `"*"`, with a
+    #   `ventilation` hash accepting `cfm_per_person`, `cfm_per_area` (cfm/ft2) and `ach`. Applies
+    #   only under the 'typical' space type load method. See Ventilation.apply_ventilation_overrides.
+    # @param occupancy_overrides [Array<Hash>, String] runtime occupancy overrides, as a Ruby array
+    #   or JSON string. Each entry is keyed the same way, with an `occupancy` hash accepting
+    #   `people_per_1000_ft2`. Applies only under the 'typical' space type load method. A density
+    #   alone only survives on a space type whose schedule set defines an occupancy schedule; to
+    #   occupy one of the not-regularly-occupied sets, pair it with a schedule_overrides entry
+    #   naming an occupancy schedule. See Occupancy.apply_occupancy_overrides.
+    # @param constructions [Hash, String] construction set spec, as a Ruby hash or JSON string. Names
+    #   the construction types and building category directly instead of taking them from the
+    #   building type's construction_sets row, which is what lets a model be built under a template
+    #   whose table has no row for its building type. Recognized fields are `building_category`,
+    #   `is_residential`, `exterior_wall_type`, `exterior_roof_type`, `exterior_floor_type`, and a
+    #   `surfaces` hash for anything else. Anything left unnamed falls back to the building type's row.
+    #   See Constructions.create_construction_set.
+    # @param primary_building_type [String] Standard building type that drives the default construction set,
+    #   residential classification, internal mass, and prototype HVAC assumptions. When nil, the standards
+    #   building type with the largest space type floor area in the model is used.
+    # @param building_name [String] Label for the building. Sets the Building object name and a
+    #   'custom_building_type' additional property. Does not affect any standards lookups.
+    # @return [Boolean] returns true if successful, false if not
+    def self.create_typical_building_from_model(model,
+                                                template,
+                                                climate_zone: 'Lookup From Model',
+                                                add_hvac: true,
+                                                hvac_system_type: 'Inferred',
+                                                hvac_delivery_type: 'Forced Air',
+                                                heating_fuel: 'NaturalGas',
+                                                service_water_heating_fuel: 'NaturalGas',
+                                                cooling_fuel: 'Electricity',
+                                                kitchen_makeup: 'Adjacent',
+                                                exterior_lighting_zone: '3 - All Other Areas',
+                                                add_constructions: true,
+                                                wall_construction_type: 'Inferred',
+                                                add_space_type_loads: true,
+                                                space_type_load_method: 'standards',
+                                                lighting_generation: 'gen4_led',
+                                                add_daylighting_controls: true,
+                                                add_infiltration: true,
+                                                add_elevators: true,
+                                                add_internal_mass: true,
+                                                add_exterior_lights: true,
+                                                onsite_parking_fraction: 1.0,
+                                                add_exhaust: true,
+                                                add_swh: true,
+                                                add_thermostat: true,
+                                                add_refrigeration: true,
+                                                refrigeration_template: 'new',
+                                                schedule_method: nil,
+                                                modify_wkdy_op_hrs: false,
+                                                wkdy_op_hrs_start_time: 8.0,
+                                                wkdy_op_hrs_duration: 8.0,
+                                                modify_wknd_op_hrs: false,
+                                                wknd_op_hrs_start_time: 8.0,
+                                                wknd_op_hrs_duration: 8.0,
+                                                schedule_overrides: nil,
+                                                load_overrides: nil,
+                                                thermostat_overrides: nil,
+                                                service_water_heating_overrides: nil,
+                                                exhaust_overrides: nil,
+                                                ventilation_overrides: nil,
+                                                occupancy_overrides: nil,
+                                                constructions: nil,
+                                                hoo_var_method: 'hours',
+                                                enable_dst: true,
+                                                unmet_hours_tolerance_r: 1.0,
+                                                remove_objects: true,
+                                                user_hvac_mapping: nil,
+                                                primary_building_type: nil,
+                                                building_name: nil,
+                                                sizing_run_directory: nil)
+      # sizing run directory
+      sizing_run_directory = Dir.pwd if sizing_run_directory.nil?
+
+      # accept overrides as Ruby arrays (API callers) or JSON strings (flat-typed measure callers).
+      # See space_type_apply_parametric_internal_load_schedules and space_type_apply_load_overrides.
+      schedule_overrides = OpenstudioStandards::CreateTypical.parse_overrides_argument(schedule_overrides, 'schedule_overrides')
+      load_overrides = OpenstudioStandards::CreateTypical.parse_overrides_argument(load_overrides, 'load_overrides')
+      thermostat_overrides = OpenstudioStandards::CreateTypical.parse_overrides_argument(thermostat_overrides, 'thermostat_overrides')
+      service_water_heating_overrides = OpenstudioStandards::CreateTypical.parse_overrides_argument(service_water_heating_overrides, 'service_water_heating_overrides')
+      exhaust_overrides = OpenstudioStandards::CreateTypical.parse_overrides_argument(exhaust_overrides, 'exhaust_overrides')
+      ventilation_overrides = OpenstudioStandards::CreateTypical.parse_overrides_argument(ventilation_overrides, 'ventilation_overrides')
+      occupancy_overrides = OpenstudioStandards::CreateTypical.parse_overrides_argument(occupancy_overrides, 'occupancy_overrides')
+      constructions = OpenstudioStandards::CreateTypical.parse_constructions_argument(constructions)
+
+      # validate the space type load method
+      unless ['standards', 'typical'].include?(space_type_load_method)
+        OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "space_type_load_method '#{space_type_load_method}' is not recognized. Options are 'standards' or 'typical'.")
+        return false
+      end
+      # Resolve the schedule method. Left nil, it follows the load method: 'prototype' with
+      # the 'standards' load method, so existing callers keep the schedules they have always
+      # received, and 'parametric' with the 'typical' load method, whose space types have no
+      # prototype schedule data to draw from.
+      schedule_method = space_type_load_method == 'typical' ? 'parametric' : 'prototype' if schedule_method.nil?
+      unless ['prototype', 'parametric'].include?(schedule_method)
+        OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "schedule_method '#{schedule_method}' is not recognized. Options are 'prototype' or 'parametric'.")
+        return false
+      end
+      if space_type_load_method == 'typical' && schedule_method == 'prototype'
+        OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.CreateTypical', "The 'prototype' schedule method relies on standards space type data and will likely not find schedules for space types using the 'typical' load method. The 'parametric' schedule method is recommended.")
+      end
+
+      # report initial condition of model
+      initial_object_size = model.getModelObjects.size
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "The building started with #{initial_object_size} objects.")
+
+      # create a new standard class
+      standard = Standard.build(template)
+
+      # validate climate zone
+      if climate_zone == 'Lookup From Model' || climate_zone.nil?
+        climate_zone = standard.model_get_building_properties(model)['climate_zone']
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Using climate zone #{climate_zone} from model")
+      else
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Using climate zone #{climate_zone} from user arguments")
+      end
+      if climate_zone == ''
+        OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', 'Could not determine climate zone from measure arguments or model.')
+        return false
+      end
+
+      # validate weekday hours of operation
+      wkdy_op_hrs_start_time_hr = nil
+      wkdy_op_hrs_start_time_min = nil
+      wkdy_op_hrs_duration_hr = nil
+      wkdy_op_hrs_duration_min = nil
+      if modify_wkdy_op_hrs
+        # weekday start time hr
+        wkdy_op_hrs_start_time_hr = wkdy_op_hrs_start_time.floor
+        if wkdy_op_hrs_start_time_hr < 0 || wkdy_op_hrs_start_time_hr > 24
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Weekday operating hours start time hrs must be between 0 and 24.  #{wkdy_op_hrs_start_time} was entered.")
+          return false
+        end
+
+        # weekday start time min
+        wkdy_op_hrs_start_time_min = (60.0 * (wkdy_op_hrs_start_time - wkdy_op_hrs_start_time.floor)).floor
+        if wkdy_op_hrs_start_time_min < 0 || wkdy_op_hrs_start_time_min > 59
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Weekday operating hours start time mins must be between 0 and 59.  #{wkdy_op_hrs_start_time} was entered.")
+          return false
+        end
+
+        # weekday duration hr
+        wkdy_op_hrs_duration_hr = wkdy_op_hrs_duration.floor
+        if wkdy_op_hrs_duration_hr < 0 || wkdy_op_hrs_duration_hr > 24
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Weekday operating hours duration hrs must be between 0 and 24.  #{wkdy_op_hrs_duration} was entered.")
+          return false
+        end
+
+        # weekday duration min
+        wkdy_op_hrs_duration_min = (60.0 * (wkdy_op_hrs_duration - wkdy_op_hrs_duration.floor)).floor
+        if wkdy_op_hrs_duration_min < 0 || wkdy_op_hrs_duration_min > 59
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Weekday operating hours duration mins must be between 0 and 59.  #{wkdy_op_hrs_duration} was entered.")
+          return false
+        end
+
+        # check that weekday start time plus duration does not exceed 24 hrs
+        if (wkdy_op_hrs_start_time_hr + wkdy_op_hrs_duration_hr + ((wkdy_op_hrs_start_time_min + wkdy_op_hrs_duration_min) / 60.0)) > 24.0
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Weekday start time of #{wkdy_op_hrs_start_time} plus duration of #{wkdy_op_hrs_duration} is more than 24 hrs, hours of operation overlap midnight.")
+        end
+      end
+
+      # validate weekend hours of operation
+      wknd_op_hrs_start_time_hr = nil
+      wknd_op_hrs_start_time_min = nil
+      wknd_op_hrs_duration_hr = nil
+      wknd_op_hrs_duration_min = nil
+      if modify_wknd_op_hrs
+        # weekend start time hr
+        wknd_op_hrs_start_time_hr = wknd_op_hrs_start_time.floor
+        if wknd_op_hrs_start_time_hr < 0 || wknd_op_hrs_start_time_hr > 24
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Weekend operating hours start time hrs must be between 0 and 24.  #{wknd_op_hrs_start_time} was entered.")
+          return false
+        end
+
+        # weekend start time min
+        wknd_op_hrs_start_time_min = (60.0 * (wknd_op_hrs_start_time - wknd_op_hrs_start_time.floor)).floor
+        if wknd_op_hrs_start_time_min < 0 || wknd_op_hrs_start_time_min > 59
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Weekend operating hours start time mins must be between 0 and 59.  #{wknd_op_hrs_start_time} was entered.")
+          return false
+        end
+
+        # weekend duration hr
+        wknd_op_hrs_duration_hr = wknd_op_hrs_duration.floor
+        if wknd_op_hrs_duration_hr < 0 || wknd_op_hrs_duration_hr > 24
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Weekend operating hours duration hrs must be between 0 and 24.  #{wknd_op_hrs_duration} was entered.")
+          return false
+        end
+
+        # weekend duration min
+        wknd_op_hrs_duration_min = (60.0 * (wknd_op_hrs_duration - wknd_op_hrs_duration.floor)).floor
+        if wknd_op_hrs_duration_min < 0 || wknd_op_hrs_duration_min > 59
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Weekend operating hours duration min smust be between 0 and 59.  #{wknd_op_hrs_duration} was entered.")
+          return false
+        end
+
+        # check that weekend start time plus duration does not exceed 24 hrs
+        if (wknd_op_hrs_start_time_hr + wknd_op_hrs_duration_hr + ((wknd_op_hrs_start_time_min + wknd_op_hrs_duration_min) / 60.0)) > 24.0
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Weekend start time of #{wknd_op_hrs_start} plus duration of #{wknd_op_hrs_duration} is more than 24 hrs, hours of operation overlap midnight.")
+        end
+      end
+
+      # validate unmet hours tolerance
+      if unmet_hours_tolerance_r < 0
+        OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', 'unmet_hours_tolerance_r must be greater than or equal to 0 Rankine.')
+        return false
+      elsif unmet_hours_tolerance_r > 5.0
+        OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', 'unmet_hours_tolerance_r must be less than or equal to 5 Rankine.')
+        return false
+      end
+
+      # make sure daylight savings is turned on up prior to any sizing runs being done.
+      if enable_dst
+        start_date = '2nd Sunday in March'
+        end_date = '1st Sunday in November'
+
+        runperiodctrl_daylightsaving = model.getRunPeriodControlDaylightSavingTime
+        runperiodctrl_daylightsaving.setStartDate(start_date)
+        runperiodctrl_daylightsaving.setEndDate(end_date)
+      end
+
+      # set space type additional properties
+      if space_type_load_method == 'typical'
+        # Space types are expected to carry a typical standards space type directly, either
+        # a level-1 name ('office') or a building-type-qualified variant ('corridor -
+        # hospital'), so resolve the lighting, equipment, ventilation, and schedule set
+        # properties from it without the prototype space type mapping. Both forms resolve
+        # through the same lookup: a bare name is qualified with the building type when a
+        # qualified variant exists, and a name that is already qualified falls back to
+        # itself.
+        OpenstudioStandards::SpaceType.set_standards_space_type_additional_properties(model)
+      else
+        standard.prototype_space_type_map(model, reset_standards_space_type: false, set_additional_properties: true)
+      end
+
+      # add internal loads to space types
+      if add_space_type_loads
+
+        # remove internal loads
+        if remove_objects
+          model.getSpaceLoads.sort.each do |instance|
+            # most prototype building types model elevators with name Elevator
+            next if instance.name.to_s.include?('Elevator')
+            next if instance.to_InternalMass.is_initialized
+            next if instance.to_WaterUseEquipment.is_initialized
+
+            instance.remove
+          end
+          model.getDesignSpecificationOutdoorAirs.each(&:remove)
+          model.getDefaultScheduleSets.each(&:remove)
+        end
+
+        # the 'typical' load method builds loads from module-level typical data instead of
+        # the standards space type lookups. These methods loop over all space types in the
+        # model and key off the additional properties set above. Schedules and overrides
+        # are still applied per space type in the loop below.
+        if space_type_load_method == 'typical'
+          # Occupancy and ventilation are both keyed by the space type's ventilation space type
+          # and the template, from data holding ASHRAE 62.1 rates and densities where the
+          # standard covers the space type, the template's own standards space type data where
+          # it does not, and curated values for the deliberate deviations. ventilation_overrides
+          # and occupancy_overrides are the escape hatch when that data is wrong for a building.
+          OpenstudioStandards::Occupancy.create_typical_occupancy(model, template: template,
+                                                                        occupancy_overrides: occupancy_overrides)
+          OpenstudioStandards::InteriorLighting.create_typical_interior_lighting(model, lighting_generation: lighting_generation)
+          OpenstudioStandards::Equipment.create_typical_equipment(model, building_type_fallback: true)
+          OpenstudioStandards::Ventilation.create_typical_ventilation(model, template: template,
+                                                                            ventilation_overrides: ventilation_overrides)
+          # @todo create typical service water heating equipment definitions once typical service water heating data is available
+        end
+
+        model.getSpaceTypes.sort.each do |space_type|
+          # apply loads from standards space type data, unless the typical methods above created them
+          unless space_type_load_method == 'typical'
+            test = standard.space_type_apply_internal_loads(space_type)
+            if test == false
+              OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.CreateTypical', "Could not add loads for #{space_type.name}. Not expected for #{template}")
+              next
+            end
+          end
+
+          # apply runtime internal load overrides on top of the standard loads
+          if load_overrides.is_a?(Array) && !load_overrides.empty?
+            OpenstudioStandards::CreateTypical.space_type_apply_load_overrides(space_type, load_overrides)
+          end
+
+          # apply internal load schedules
+          if schedule_method == 'prototype'
+            standard.space_type_apply_standard_internal_load_schedules(space_type)
+          else # parametric
+            # Pass the building hours of operation through so parametric schedules shift
+            # to match. Only forward hours the caller asked to modify; otherwise
+            # the parametric expansion falls back to its standalone standards.
+            OpenstudioStandards::Schedules.space_type_apply_parametric_internal_load_schedules(
+              space_type,
+              wkdy_start_time: modify_wkdy_op_hrs ? wkdy_op_hrs_start_time : nil,
+              wkdy_duration: modify_wkdy_op_hrs ? wkdy_op_hrs_duration : nil,
+              wknd_start_time: modify_wknd_op_hrs ? wknd_op_hrs_start_time : nil,
+              wknd_duration: modify_wknd_op_hrs ? wknd_op_hrs_duration : nil,
+              schedule_overrides: schedule_overrides
+            )
+          end
+
+          # Include the template as an additional property on the space type object if present
+          space_type.additionalProperties.setFeature('template', "#{template}")
+        end
+
+        # warn about override entries that matched no space type in the model
+        checked_overrides = {}
+        checked_overrides['schedule_overrides'] = schedule_overrides if schedule_method != 'prototype'
+        checked_overrides['load_overrides'] = load_overrides
+        checked_overrides['thermostat_overrides'] = thermostat_overrides if add_thermostat
+        checked_overrides['service_water_heating_overrides'] = service_water_heating_overrides if add_swh
+        checked_overrides['exhaust_overrides'] = exhaust_overrides if add_exhaust
+        if space_type_load_method == 'typical'
+          checked_overrides['ventilation_overrides'] = ventilation_overrides
+          checked_overrides['occupancy_overrides'] = occupancy_overrides
+        end
+        if checked_overrides.values.any? { |o| o.is_a?(Array) && !o.empty? }
+          available_keys = ['*']
+          model.getSpaceTypes.each do |st|
+            available_keys << st.additionalProperties.getFeatureAsString('schedule_set').get if st.additionalProperties.getFeatureAsString('schedule_set').is_initialized
+            available_keys << st.additionalProperties.getFeatureAsString('standards_space_type').get if st.additionalProperties.getFeatureAsString('standards_space_type').is_initialized
+            available_keys << st.additionalProperties.getFeatureAsString('ventilation_space_type').get if st.additionalProperties.getFeatureAsString('ventilation_space_type').is_initialized
+          end
+          checked_overrides.each do |override_name, overrides|
+            next unless overrides.is_a?(Array)
+
+            overrides.each do |entry|
+              key = (entry[:space_type] || entry[:schedule_set] || entry[:standards_space_type] || entry[:ventilation_space_type]).to_s
+              unless available_keys.include?(key)
+                OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.CreateTypical', "#{override_name} entry '#{key}' did not match any space type's schedule set or standards space type.")
+              end
+            end
+          end
+        end
+
+        # warn if spaces in model without space type
+        spaces_without_space_types = []
+        model.getSpaces.sort.each do |space|
+          next if space.spaceType.is_initialized
+
+          spaces_without_space_types << space
+        end
+        if !spaces_without_space_types.empty?
+          OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.CreateTypical', "#{spaces_without_space_types.size} spaces do not have space types assigned, and wont' receive internal loads from standards space type lookups.")
+        end
+      end
+
+      # identify primary building type (used for construction, and ideally HVAC as well)
+      if primary_building_type.nil?
+        building_types = {}
+        model.getSpaceTypes.sort.each do |space_type|
+          # populate hash of building types
+          if space_type.standardsBuildingType.is_initialized
+            bldg_type = space_type.standardsBuildingType.get
+            if building_types.key?(bldg_type)
+              building_types[bldg_type] += space_type.floorArea
+            else
+              building_types[bldg_type] = space_type.floorArea
+            end
+          else
+            OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.CreateTypical', "Can't identify building type for #{space_type.name}")
+          end
+        end
+        # @todo this fails if no space types, or maybe just no space types with standards
+        primary_bldg_type = building_types.key(building_types.values.max)
+        if primary_bldg_type.nil?
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', 'Could not identify a primary building type from the model space types. Provide the primary_building_type argument.')
+          return false
+        end
+      else
+        # user-specified primary building type; must be a standard building type
+        # since it drives construction set and other standards data lookups
+        if OpenstudioStandards::Geometry.building_form_defaults(primary_building_type).nil?
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "primary_building_type '#{primary_building_type}' is not a recognized standard building type.")
+          return false
+        end
+        primary_bldg_type = primary_building_type
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Using user-specified primary building type #{primary_bldg_type} for construction set, internal mass, and HVAC assumption lookups.")
+      end
+      # Used for some lookups in the standards gem
+      lookup_building_type = standard.model_get_lookup_name(primary_bldg_type)
+      model.getBuilding.setStandardsBuildingType(primary_bldg_type)
+
+      # label the building when a custom building name is provided.
+      # This is a label only and does not affect standards lookups.
+      unless building_name.to_s.empty?
+        model.getBuilding.setName(building_name)
+        model.getBuilding.additionalProperties.setFeature('custom_building_type', building_name)
+      end
+
+      # The construction spec, if there is one. Read here as well as below because the F and C
+      # factor lookups need a building category out of it.
+      construction_default = constructions.nil? ? nil : (constructions[:default].is_a?(Hash) ? constructions[:default] : constructions)
+      # The building categories the ground contact assemblies are looked up under. They are the
+      # one field the two methods below take from the construction_sets table, and that table has
+      # no row for an ASHRAE building type under a DEER template - so without them a DEER model
+      # kept an uninsulated slab where every other model gets an F-factor foundation. A spec
+      # states the category per surface; the ground contact wall falls back to the exterior wall's,
+      # which is what the construction_sets row gives it.
+      spec_category = lambda do |surface|
+        next nil if construction_default.nil?
+
+        construction_default.dig(:surfaces, surface, :building_category) || construction_default[:building_category]
+      end
+      ground_wall_category = spec_category.call(:ground_contact_wall) || spec_category.call(:exterior_wall)
+      ground_floor_category = spec_category.call(:ground_contact_floor)
+
+      # set FC factor constructions before adding other constructions
+      standard.model_set_below_grade_wall_constructions(model, lookup_building_type, climate_zone, building_category: ground_wall_category)
+      standard.model_set_floor_constructions(model, lookup_building_type, climate_zone, building_category: ground_floor_category)
+      if model.getFFactorGroundFloorConstructions.empty?
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', 'Unable to determine FC factor value to use. Using default ground construction instead.')
+      else
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', 'Set FC factor constructions for slab and below grade walls.')
+      end
+
+      # adjust F factor constructions to avoid simulation errors
+      model.getFFactorGroundFloorConstructions.each do |cons|
+        # Rfilm_in = 0.135, Rfilm_out = 0.03, Rcons for 6" heavy concrete = 0.15m / 1.95 W/mK, 0.001 minimum resistance of Rfic resistive layer
+        if cons.area <= (0.135 + 0.03 + (0.15 / 1.95) + 0.001) * cons.perimeterExposed * cons.fFactor
+          # set minimum Rfic to ~ R1 = 0.18 m^2K/W
+          new_area = 0.422 * cons.perimeterExposed * cons.fFactor
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "F-factor fictitious resistance for #{cons.name.get} with Area=#{cons.area.round(2)}, Exposed Perimeter=#{cons.perimeterExposed.round(2)}, and F-factor=#{cons.fFactor.round(2)} will result in a negative value and a failed simulation. Construction area is adjusted to be #{new_area.round(2)} m2.")
+          cons.setArea(new_area)
+        end
+      end
+
+      # make construction set and apply to building
+      if add_constructions
+
+        # remove default construction sets
+        if remove_objects
+          model.getDefaultConstructionSets.each(&:remove)
+        end
+
+        # The residential classification. A construction spec states it outright; without one it is
+        # inferred from the building type, and that list only recognizes the ASHRAE prototype names
+        # -- so a model built under a DEER template with DEER building types is always classified
+        # Nonresidential, hotels and apartments included.
+        if !construction_default.nil? && construction_default.key?(:is_residential)
+          is_residential = construction_default[:is_residential] ? 'Yes' : 'No'
+        elsif ['SmallHotel', 'LargeHotel', 'MidriseApartment', 'HighriseApartment'].include?(primary_bldg_type)
+          is_residential = 'Yes'
+        else
+          is_residential = 'No'
+        end
+        # The occupancy type the wall_construction_type override looks its assembly up under.
+        # It has to be the category the exterior wall itself is resolved under, which is what the
+        # override is replacing: a mid-rise apartment carries a Residential wall inside an
+        # otherwise Nonresidential envelope, and asking for Mass under the wrong category picks a
+        # different assembly (R-12.5 vs R-11.11 under 90.1-2013). Falls back to the spec-level
+        # category, then to the building type inference.
+        wall_category = spec_category.call(:exterior_wall)
+        occ_type = wall_category || (is_residential == 'Yes' ? 'Residential' : 'Nonresidential')
+
+        if constructions.nil?
+          bldg_def_const_set = standard.model_add_construction_set(model, climate_zone, lookup_building_type, nil, is_residential)
+          bldg_def_const_set = bldg_def_const_set.is_initialized ? bldg_def_const_set.get : nil
+          model.getBuilding.setDefaultConstructionSet(bldg_def_const_set) unless bldg_def_const_set.nil?
+        else
+          # Named construction types reach the same assemblies the building type's row would have
+          # selected, so this works under a template whose construction_sets table has no row for
+          # this building type. The row is still consulted for every slot the spec leaves unnamed.
+          # A `sets` list assigns further sets to collections of space types, which is how a
+          # mixed-use building carries more than one envelope.
+          bldg_def_const_set = OpenstudioStandards::Constructions.assign_construction_sets(
+            model, standard, climate_zone, constructions,
+            fallback_building_type: lookup_building_type,
+            building_name: building_name || lookup_building_type
+          )
+        end
+
+        if bldg_def_const_set.nil?
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "Could not create default construction set for the building type #{lookup_building_type} in climate zone #{climate_zone} with template #{template}.")
+          return false
+        end
+
+        if is_residential == 'Yes' && !bldg_def_const_set.name.to_s.start_with?('Res ')
+          bldg_def_const_set.setName("Res #{bldg_def_const_set.name}")
+        end
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Adding default construction set named #{bldg_def_const_set.name}")
+
+        # Replace the construction of exterior walls with user-specified wall construction type
+        unless wall_construction_type == 'Inferred'
+          # Check that a default exterior construction set is defined
+          if bldg_def_const_set.defaultExteriorSurfaceConstructions.empty?
+            OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', 'Default construction set has no default exterior surface constructions.')
+            return false
+          end
+          ext_surf_consts = bldg_def_const_set.defaultExteriorSurfaceConstructions.get
+
+          # Check that a default exterior wall is defined
+          if ext_surf_consts.wallConstruction.empty?
+            OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', 'Default construction set has no default exterior wall construction.')
+            return false
+          end
+          old_construction = ext_surf_consts.wallConstruction.get
+          standards_info = old_construction.standardsInformation
+
+          # Get the old wall construction type
+          if standards_info.standardsConstructionType.empty?
+            old_wall_construction_type = 'Not defined'
+          else
+            old_wall_construction_type = standards_info.standardsConstructionType.get
+          end
+
+          # Modify the default wall construction if different from measure input
+          if old_wall_construction_type == wall_construction_type
+            # Don't modify if the default matches the user-specified wall construction type
+            OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Exterior wall construction type #{wall_construction_type} is the default for this building type.")
+          else
+            climate_zone_set = standard.model_find_climate_zone_set(model, climate_zone)
+            new_construction = standard.model_find_and_add_construction(model,
+                                                                        climate_zone_set,
+                                                                        'ExteriorWall',
+                                                                        wall_construction_type,
+                                                                        occ_type)
+            ext_surf_consts.setWallConstruction(new_construction)
+            OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Set exterior wall construction to #{new_construction.name}, replacing building type default #{old_construction.name}.")
+          end
+        end
+
+        # Replace the construction of any outdoor-facing "AtticFloor" surfaces
+        # with the "ExteriorRoof" - "IEAD" construction for the specific climate zone and template.
+        # This prevents creation of buildings where the DOE Prototype building construction set
+        # assumes an attic but the supplied geometry used does not have an attic.
+        new_construction = nil
+        climate_zone_set = standard.model_find_climate_zone_set(model, climate_zone)
+        model.getSurfaces.sort.each do |surf|
+          next unless surf.outsideBoundaryCondition == 'Outdoors'
+          next unless surf.surfaceType == 'RoofCeiling'
+          next if surf.construction.empty?
+
+          construction = surf.construction.get
+          standards_info = construction.standardsInformation
+          next if standards_info.intendedSurfaceType.empty?
+          next unless standards_info.intendedSurfaceType.get == 'AtticFloor'
+
+          if new_construction.nil?
+            new_construction = standard.model_find_and_add_construction(model,
+                                                                        climate_zone_set,
+                                                                        'ExteriorRoof',
+                                                                        'IEAD',
+                                                                        occ_type)
+          end
+          surf.setConstruction(new_construction)
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Changed the construction for #{surf.name} from #{construction.name} to #{new_construction.name} to avoid outdoor-facing attic floor constructions in buildings with no attic space.")
+        end
+
+        # address any adiabatic surfaces that don't have hard assigned constructions
+        model.getSurfaces.sort.each do |surface|
+          next if surface.outsideBoundaryCondition != 'Adiabatic'
+          next if surface.construction.is_initialized
+
+          surface.setAdjacentSurface(surface)
+          surface.setConstruction(surface.construction.get)
+          surface.setOutsideBoundaryCondition('Adiabatic')
+        end
+
+
+        # set ground temperatures from DOE prototype buildings
+        OpenstudioStandards::Weather.model_set_ground_temperatures(model, climate_zone: climate_zone)
+      end
+
+      # add infiltration
+      if add_infiltration
+        if remove_objects
+          model.getSpaceInfiltrationDesignFlowRates.each(&:remove)
+        end
+
+        # use NIST method for determining infiltration
+        # this sets a default always on; schedules are adjusted later if HVAC is added
+        OpenstudioStandards::Infiltration.model_set_nist_infiltration(model,
+                                                                      airtightness_value: standard.default_airtightness,
+                                                                      air_barrier: standard.default_air_barrier)
+      end
+
+      # add elevators (returns ElectricEquipment object)
+      if add_elevators
+
+        # remove elevators as spaceLoads or exteriorLights
+        model.getSpaceLoads.sort.each do |instance|
+          next if !instance.name.to_s.include?('Elevator') # most prototype building types model exterior elevators with name Elevator
+
+          instance.remove
+        end
+        model.getExteriorLightss.sort.each do |ext_light|
+          next if !ext_light.name.to_s.include?('Fuel equipment') # some prototype building types model exterior elevators by this name
+
+          ext_light.remove
+        end
+
+        elevators = standard.model_add_elevators(model)
+        if elevators.nil?
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', 'No elevators added to the building.')
+        else
+          elevator_def = elevators.electricEquipmentDefinition
+          design_level = elevator_def.designLevel.get
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Adding #{elevators.multiplier.round(1)} elevators each with power of #{OpenStudio.toNeatString(design_level, 0, true)} (W), plus lights and fans.")
+          elevator_def.setFractionLatent(0.0)
+          elevator_def.setFractionRadiant(0.0)
+          elevator_def.setFractionLost(1.0)
+        end
+      end
+
+      # add exterior lights (returns a hash where key is lighting type and value is exteriorLights object)
+      if add_exterior_lights
+
+        if remove_objects
+          model.getExteriorLightss.sort.each do |ext_light|
+            next if ext_light.name.to_s.include?('Fuel equipment') # some prototype building types model exterior elevators by this name
+
+            ext_light.remove
+          end
+        end
+        exterior_lights = OpenstudioStandards::ExteriorLighting.create_typical_exterior_lighting(model,
+                                                                                                 lighting_generation: 'default',
+                                                                                                 lighting_zone: exterior_lighting_zone.chars[0].to_i,
+                                                                                                 onsite_parking_fraction: onsite_parking_fraction)
+        exterior_lights.each do |v|
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Adding Exterior Lights named #{v.exteriorLightsDefinition.name} with design level of #{v.exteriorLightsDefinition.designLevel} * #{OpenStudio.toNeatString(v.multiplier, 0, true)}.")
+        end
+      end
+
+      # add_exhaust
+      if add_exhaust
+
+        # remove exhaust objects
+        if remove_objects
+          model.getFanZoneExhausts.each(&:remove)
+        end
+
+        # The module method looks up exhaust rates and makeup air sources by all-level space
+        # type name, so it reaches models built from the typical taxonomy. The Standard method
+        # it replaces keyed both on DOE prototype (building_type, space_type) pairs, which the
+        # typical path never produces, and so added no exhaust at all.
+        zone_exhaust_fans = OpenstudioStandards::HVAC.create_typical_exhaust(model, standard,
+                                                                            makeup_source: kitchen_makeup,
+                                                                            exhaust_overrides: exhaust_overrides)
+        zone_exhaust_fans.each do |zone_exhaust_fan|
+          max_flow_rate_ip = OpenStudio.convert(zone_exhaust_fan.maximumFlowRate.get, 'm^3/s', 'cfm').get
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Adding #{OpenStudio.toNeatString(max_flow_rate_ip, 0, true)} (cfm) of exhaust to #{zone_exhaust_fan.thermalZone.get.name}")
+        end
+      end
+
+      # add service water heating demand and supply
+      if add_swh
+
+        # remove water use equipment and water use connections
+        if remove_objects
+          # @todo remove plant loops used for service water heating
+          model.getWaterUseEquipments.each(&:remove)
+          model.getWaterUseConnectionss.each(&:remove)
+        end
+
+        # Infer the SWH type
+        if service_water_heating_fuel == 'Inferred'
+          if heating_fuel == 'NaturalGas' || heating_fuel.include?('DistrictHeating')
+            # If building has gas service, probably uses natural gas for SWH
+            service_water_heating_fuel = 'NaturalGas'
+          elsif heating_fuel == 'Electricity'
+            # If building is doing space heating with electricity, probably used for SWH
+            service_water_heating_fuel = 'Electricity'
+          elsif heating_fuel == 'DistrictAmbient'
+            # If building has district ambient loop, it is fancy and probably uses HPs for SWH
+            service_water_heating_fuel = 'HeatPump'
+          else
+            # Use inferences built into OpenStudio Standards for each building and space type
+            service_water_heating_fuel = nil
+          end
+        end
+
+        typical_swh = OpenstudioStandards::ServiceWaterHeating.create_typical_service_water_heating(
+          model, water_heating_fuel: service_water_heating_fuel,
+                 service_water_heating_overrides: service_water_heating_overrides
+        )
+        midrise_swh_loops = []
+        stripmall_swh_loops = []
+        typical_swh.each do |loop|
+          if loop.name.get.include?('MidriseApartment')
+            midrise_swh_loops << loop
+          elsif loop.name.get.include?('RetailStripmall')
+            stripmall_swh_loops << loop
+          else
+            water_use_connections = []
+            loop.demandComponents.each do |component|
+              next if !component.to_WaterUseConnections.is_initialized
+
+              water_use_connections << component
+            end
+            OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Adding #{loop.name} to the building. It has #{water_use_connections.size} water use connections.")
+          end
+        end
+        if !midrise_swh_loops.empty?
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Adding #{midrise_swh_loops.size} MidriseApartment service water heating loops.")
+        end
+        if !stripmall_swh_loops.empty?
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Adding #{stripmall_swh_loops.size} RetailStripmall service water heating loops.")
+        end
+      end
+
+      # add_daylighting_controls
+      if add_daylighting_controls
+        # remove add_daylighting_controls objects
+        if remove_objects
+          model.getDaylightingControls.each(&:remove)
+        end
+
+        # add daylight controls, need to perform a sizing run for 2010
+        if (template == '90.1-2010' || template == 'ComStock 90.1-2010') && (standard.model_run_sizing_run(model, "#{sizing_run_directory}/create_typical_building_from_model_SR0") == false)
+          return false
+        end
+
+        standard.model_add_daylighting_controls(model)
+      end
+
+      # add refrigeration
+      if add_refrigeration
+
+        # remove refrigeration equipment
+        if remove_objects
+          model.getRefrigerationSystems.each(&:remove)
+          model.getRefrigerationCases.each(&:remove)
+          model.getRefrigerationWalkIns.each(&:remove)
+          model.getRefrigerationCompressorRacks.each(&:remove)
+          model.getRefrigerationCompressors.each(&:remove)
+        end
+
+        # Add refrigerated cases and walkins
+        OpenstudioStandards::Refrigeration.create_typical_refrigeration(model, template: refrigeration_template)
+      end
+
+      # @todo add slab modeling and slab insulation
+      # @todo fuel customization for cooking and laundry
+      # works by switching some fraction of electric loads to gas if requested (assuming base load is electric)
+
+      # Continuous-operation overrides, before the HVAC pass derives operation schedules from
+      # occupancy. Applied whether or not thermostats are added: the flag governs the loop
+      # and zone equipment schedules, not the thermostat.
+      OpenstudioStandards::CreateTypical.model_apply_operation_overrides(model, thermostat_overrides)
+
+      # add thermostats
+      if add_thermostat
+
+        # remove thermostats
+        if remove_objects
+          model.getThermostatSetpointDualSetpoints.each(&:remove)
+        end
+
+        # Pass the operating hours through so thermostat schedules are built around the
+        # hours this model actually runs, rather than the hours baked into a prototype
+        # schedule. Only pass hours the caller asked to modify; otherwise the space type's
+        # own parametric occupancy start and end times are used.
+        OpenstudioStandards::ThermalZone.thermal_zones_set_thermostat_schedules(
+          model.getThermalZones,
+          wkdy_op_hrs_start_time: modify_wkdy_op_hrs ? wkdy_op_hrs_start_time : nil,
+          wkdy_op_hrs_duration: modify_wkdy_op_hrs ? wkdy_op_hrs_duration : nil,
+          wknd_op_hrs_start_time: modify_wknd_op_hrs ? wknd_op_hrs_start_time : nil,
+          wknd_op_hrs_duration: modify_wknd_op_hrs ? wknd_op_hrs_duration : nil,
+          thermostat_overrides: thermostat_overrides
+        )
+      end
+
+      # add internal mass
+      if add_internal_mass
+
+        if remove_objects
+          model.getSpaceLoads.sort.each do |instance|
+            next unless instance.to_InternalMass.is_initialized
+
+            instance.remove
+          end
+        end
+
+        # add internal mass to conditioned spaces; needs to happen after thermostats are applied
+        standard.model_add_internal_mass(model, primary_bldg_type)
+      end
+
+      # add hvac system
+      if add_hvac
+
+        # remove HVAC objects
+        if remove_objects
+          standard.model_remove_prm_hvac(model)
+        end
+
+        # If user does not map HVAC types to zones with a JSON file, run conventional approach to HVAC assignment
+        if user_hvac_mapping.nil?
+          case hvac_system_type
+          when 'Inferred'
+
+            # Get the hvac delivery type enum
+            hvac_delivery = case hvac_delivery_type
+                            when 'Forced Air'
+                              'air'
+                            when 'Hydronic'
+                              'hydronic'
+                            end
+
+            # Group the zones by occupancy type.  Only split out non-dominant groups if their total area exceeds the limit.
+            min_area_m2 = OpenStudio.convert(20_000, 'ft^2', 'm^2').get
+            sys_groups = OpenstudioStandards::Geometry.model_group_thermal_zones_by_occupancy_type(model, min_area_m2: min_area_m2)
+
+            # For each group, infer the HVAC system type.
+            sys_groups.each do |sys_group|
+              # Infer the primary system type
+              sys_type, central_htg_fuel, zone_htg_fuel, clg_fuel = standard.model_typical_hvac_system_type(model,
+                                                                                                            climate_zone,
+                                                                                                            sys_group['type'],
+                                                                                                            hvac_delivery,
+                                                                                                            heating_fuel,
+                                                                                                            cooling_fuel,
+                                                                                                            OpenStudio.convert(sys_group['area_ft2'], 'ft^2', 'm^2').get,
+                                                                                                            sys_group['stories'])
+
+              # Infer the secondary system type for multizone systems
+              sec_sys_type = case sys_type
+                             when 'PVAV Reheat', 'VAV Reheat'
+                               'PSZ-AC'
+                             when 'PVAV PFP Boxes', 'VAV PFP Boxes'
+                               'PSZ-HP'
+                             else
+                               sys_type # same as primary system type
+                             end
+
+              # group zones
+              story_zone_lists = OpenstudioStandards::Geometry.model_group_thermal_zones_by_building_story(model, sys_group['zones'])
+
+              # On each story, add the primary system to the primary zones
+              # and add the secondary system to any zones that are different.
+              story_zone_lists.each do |story_group|
+                # Differentiate primary and secondary zones, based on
+                # operating hours and internal loads (same as 90.1 PRM)
+                pri_sec_zone_lists = standard.model_differentiate_primary_secondary_thermal_zones(model, story_group)
+                system_zones = pri_sec_zone_lists['primary']
+
+                # if the primary system type is PTAC, filter to cooled zones to prevent sizing error if no cooling
+                if sys_type == 'PTAC'
+                  heated_and_cooled_zones = system_zones.select { |zone| OpenstudioStandards::ThermalZone.thermal_zone_heated?(zone) && OpenstudioStandards::ThermalZone.thermal_zone_cooled?(zone) }
+                  cooled_only_zones = system_zones.select { |zone| !OpenstudioStandards::ThermalZone.thermal_zone_heated?(zone) && OpenstudioStandards::ThermalZone.thermal_zone_cooled?(zone) }
+                  system_zones = heated_and_cooled_zones + cooled_only_zones
+                end
+
+                # Add the primary system to the primary zones
+                unless standard.model_add_hvac_system(model, sys_type, central_htg_fuel, zone_htg_fuel, clg_fuel, system_zones)
+                  OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "HVAC system type '#{sys_type}' not recognized. Check input system type argument against Model.hvac.rb for valid hvac system type names.")
+                  return false
+                end
+
+                # Add the secondary system to the secondary zones (if any)
+                if !pri_sec_zone_lists['secondary'].empty?
+                  system_zones = pri_sec_zone_lists['secondary']
+                  if (sec_sys_type == 'PTAC') || (sec_sys_type == 'PSZ-AC')
+                    heated_and_cooled_zones = system_zones.select { |zone| OpenstudioStandards::ThermalZone.thermal_zone_heated?(zone) && OpenstudioStandards::ThermalZone.thermal_zone_cooled?(zone) }
+                    cooled_only_zones = system_zones.select { |zone| !OpenstudioStandards::ThermalZone.thermal_zone_heated?(zone) && OpenstudioStandards::ThermalZone.thermal_zone_cooled?(zone) }
+                    system_zones = heated_and_cooled_zones + cooled_only_zones
+                  end
+                  unless standard.model_add_hvac_system(model, sec_sys_type, central_htg_fuel, zone_htg_fuel, clg_fuel, system_zones)
+                    OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "HVAC system type '#{sys_type}' not recognized. Check input system type argument against Model.hvac.rb for valid hvac system type names.")
+                    return false
+                  end
+                end
+              end
+            end
+
+          else
+            # HVAC system_type specified
+            # Group the zones by occupancy type.  Only split out non-dominant groups if their total area exceeds the limit.
+            min_area_m2 = OpenStudio.convert(20_000, 'ft^2', 'm^2').get
+            sys_groups = OpenstudioStandards::Geometry.model_group_thermal_zones_by_occupancy_type(model, min_area_m2: min_area_m2)
+            sys_groups.each do |sys_group|
+              # group zones
+              story_zone_groups = OpenstudioStandards::Geometry.model_group_thermal_zones_by_building_story(model, sys_group['zones'])
+
+              # Add the user specified HVAC system for each story.
+              # Single-zone systems will get one per zone.
+              story_zone_groups.each do |zones|
+                unless OpenstudioStandards::HVAC.add_cbecs_hvac_system(model, standard, hvac_system_type, zones)
+                  OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "HVAC system type '#{hvac_system_type}' not recognized. Check input system type argument against cbecs_hvac.rb in the HVAC module for valid HVAC system type names.")
+                  return false
+                end
+              end
+            end
+          end
+        else
+          # If user specified a mapping of HVAC systems to zones
+          user_hvac_mapping['systems'].each do |system_hash|
+            hvac_system_type = system_hash['system_type']
+            zone_names = system_hash['thermal_zones']
+
+            # Get OS:ThermalZone objects
+            zones = zone_names.map do |zone_name|
+              model.getThermalZoneByName(zone_name).get
+            end
+
+            puts "Adding #{hvac_system_type} to #{zone_names.join(', ')}"
+
+            unless OpenstudioStandards::HVAC.add_cbecs_hvac_system(model, standard, hvac_system_type, zones)
+              OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "HVAC system type '#{hvac_system_type}' not recognized. Check input system type argument against cbecs_hvac.rb in the HVAC module for valid HVAC system type names.")
+              return false
+            end
+          end
+        end
+      end
+
+      # hours of operation
+      # The parametric schedule method consumes the building hours of operation directly
+      # (per space type, with offsets) when building the load schedules above, so this
+      # legacy hours-of-operation rewrite applies only to the prototype schedule method.
+      if (modify_wkdy_op_hrs || modify_wknd_op_hrs) && schedule_method == 'prototype'
+        # Infer the current hours of operation schedule for the building
+        op_sch = OpenstudioStandards::Schedules.model_infer_hours_of_operation_building(model)
+
+        # Convert existing schedules in the model to parametric schedules based on current hours of operation
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Generating parametric schedules from ruleset schedules using #{hoo_var_method} variable method for hours of operation formula.")
+        OpenstudioStandards::Schedules.model_setup_parametric_schedules(model, hoo_var_method: hoo_var_method)
+
+        # Create start and end times from start time and duration supplied
+        wkdy_start_time = nil
+        wkdy_end_time = nil
+        wknd_start_time = nil
+        wknd_end_time = nil
+        # weekdays
+        if modify_wkdy_op_hrs
+          wkdy_start_time = OpenStudio::Time.new(0, wkdy_op_hrs_start_time_hr, wkdy_op_hrs_start_time_min, 0)
+          wkdy_end_time = wkdy_start_time + OpenStudio::Time.new(0, wkdy_op_hrs_duration_hr, wkdy_op_hrs_duration_min, 0)
+        end
+        # weekends
+        if modify_wknd_op_hrs
+          wknd_start_time = OpenStudio::Time.new(0, wknd_op_hrs_start_time_hr, wknd_op_hrs_start_time_min, 0)
+          wknd_end_time = wknd_start_time + OpenStudio::Time.new(0, wknd_op_hrs_duration_hr, wknd_op_hrs_duration_min, 0)
+        end
+
+        # Modify hours of operation, using weekdays values for all weekdays and weekend values for Saturday and Sunday
+        OpenstudioStandards::Schedules.schedule_ruleset_set_hours_of_operation(op_sch,
+                                                                               wkdy_start_time: wkdy_start_time,
+                                                                               wkdy_end_time: wkdy_end_time,
+                                                                               sat_start_time: wknd_start_time,
+                                                                               sat_end_time: wknd_end_time,
+                                                                               sun_start_time: wknd_start_time,
+                                                                               sun_end_time: wknd_end_time)
+
+        # Apply new operating hours to parametric schedules to make schedules in model reflect modified hours of operation
+        parametric_schedules = OpenstudioStandards::Schedules.model_apply_parametric_schedules(model, error_on_out_of_order: false)
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Updated #{parametric_schedules.size} schedules with new hours of operation.")
+      end
+
+      # set hvac controls and efficiencies (this should be last model articulation element)
+      if add_hvac
+        # set additional properties for building
+        props = model.getBuilding.additionalProperties
+        props.setFeature('hvac_system_type', hvac_system_type)
+
+        case hvac_system_type
+        when 'Ideal Air Loads'
+
+        else
+          # Set the heating and cooling sizing parameters
+          standard.model_apply_prm_sizing_parameters(model)
+
+          # Perform a sizing run
+          if standard.model_run_sizing_run(model, "#{sizing_run_directory}/create_typical_building_from_model_SR1") == false
+            return false
+          end
+
+          # Raise VAV terminal minimums to cover their zones' outdoor air, so the terminals
+          # pass in heating the flow the central heating coil is sized on
+          standard.model_apply_vav_terminal_minimum_outdoor_air(model)
+
+          # If there are any multizone systems, reset damper positions
+          # to achieve a 60% ventilation effectiveness minimum for the system
+          # following the ventilation rate procedure from 62.1
+          standard.model_apply_multizone_vav_outdoor_air_sizing(model)
+
+          # Apply the prototype HVAC assumptions
+          standard.model_apply_prototype_hvac_assumptions(model, primary_bldg_type, climate_zone)
+
+          # Apply the HVAC efficiency standard
+          standard.model_apply_hvac_efficiency_standard(model, climate_zone)
+        end
+
+        # adjust infiltration schedules
+        if add_infiltration
+          OpenstudioStandards::Infiltration.model_set_nist_infiltration_schedules(model)
+        end
+
+        # Exhaust fans are created before there is any HVAC to ask about availability, so they
+        # come out always on. Now that the systems exist, put each fan on the schedule of the
+        # air loop serving its zone; an exhaust fan that keeps running after its air handler
+        # cycles off leaves the zone with no supply and no makeup air, which EnergyPlus reports
+        # as an unbalanced air loop and then fails to converge around.
+        if add_exhaust
+          OpenstudioStandards::HVAC.exhaust_fans_follow_hvac_availability(model)
+        end
+      end
+
+      # set unmet hours tolerance
+      unmet_hrs_tol_k = OpenStudio.convert(unmet_hours_tolerance_r, 'R', 'K').get
+      tolerances = model.getOutputControlReportingTolerances
+      tolerances.setToleranceforTimeHeatingSetpointNotMet(unmet_hrs_tol_k)
+      tolerances.setToleranceforTimeCoolingSetpointNotMet(unmet_hrs_tol_k)
+
+      # remove everything but spaces, zones, and stub space types (extend as needed for additional objects, may make bool arg for this)
+      if remove_objects
+        model.purgeUnusedResourceObjects
+        objects_after_cleanup = initial_object_size - model.getModelObjects.size
+        if objects_after_cleanup > 0
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Removing #{objects_after_cleanup} objects from model")
+        end
+      end
+
+      # change night cycling control to "Thermostat" cycling and increase thermostat tolerance to 1.99999
+      manager_night_cycles = model.getAvailabilityManagerNightCycles
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Changing thermostat tolerance to 1.99999 for #{manager_night_cycles.size} night cycle manager objects.")
+      manager_night_cycles.each do |night_cycle|
+        night_cycle.setThermostatTolerance(1.9999)
+        night_cycle.setCyclingRunTimeControlType('Thermostat')
+      end
+
+      # disable HVAC Sizing Simulation for Sizing Periods, not used for the type of PlantLoop sizing used in ComStock
+      if model.version >= OpenStudio::VersionString.new('3.0.0')
+        sim_control = model.getSimulationControl
+        sim_control.setDoHVACSizingSimulationforSizingPeriodsNoFail(false)
+      end
+
+      # report final condition of model
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "The building finished with #{model.getModelObjects.size} objects.")
+
+      return true
+    end
+
+    # creates spaces types and construction objects in the model for the given
+    # building type, template, and climate zone
+    #
+    # @param building_type [String] standard building type
+    # @param template [String] standard template
+    # @param climate_zone [String] ASHRAE climate zone, e.g. 'ASHRAE 169-2013-4A'
+    # @param create_space_types [Boolean] Create space types
+    # @param create_construction_set [Boolean] Create the construction set
+    # @param set_building_defaults [Boolean] Set the climate zone, newly generated construction set,
+    #   and first newly generated space type as the building default
+    # @return [Boolean] returns true if successful, false if not
+    def self.create_space_types_and_constructions(model,
+                                                  building_type,
+                                                  template,
+                                                  climate_zone,
+                                                  create_space_types: true,
+                                                  create_construction_set: true,
+                                                  set_building_defaults: true)
+      # reporting initial condition of model
+      starting_space_types = model.getSpaceTypes.sort
+      starting_construction_sets = model.getDefaultConstructionSets.sort
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "The building started with #{starting_space_types.size} space types and #{starting_construction_sets.size} construction sets.")
+
+      # lookup space types for specified building type (false indicates not to use whole building type only)
+      space_type_hash = OpenstudioStandards::CreateTypical.get_space_types_from_building_type(building_type, template: template, whole_building: false)
+      if space_type_hash == false
+        OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', "#{building_type} is an unexpected building type.")
+        return false
+      end
+
+      # create space_type_map from array
+      space_type_map = {}
+      default_space_type_name = nil
+      space_type_hash.each do |space_type_name, hash|
+        # skip space types like undeveloped and basement
+        next if hash[:space_type_gen] == false
+
+        # no spaces to pass in
+        space_type_map[space_type_name] = []
+        if hash[:default]
+          default_space_type_name = space_type_name
+        end
+      end
+
+      # Make the standard applier
+      standard = Standard.build(template)
+
+      # mapping building_type name is needed for a few methods
+      lookup_building_type = standard.model_get_lookup_name(building_type)
+
+      # remap small medium and large office to office
+      if building_type.include?('Office')
+        building_type = 'Office'
+      end
+
+      # get array of new space types
+      space_types_new = []
+
+      # create_space_types
+      if create_space_types
+
+        # array of starting space types
+        space_types_starting = model.getSpaceTypes.sort
+
+        # create stub space types
+        space_type_hash.each do |space_type_name, hash|
+          # skip space types like undeveloped and basement
+          next if hash[:space_type_gen] == false
+
+          # create space type
+          space_type = OpenStudio::Model::SpaceType.new(model)
+          space_type.setStandardsBuildingType(lookup_building_type)
+          space_type.setStandardsSpaceType(space_type_name)
+          space_type.setName("#{lookup_building_type} #{space_type_name}")
+
+          # add to array of new space types
+          space_types_new << space_type
+
+          # add internal loads (the nil check isn't necessary, but I will keep it in as a warning instad of an error)
+          test = standard.space_type_apply_internal_loads(space_type)
+          if test.nil?
+            OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.CreateTypical', "Could not add loads for #{space_type.name}. Not expected for #{template} #{lookup_building_type}")
+          end
+
+          # assign internal load schedules
+          # Stub space types intentionally use the prototype schedules.
+          # This helper generates placeholder space types for geometry/space-type creation
+          # and does not carry the schedule_method or the schedule_set additional property
+          # that the parametric orchestrator resolves against, so the parametric path does
+          # not apply here. The parametric method is used in create_typical_building_from_model.
+          standard.space_type_apply_standard_internal_load_schedules(space_type)
+
+          # assign colors
+          standard.space_type_apply_rendering_color(space_type)
+
+          # exend space type name to include the template. Consider this as well for load defs
+          space_type.setName("#{space_type.name} - #{template}")
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Added space type named #{space_type.name}")
+        end
+
+      end
+
+      # add construction sets
+      bldg_def_const_set = nil
+      if create_construction_set
+
+        # Make the default construction set for the building
+        is_residential = 'No' # default is nonresidential for building level
+        bldg_def_const_set = standard.model_add_construction_set(model, climate_zone, lookup_building_type, nil, is_residential)
+        if bldg_def_const_set.is_initialized
+          bldg_def_const_set = bldg_def_const_set.get
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Added default construction set named #{bldg_def_const_set.name}")
+        else
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', 'Could not create default construction set for the building.')
+          return false
+        end
+
+        # make residential construction set as unused resource
+        if ['SmallHotel', 'LargeHotel', 'MidriseApartment', 'HighriseApartment'].include?(building_type)
+          res_const_set = standard.model_add_construction_set(model, climate_zone, lookup_building_type, nil, 'Yes')
+          if res_const_set.is_initialized
+            res_const_set = res_const_set.get
+            res_const_set.setName("#{bldg_def_const_set.name} - Residential ")
+            OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Added residential construction set named #{res_const_set.name}")
+          else
+            OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.CreateTypical', 'Could not create residential construction set for the building.')
+            return false
+          end
+        end
+
+      end
+
+      # set_building_defaults
+      if set_building_defaults
+
+        # identify default space type
+        default_space_type = nil
+        space_types_new.each do |space_type|
+          standards_building_type = space_type.standardsBuildingType.is_initialized ? space_type.standardsBuildingType.get : nil
+          standards_space_type = space_type.standardsSpaceType.is_initialized ? space_type.standardsSpaceType.get : nil
+          if default_space_type_name == standards_space_type
+            default_space_type = space_type
+          end
+        end
+
+        # set default space type
+        building = model.getBuilding
+        if !default_space_type.nil?
+          building.setSpaceType(default_space_type)
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Setting default Space Type for building to #{building.spaceType.get.name}")
+        end
+
+        # default construction
+        if !bldg_def_const_set.nil?
+          building.setDefaultConstructionSet(bldg_def_const_set)
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Setting default Construction Set for building to #{building.defaultConstructionSet.get.name}")
+        end
+
+        # set climate zone
+        os_climate_zone = climate_zone.gsub(/ASHRAE .*-.*-/, '')
+        # trim off letter from climate zone 7 or 8
+        if (os_climate_zone[0] == '7') || (os_climate_zone[0] == '8')
+          os_climate_zone = os_climate_zone[0]
+        end
+        climate_zone = model.getClimateZones.setClimateZone('ASHRAE', os_climate_zone)
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Setting #{climate_zone.institution} Climate Zone to #{climate_zone.value}")
+
+        # set building type
+        # use lookup_building_type so spaces like MediumOffice will map to Office (Supports baseline automation)
+        building.setStandardsBuildingType(lookup_building_type)
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Setting Standards Building Type to #{building.standardsBuildingType}")
+
+        # rename building if it is named "Building 1"
+        if model.getBuilding.name.to_s == 'Building 1'
+          model.getBuilding.setName("#{building_type} #{template} #{os_climate_zone}")
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "Renaming building to #{model.getBuilding.name}")
+        end
+      end
+
+      # reporting final condition of model
+      finishing_space_types = model.getSpaceTypes.sort
+      finishing_construction_sets = model.getDefaultConstructionSets.sort
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "The building finished with #{finishing_space_types.size} space types and #{finishing_construction_sets.size} construction sets.")
+
+      return true
+    end
+  end
+end
