@@ -1,4 +1,4 @@
-# Test files run in CI, regenerated in Phase 6 from the kept tree.
+# Test files run in CI: every test_*.rb under test/modules, test/90_1_general and test/os_stds_methods.
 # Paths are relative to test/. Regenerate with the snippet in test/BASELINE.md after adding,
 # moving or removing a test file.
 

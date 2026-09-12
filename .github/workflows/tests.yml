@@ -1,8 +1,8 @@
 name: tests
 
 # Runs the kept test set: the OpenstudioStandards module tests, the 90.1 Standard-class
-# lookups, and the Standard-class method tests. test/ci_tests.txt is not used here — it is
-# regenerated in Phase 6 of the fork plan, once the trimmed tree is final.
+# lookups, and the Standard-class method tests. The glob below is the same set that
+# test/ci_tests.txt lists; regenerate that file when adding or removing a test.
 
 on:
   push:

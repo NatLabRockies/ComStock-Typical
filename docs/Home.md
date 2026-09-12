@@ -1,30 +1,48 @@
-# OpenStudio-Standards
+# ComStock-Typical
 
-openstudio-standards is a Ruby Gem library that extends the {https://www.openstudio.net/ OpenStudio SDK}.
-It has four main use-cases:
+ComStock-Typical is a Ruby gem that extends the {https://www.openstudio.net/ OpenStudio SDK} with
+methods for creating **typical** commercial building energy models. It is a fork of
+{https://github.com/NREL/openstudio-standards openstudio-standards}, trimmed to the typical-building
+path that {https://github.com/NREL/ComStock ComStock} uses.
 
-1. Provide higher level methods to help BEM users and developers to create OpenStudio models from custom or programmatically-generated geometry
-2. Create typical building models in OpenStudio format
-3. Create a code baseline model from a proposed model
-4. Check a model against a code/standard
+It has two main use-cases:
 
-openstudio-standards previously supported making the DOE/PNNL prototype buildings in OpenStudio format. This has since been deprecated, as the DOE/PNNL prototypes are intended for specific code comparisons under the Energy Policy Act and are not intended to accurately represent typical existing or new buildings. While openstudio-standards still creates typical buildings, these are not the same as the highly specific DOE/PNNL prototypes that are used for code determination. Typical buildings may share the same geometry and some component level assumptions, but they strive to be more realistic and are updated regularly to reflect common practice.
+1. **Create a typical building model** — geometry, space types, loads, schedules, ventilation,
+   service water heating, refrigeration, exterior lighting and HVAC — from user geometry, from
+   programmatically generated geometry, or from a custom building specification.
+2. **Apply code-minimum performance** to a model from the standards data: envelope constructions,
+   HVAC efficiencies, fan and pump power, lighting power, and so on.
+
+A typical building is not a code-compliance artifact. It follows minimally code-compliant equipment
+efficiencies for its vintage because that is what buildings of that vintage tend to have, but its
+purpose is to represent the existing stock, not to determine code. The DOE/PNNL prototype buildings,
+which do determine code, are not created here; they stay in openstudio-standards.
+
+## What this fork does not do
+
+Prototype building creation, Appendix G / PRM baseline generation, the NECB, BTAP, CBES, OEESC and
+IECC standards, construction costing, and the OpenStudio Application library export were all removed.
+They remain in openstudio-standards. The standards that remain here are the ASHRAE 90.1 family and
+DEER, and DEER is kept only until the California Title 24 data replaces it.
 
 ## Overview of Main Features
-If you are looking for a high-level overview of the features of this library, see the {file:docs/Features.md Features page}.
+
+For a high-level overview of what the library does, see the {file:docs/Features.md Features page}.
 
 ## User Quick Start Guide
 
-If you are a user, see the {file:docs/UserQuickStartGuide.md User Quick Start Guide}
+If you are a user, see the {file:docs/UserQuickStartGuide.md User Quick Start Guide}.
 
-## Online Documentation
-
-If you are a user, please see the {http://www.rubydoc.info/gems/openstudio-standards Online Documentation} for an overview of how the library is structured and how it is used.
+To build a model of your own mix of space types, see the
+{file:docs/CustomBuildings.md Custom Buildings page}.
 
 ## Developer Information
 
-If you are a developer looking to get started, see the {file:docs/DeveloperInformation.md Developer Information page}.
+If you are a developer looking to get started, see the
+{file:docs/DeveloperInformation.md Developer Information page}.
 
-For an overview of the repository structure, see the {file:docs/RepositoryStructure.md Repository Structure page}.
+For an overview of the repository structure, see the
+{file:docs/RepositoryStructure.md Repository Structure page}.
 
-For an overview of the code architecture, see the {file:docs/CodeArchitecture.md Code Architecture page}.
+For an overview of the code architecture, see the
+{file:docs/CodeArchitecture.md Code Architecture page}.
