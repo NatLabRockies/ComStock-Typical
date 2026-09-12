@@ -72,7 +72,9 @@ class TestRefrigerationCreateTypicalRefrigeration < Minitest::Test
     # default refrigeration system
     result = @refrig.create_typical_refrigeration(model)
     assert(result)
-    model.save('output/small_supermarket.osm', true)
+    output_dir = "#{__dir__}/output"
+    FileUtils.mkdir_p output_dir
+    model.save("#{output_dir}/small_supermarket.osm", true)
   end
 
   def test_create_typical_refrigeration_primary_school

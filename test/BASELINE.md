@@ -15,10 +15,10 @@ longer starting up than testing. Load every kept test file into one CLI process 
 ```
 
 `test/baseline_run.rb` pushes `lib` and `test/helpers` onto the load path and requires every
-`test_*.rb` under `test/modules`, `test/90_1_general` and `test/os_stds_methods`. Run it from
-the repository root: four tests in `test/modules/sql_file` write to a relative `output/AR`.
-Set `CHECK_ROOT` to point it at another tree, which is how a failure here is checked against
-upstream before being called a regression.
+`test_*.rb` under `test/modules`, `test/90_1_general` and `test/os_stds_methods`. Every test
+writes its run output beside its own file, into a gitignored directory, so it does not matter
+which directory you run from. Set `CHECK_ROOT` to point it at another tree, which is how a
+failure here is checked against upstream before being called a regression.
 
 ## The tests that run EnergyPlus
 

@@ -12,7 +12,7 @@ class TestApplyHVACEfficiencyStandard < Minitest::Test
     # Set the heating and cooling sizing parameters
     std.model_apply_prm_sizing_parameters(model)
     # Perform a sizing run
-    if std.model_run_sizing_run(model, "output/#{test_name}/SR1") == false
+    if std.model_run_sizing_run(model, File.join(File.dirname(__FILE__), "output/#{test_name}/SR1")) == false
       return false
     end
     # If there are any multizone systems, reset damper positions
