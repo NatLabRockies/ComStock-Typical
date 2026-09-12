@@ -160,15 +160,9 @@ namespace :data do
   end
 end
 
-# Tasks to export libraries packaged with
-# the OpenStudio installer
-namespace :library do
-  require "#{File.dirname(__FILE__)}/data/standards/export_OpenStudio_libraries.rb"
-  desc 'Export libraries for OpenStudio installer'
-  task 'export' do
-    export_openstudio_libraries
-  end
-end
+# The OpenStudio-installer library export stays with openstudio-standards (decision D9): no test
+# here invokes it and this gem ships no installer libraries. The library:export task and
+# data/standards/export_OpenStudio_libraries.rb went with it.
 
 require 'yard'
 desc 'Generate the documentation'

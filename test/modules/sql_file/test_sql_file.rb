@@ -2,6 +2,9 @@ require_relative '../../helpers/minitest_helper'
 
 class TestSqlFile < Minitest::Test
   def setup
+    # this class runs EnergyPlus in setup
+    skip_unless_simulations_enabled
+
     @sql_file_path = 'output/AR/run/eplusout.sql'
 
     template = '90.1-2013'

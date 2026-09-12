@@ -53,7 +53,7 @@ lib/openstudio-standards/btap/costing/btap_results/tests/output/
 /data/costing/rs_means_auth
 /tmp/
 *.xlsx
-!Scorecard*.xlsx
+# (the Scorecard*.xlsx exception went with docs/scorecards, the prototype QAQC workbooks)
 *.DS_Store
 /data/standards/openstudio_standards_duplicates_log.csv
 /data/standards/export

@@ -2,6 +2,9 @@ require_relative '../../helpers/minitest_helper'
 
 class TestQAQC < Minitest::Test
   def setup
+    # this class runs EnergyPlus in setup
+    skip_unless_simulations_enabled
+
     @qaqc = OpenstudioStandards::QAQC
     @create = OpenstudioStandards::CreateTypical
 
