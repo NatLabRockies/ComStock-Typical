@@ -5851,7 +5851,10 @@ class Standard
         # get the design specification outdoor air of the largest space in the zone
         # @todo create a new design specification outdoor air object that sums ventilation rates and schedules if multiple design specification outdoor air objects
         space_areas = zone.spaces.map(&:floorArea)
-        largest_space = zone.spaces.select { |s| s.floorArea == space_areas.max }
+        # Sorted so an exact tie in floor area resolves to the same space every run:
+        # model object handles are random, so an unsorted pick can hand the zone a different
+        # space, and with it a different design specification outdoor air object.
+        largest_space = zone.spaces.sort.select { |s| s.floorArea == space_areas.max }
         largest_space = largest_space[0]
         design_spec_oa = largest_space.designSpecificationOutdoorAir
         if design_spec_oa.is_initialized
