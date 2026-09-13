@@ -9,7 +9,7 @@ ComStock-Typical has two main use-cases:
    power, and lighting power from the standards data for a given template and climate zone.
 
 Model QAQC supports both: the {OpenstudioStandards::QAQC QAQC module} reads an EnergyPlus `.sql`
-file back and checks a simulated model's end uses, envelope conductances, internal loads, schedules,
+file back and checks a simulated model's envelope conductances, internal loads, schedules,
 HVAC capacities and part-load ratios against expectations.
 
 The DOE/PNNL prototype buildings and Appendix G baseline generation are not part of this fork. They

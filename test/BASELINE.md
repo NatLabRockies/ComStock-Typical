@@ -11,7 +11,7 @@ The OpenStudio CLI takes about 52 seconds to start, so running the suite file by
 longer starting up than testing. Load every kept test file into one CLI process instead:
 
 ```bash
-"C:/openstudio-3.10.0/bin/openstudio.exe" execute_ruby_script test/baseline_run.rb
+openstudio execute_ruby_script test/baseline_run.rb
 ```
 
 `test/baseline_run.rb` pushes `lib` and `test/helpers` onto the load path and requires every
@@ -46,16 +46,40 @@ generator, not the subject, and those 21 minutes buy coverage of code that parse
 committed `.sql` fixture would remove the simulation entirely and make them deterministic; that
 is worth doing and has not been done.
 
-Set `SKIP_SIMULATION_TESTS` to skip every test that runs EnergyPlus:
+`SKIP_SIMULATION_TESTS` skips the six classes that dominate the runtime:
 
 ```bash
 SKIP_SIMULATION_TESTS=true openstudio execute_ruby_script test/baseline_run.rb
 ```
 
+It covers 34 tests worth about 73 of the 108 minutes — the four `sql_file` classes, `TestQAQC`, and
+everything that goes through the two entry points in `hvac_system_test_helper.rb`. **It does not skip
+every test that runs EnergyPlus.** Fourteen other files run a sizing run of their own through
+`sizing_run_directory:` or `model_run_sizing_run`, most of them under `create_typical`,
+`service_water_heating` and `schedules`, and none of them are guarded. A run with this set is
+therefore still tens of minutes of EnergyPlus, not a fast smoke test.
+
 Simulations run by default, so CI and the numbers below are unaffected by the control existing.
 Skipped tests report as skips rather than passes, so a partial run cannot be mistaken for a full
-one. It currently covers 34 tests worth about 73 of the 108 minutes. Do not use it to get a green
-run.
+one. Do not use it to get a green run.
+
+## A single-process run currently hangs
+
+`test_comstock_schedule_mod` in `test/modules/schedules/test_schedules_parametric.rb` spins
+indefinitely when the suite is loaded into one process, burning one core with no output and no file
+writes. It loops over fourteen building types and stops partway through: `LargeOffice` on one run,
+`SmallOffice` on the next, so it is state-dependent rather than tied to one building type.
+
+Run on its own the test does not hang. It finishes in 35 seconds with 4495 assertions and the one
+documented `SmallHotel` failure below. Reproduced identically on a tree with no local changes, so it
+is not caused by any change in flight. It was measured with `SKIP_SIMULATION_TESTS=true` both times;
+the 108-minute baseline below predates that control and completed, which makes the interaction
+between skipping and single-process state the first thing to look at.
+
+Until it is fixed, a full `baseline_run.rb` will not finish. Cap it with `timeout` so it cannot sit
+burning a core unnoticed, and read the log directly rather than piping it through `tail`, which
+holds everything until EOF and shows nothing at all for a run that never ends.
+
 
 ## Regenerating the CI test list
 

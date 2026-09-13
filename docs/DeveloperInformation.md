@@ -37,16 +37,23 @@ openstudio execute_ruby_script test/baseline_run.rb
 ```
 
 Fifty of the tests run EnergyPlus, and they are most of the suite's runtime. Set
-`SKIP_SIMULATION_TESTS` to skip them while iterating on something else:
+`SKIP_SIMULATION_TESTS` to skip the six classes that dominate it:
 
 ```bash
 SKIP_SIMULATION_TESTS=true openstudio execute_ruby_script test/baseline_run.rb
 ```
 
+That covers 34 tests worth about 73 of the 108 minutes. It does **not** skip every test that runs
+EnergyPlus: fourteen other files run a sizing run of their own and are not guarded, so a run with
+this set is still tens of minutes of simulation.
+
 They run by default, skipped tests report as skips rather than passes, and a run with this set is
 not a green run. **`test/BASELINE.md`** records what the full suite costs, which failures are
 inherited from upstream rather than caused by a change here, and how to check a new failure against
-upstream before calling it a regression. Read it before concluding you broke something.
+upstream before calling it a regression. **It also records that a full single-process run currently
+hangs** in `test_comstock_schedule_mod`. Read it before concluding you broke something — and cap a
+full run with `timeout`, and send the log to a file rather than piping it through `tail`, which
+shows nothing at all for a run that never reaches EOF.
 
 A single-process run only works because every test class name in this tree is unique. Upstream reuses
 class names freely, because its CI runs one file per process. Here a second class of the same name
@@ -61,7 +68,6 @@ that runs a simulation or saves a model should do the same, with `"#{__dir__}/ou
 `bundle exec rake -T` lists them:
 
 - `bundle exec rake test:parallel_run_all_tests_locally` — run the test files in `test/ci_tests.txt`
-- `bundle exec rake data:update` — regenerate the standards JSONs from downloaded spreadsheets
 - `bundle exec rake doc` — generate the API documentation
 - `bundle exec rake doc:show` — generate it and open it in a browser
 - `bundle exec rake rubocop` — check code style
@@ -98,7 +104,8 @@ removing a test — the command is in `test/BASELINE.md`.
   Changes belong there.
 - **Typical data** — occupancy, ventilation, lighting, schedules, refrigeration and the rest — lives
   in `lib/openstudio-standards/<module>/data/` and is edited here, in the JSON directly.
-- **Other standards data** is generated from spreadsheets by `rake data:update`.
+- **DEER standards data** is edited as JSON in `lib/openstudio-standards/standards/deer/`. It leaves
+  when the California Title 24 data replaces it.
 
 The split matters: typical data is vintage-agnostic and describes how a building is used, while
 standards data is vintage-specific and describes what was required when it was built. A value that

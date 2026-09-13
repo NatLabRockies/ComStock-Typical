@@ -1,26 +1,18 @@
 # Repository Structure
 
 ## ```/data```
-Raw data shipped with the gem. Files here should not contain code, with the one exception noted
-below. Everything under `/data` is packaged into the gem, so test fixtures do not belong here —
-they live under `/test`.
-
-### ```/inventory```
-Inventory data used by the library. Currently `thermal_bridging.csv`.
-
-### ```/standards```
-Spreadsheet management for the standards data: the exclusion list, the template-to-climate-zone
-map, and `manage_OpenStudio_Standards.rb`, which `rake data:update` uses to regenerate the standards
-JSONs from downloaded spreadsheets. The standards JSONs themselves are not here — they live beside
-the Standard classes that read them, under `/lib/openstudio-standards/standards/`.
-
-Rather than editing the 90.1 JSON files directly, make a pull request to the
-[building energy standards database](https://github.com/pnnl/building-energy-standards-data).
+Raw data shipped with the gem. It holds one thing: weather. Files here contain no code, and
+everything under `/data` is packaged into the gem, so test fixtures do not belong here — they live
+under `/test`. The standards JSONs are not here either; they live beside the Standard classes that
+read them, under `/lib/openstudio-standards/standards/`.
 
 ### ```/weather```
 Weather data for 50 representative locations: an `.epw` of typical annual weather, a `.ddy` of
 design day information, and a `.stat` summary for each. The set is exactly what the climate zone map
 and the tests reference; it is not a general-purpose weather library.
+
+Rather than editing the 90.1 standards JSON files directly, make a pull request to the
+[building energy standards database](https://github.com/pnnl/building-energy-standards-data).
 
 ## ```/docs```
 The documentation you are reading. API documentation is not here — it is generated from the source

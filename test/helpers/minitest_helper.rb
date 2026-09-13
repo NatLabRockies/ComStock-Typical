@@ -1,29 +1,3 @@
-=begin
-require 'simplecov'
-require 'codecov'
-
-# Get the code coverage in html for local viewing
-# and in JSON for CI codecov
-if ENV['CI'] == 'true'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
-else
-  SimpleCov.formatter = SimpleCov::Formatter::HTMLFormatter
-end
-
-# Ignore some of the code in coverage testing
-SimpleCov.start do
-  add_filter '/.idea/'
-  add_filter '/.yardoc/'
-  add_filter '/data/'
-  add_filter '/doc/'
-  add_filter '/docs/'
-  add_filter '/pkg/'
-  add_filter '/test/'
-  add_filter '/hvac_sizing/'
-  add_filter 'version'  
-end
-=end
-
 $LOAD_PATH.unshift File.expand_path('../../../lib', __FILE__)
 require 'minitest/autorun'
 if ENV['CI'] == 'true'
@@ -48,11 +22,17 @@ rescue LoadError
   puts 'Using installed openstudio-standards gem.' 
 end
 
-# Control for the tests that run EnergyPlus.
+# Control for the six test classes that dominate the runtime.
 #
 # 50 of the suite's 664 tests take 90% of its 108 minutes, and nearly all of that is EnergyPlus:
 # sizing runs, and annual runs whose results the test then reads back. That is fine in CI and
-# painful when iterating on a single module, so a test that simulates can be asked to skip.
+# painful when iterating on a single module, so those classes can be asked to skip.
+#
+# This covers 34 tests worth about 73 of the 108 minutes: the four sql_file classes, TestQAQC, and
+# the two entry points in hvac_system_test_helper.rb. It is NOT every test that runs EnergyPlus.
+# Fourteen other files run a sizing run of their own through sizing_run_directory: or
+# model_run_sizing_run and are not guarded, so a run with this set still simulates for tens of
+# minutes. Guard a new class here only if its simulation is worth that much time.
 #
 # Simulations run by default, so CI, the archived Phase 3 baseline and anyone who sets nothing
 # are unaffected. Set SKIP_SIMULATION_TESTS to a true-ish value to skip them:

@@ -75,10 +75,6 @@ class TestQAQC < Minitest::Test
     # collect attributes
     check_elems = OpenStudio::AttributeVector.new
 
-    # eui checks
-    check_elems << @qaqc.check_eui('General', target_standard)
-    check_elems << @qaqc.check_eui_by_end_use('General', target_standard)
-
     # envelope checks
     check_elems << @qaqc.check_envelope_conductance('Baseline', target_standard)
 
