@@ -354,4 +354,54 @@ class TestScheduleTimeWarp < Minitest::Test
     assert_includes times, 20.0
     assert_includes times, 30.0
   end
+
+  # -------------------------------------------------------------------------
+  # Tied anchors resolve in authored order, every time
+  # -------------------------------------------------------------------------
+
+  # Mirrors the shipped 'dining - cafeteria/fast food occupancy' Default profile, whose
+  # st- and et-anchored points share standard times: 'st-2' and 'et-7' both sit at hour 8,
+  # 'st-1' and 'et-6' at hour 9, 'st+3' and 'et-2' at hour 13, 'st+6' and 'et+1' at 16.
+  # collapse_coincident_times keeps the point authored last at a shared time, which only
+  # means something if the sort in front of it is stable. Ruby's sort_by is not, and the
+  # cafeteria in ComStock's hospital 59051 expanded to a different profile from one
+  # process to the next until the sort was made stable.
+  def tied_anchor_profile
+    {
+      name: 'tied', day_types: 'Default', category: 'Occupancy', type: 'parametric',
+      start_date: '2018-01-01T00:00:00+00:00', end_date: '2018-12-31T00:00:00+00:00',
+      base_std: 0.0, peak_std: 0.8, st_std: 10.0, et_std: 15.0, adjustment_mode: 'truncate',
+      control_points: [
+        ['st-7', 'range*0.063'], ['st-2', 'range*0.063'], ['st-1', 'range*0.125'], ['st', 'range*0.5'],
+        ['st+2', 'range*0.5'], ['st+3', 'range*0.25'], ['st+5', 'peak'], ['st+6', 'range*0.875'],
+        ['et-7', 'range*0.25'], ['et-6', 'range*0.313'], ['et-4', 'peak'], ['et-2', 'peak'],
+        ['et-1', 'range*0.625'], ['et+1', 'range*0.25'], ['et+2', 'range*0.25']
+      ]
+    }
+  end
+
+  def test_tied_anchors_keep_the_value_authored_last
+    profile = tied_anchor_profile
+    pairs = anchors(profile, profile[:st_std], profile[:et_std])
+    by_time = pairs.to_h
+    # 'et-7' (range*0.25) is authored after 'st-2' (range*0.063) and both land on hour 8
+    assert_in_delta 0.25 * 0.8, by_time[8.0], 1e-9
+    # 'et-6' (range*0.313) after 'st-1' (range*0.125) at hour 9
+    assert_in_delta 0.313 * 0.8, by_time[9.0], 1e-9
+    # 'et-2' (peak) after 'st+3' (range*0.25) at hour 13
+    assert_in_delta 0.8, by_time[13.0], 1e-9
+    # 'et+1' (range*0.25) after 'st+6' (range*0.875) at hour 16
+    assert_in_delta 0.25 * 0.8, by_time[16.0], 1e-9
+    assert_equal pairs.map(&:first), pairs.map(&:first).uniq, 'coincident anchors were not collapsed'
+  end
+
+  def test_tied_anchors_expand_identically_on_every_call
+    profile = tied_anchor_profile
+    reference = expanded(profile, 7.0, 13.5)
+    50.times do |i|
+      # fresh hashes each time, so no per-object state can carry an ordering over
+      again = expanded(tied_anchor_profile, 7.0, 13.5)
+      assert_equal reference, again, "expansion #{i + 1} differed from the first"
+    end
+  end
 end

@@ -472,7 +472,15 @@ module OpenstudioStandards
       # et-anchored points (the dining profiles put 'st+6' at 22 h ahead of 'et-7' at
       # 19 h); ordering before the warp - which is monotone - makes the resulting order
       # independent of the requested duration rather than a function of the multiplier.
-      time_value_pairs.sort_by! { |pair| pair[0] }
+      #
+      # The sort must be stable. Several authored profiles place an st-anchored and an
+      # et-anchored point on the same standard time (the cafeteria occupancy puts 'st-2'
+      # and 'et-7' both at hour 8), and collapse_coincident_times below keeps the point
+      # authored LAST at a shared time. Ruby's sort_by is not stable, so a bare sort_by
+      # handed collapse an arbitrary survivor and the same profile expanded differently
+      # from one run to the next. Sorting on [time, authored index] keeps the tie in
+      # authored order.
+      time_value_pairs = time_value_pairs.each_with_index.sort_by { |(time, _), index| [time, index] }.map(&:first)
 
       standard_times = OpenstudioStandards::Schedules.compress_standard_span(
         time_value_pairs.map(&:first), st_std.to_f, et_std.to_f
