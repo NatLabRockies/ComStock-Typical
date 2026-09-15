@@ -3,6 +3,8 @@ require 'minitest/autorun'
 if ENV['CI'] == 'true'
   begin
     require 'minitest/ci'
+    # CI runs each test file in its own process; without this every run wipes the previous reports.
+    Minitest::Ci.clean = false
     puts "Saving test results to #{Minitest::Ci.report_dir}"
   rescue LoadError
     puts 'minitest/ci is unavailable; continuing without CI-specific reporting.'
