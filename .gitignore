@@ -46,3 +46,6 @@ report.xml
 temp_folder/
 *.xlsx
 *.DS_Store
+
+# Schedule editor
+/utilities/schedule_editor/

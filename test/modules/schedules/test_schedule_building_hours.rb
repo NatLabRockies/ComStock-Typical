@@ -137,4 +137,60 @@ class TestScheduleBuildingHours < Minitest::Test
                     'positive end offset should close later'
     refute_equal offset_vals, no_offset_vals, 'offset profile should differ from the un-offset profile'
   end
+
+  # -------------------------------------------------------------------------
+  # A schedule set can keep its own clock
+  # -------------------------------------------------------------------------
+
+  def test_set_that_does_not_follow_building_hours_expands_at_authored_timing
+    # the guest room schedule set carries follows_building_hours: false
+    model = new_model
+    space_type = OpenStudio::Model::SpaceType.new(model)
+    space_type.setName('guest room')
+    space_type.additionalProperties.setFeature('schedule_set', 'guest room schedule set')
+    assert @sch.space_type_apply_parametric_internal_load_schedules(space_type, wkdy_start_time: 8.0, wkdy_duration: 12.75,
+                                                                     wknd_start_time: 9.0, wknd_duration: 11.0)
+    people_sched = space_type.defaultScheduleSet.get.numberofPeopleSchedule.get.to_ScheduleRuleset.get
+    with_hours = hourly(people_sched.defaultDaySchedule)
+
+    authored = @sch.create_parametric_schedule_full(new_model, @sch.schedule_data(:occupancy), 'guest room occupancy',
+                                                    {}, category: 'Occupancy')
+    authored_vals = hourly(authored.to_ScheduleRuleset.get.defaultDaySchedule)
+    assert_equal authored_vals, with_hours, 'building hours must not move a set that does not follow them'
+
+    # and a set that does follow them still moves
+    kitchen = OpenStudio::Model::SpaceType.new(model)
+    kitchen.setName('kitchen')
+    kitchen.additionalProperties.setFeature('schedule_set', 'food preparation schedule set')
+    assert @sch.space_type_apply_parametric_internal_load_schedules(kitchen, wkdy_start_time: 8.0, wkdy_duration: 12.75)
+    kitchen_sched = kitchen.defaultScheduleSet.get.numberofPeopleSchedule.get.to_ScheduleRuleset.get
+    kitchen_authored = @sch.create_parametric_schedule_full(new_model, @sch.schedule_data(:occupancy), 'food preparation occupancy',
+                                                            {}, category: 'Occupancy')
+    refute_equal hourly(kitchen_authored.to_ScheduleRuleset.get.defaultDaySchedule), hourly(kitchen_sched.defaultDaySchedule)
+  end
+
+  def test_guest_room_keeps_its_night_under_any_building_hours
+    # the room is occupied overnight and vacant by day whatever the hotel's hours, and the
+    # sleep gate keeps its lights and equipment low overnight
+    [[8.0, 12.75], [5.0, 17.0], [9.5, 7.25]].each do |st, dur|
+      model = new_model
+      space_type = OpenStudio::Model::SpaceType.new(model)
+      space_type.setName('guest room')
+      space_type.additionalProperties.setFeature('schedule_set', 'guest room schedule set')
+      lights = OpenStudio::Model::Lights.new(OpenStudio::Model::LightsDefinition.new(model))
+      lights.setSpaceType(space_type)
+      assert @sch.space_type_apply_parametric_internal_load_schedules(space_type, wkdy_start_time: st, wkdy_duration: dur)
+      sset = space_type.defaultScheduleSet.get
+      occ = hourly(sset.numberofPeopleSchedule.get.to_ScheduleRuleset.get.defaultDaySchedule)
+      ltg = hourly(sset.lightingSchedule.get.to_ScheduleRuleset.get.defaultDaySchedule)
+      assert_operator occ[2], :>, 0.9, "room should be occupied at 02:00 for hours #{st} + #{dur}"
+      assert_operator occ[13], :<, 0.2, "room should be vacant at 13:00 for hours #{st} + #{dur}"
+      assert_operator ltg[2], :<, 0.1, "lights should be gated off at 02:00 for hours #{st} + #{dur}"
+      assert_operator ltg[20], :>, 0.5, "lights should be up in the evening for hours #{st} + #{dur}"
+      # the gated day runs to 24:00 at its own floor, not to OpenStudio's default of zero
+      day = sset.lightingSchedule.get.to_ScheduleRuleset.get.defaultDaySchedule
+      assert_equal 24.0, day.times.last.totalHours
+      assert_in_delta 0.05, day.values.last, 1e-9, "the last interval of a gated day should be the lighting floor"
+    end
+  end
 end

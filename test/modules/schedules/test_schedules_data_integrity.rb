@@ -255,6 +255,9 @@ class TestSchedulesDataIntegrity < Minitest::Test
       %w[start_time_offset end_time_offset].each do |k|
         errors << "#{id}: '#{k}' must be numeric" if set.key?(k) && !set[k].nil? && !numeric?(set[k])
       end
+      if set.key?('follows_building_hours') && ![true, false].include?(set['follows_building_hours'])
+        errors << "#{id}: 'follows_building_hours' must be true or false"
+      end
 
       occ = set['occupancy_schedule']
       if !occ.nil? && !occ_names.include?(occ)

@@ -404,4 +404,48 @@ class TestScheduleTimeWarp < Minitest::Test
       assert_equal reference, again, "expansion #{i + 1} differed from the first"
     end
   end
+
+  # -------------------------------------------------------------------------
+  # Pads that fold onto the same instant keep the base, they do not add up
+  # -------------------------------------------------------------------------
+
+  # Mirrors the shipped 'patient room occupancy' Default profile: a 0.4 floor held by pads
+  # at 'st-9' and 'et+7', which at the 9-17 standard timing sit on hours 0 and 24. Any
+  # other timing folds the leading pad into the previous day, onto the trailing pad's
+  # wrapped time, and the merge used to sum the two into a 0.8 hump.
+  def padded_floor_profile
+    {
+      name: 'padded', day_types: 'Default', category: 'Occupancy', type: 'parametric',
+      start_date: '2018-01-01T00:00:00+00:00', end_date: '2018-12-31T00:00:00+00:00',
+      base_std: 0.4, peak_std: 0.8, st_std: 9.0, et_std: 17.0,
+      control_points: [
+        ['st-9', 'base'], ['st-3', 'base'], ['st-1', 'range*0.5'], ['st', 'peak'],
+        ['et-1', 'peak'], ['et', 'range*0.5'], ['et+1', 'range*0.25'], ['et+3', 'base'], ['et+7', 'base']
+      ]
+    }
+  end
+
+  def test_coincident_wrapped_anchors_keep_the_larger_value
+    merged = @sch.wrap_schedule_pairs([[-1.25, 0.4], [4.5, 0.4], [7.25, 0.8], [22.75, 0.4]])
+    assert_equal [[4.5, 0.4], [7.25, 0.8], [22.75, 0.4]], merged
+    # a genuine overlap keeps the larger of the two, never their sum
+    merged = @sch.wrap_schedule_pairs([[-1.0, 0.3], [23.0, 0.5]])
+    assert_equal [[23.0, 0.5]], merged
+  end
+
+  def test_shifted_hours_do_not_raise_the_overnight_floor
+    profile = padded_floor_profile
+    [[7.25, 16.25], [7.0, 13.5], [9.5, 24.25], [4.75, 11.0]].each do |st, et|
+      # where the two pads fold onto each other: the leading pad's warped time, on the day
+      fold = anchors(profile, st, et).first[0] % 24.0
+      pairs = expanded(profile, st, et)
+      near_fold = pairs.select { |t, _| ((t - fold).abs % 24.0) <= 1.0 || ((t - fold).abs % 24.0) >= 23.0 }
+      refute_empty near_fold
+      near_fold.each do |t, v|
+        assert_in_delta profile[:base_std], v, 1e-9, "hour #{t} rose to #{v} for st #{st} et #{et}"
+      end
+      assert_in_delta profile[:peak_std], pairs.map(&:last).max, 1e-9
+      assert_operator pairs.map(&:last).min, :>=, profile[:base_std] - 1e-9
+    end
+  end
 end
