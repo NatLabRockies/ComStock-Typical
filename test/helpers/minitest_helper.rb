@@ -81,7 +81,9 @@ elsif ENV['JENKINS_HOME'] # Jenkins
   Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new, Minitest::Reporters::JUnitReporter.new(reports_dir = "test/reports", empty = false)]
 elsif ENV['CI'] == 'true' && JUNIT_REPORTER_AVAILABLE # GitHub Actions
   puts "Running tests from CI, using JUnit XML test reporter and console-based test reporter."
-  # empty = false: CI runs each test file in its own process, so the reporter must not wipe test/reports on start.
+  # empty = false stops each per-file process from wiping the previous ones' reports, but it also
+  # skips the reporter's own mkdir_p, so the directory has to exist before the run.
+  FileUtils.mkdir_p('test/reports')
   Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new, Minitest::Reporters::JUnitReporter.new(reports_dir = "test/reports", empty = false)]
 else # Terminal or other
   puts "Running tests from terminal, using console-based test reporter. CI=#{ENV['CI'].inspect} junit=#{JUNIT_REPORTER_AVAILABLE}"
