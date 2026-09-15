@@ -25,7 +25,7 @@ jobs:
     container:
       image: nrel/openstudio:3.10.0
     env:
-      SKIP_SIMULATION_TESTS: ${{ inputs.skip_simulation_tests }}
+      SKIP_SIMULATION_TESTS: ${{ inputs.skip_simulation_tests || github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
 
