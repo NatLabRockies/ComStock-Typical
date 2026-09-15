@@ -1,8 +1,12 @@
 $LOAD_PATH.unshift File.expand_path('../../../lib', __FILE__)
 require 'minitest/autorun'
 if ENV['CI'] == 'true'
-  require 'minitest/ci'
-  puts "Saving test results to #{Minitest::Ci.report_dir}"
+  begin
+    require 'minitest/ci'
+    puts "Saving test results to #{Minitest::Ci.report_dir}"
+  rescue LoadError
+    puts 'minitest/ci is unavailable; continuing without CI-specific reporting.'
+  end
 end
 require 'minitest/reporters'
 require 'minitest/reporters/base_reporter'
