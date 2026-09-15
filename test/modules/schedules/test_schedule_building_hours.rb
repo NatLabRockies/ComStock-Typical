@@ -13,6 +13,7 @@ class TestScheduleBuildingHours < Minitest::Test
   def new_model
     model = OpenStudio::Model::Model.new
     model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model.getYearDescription.setDayofWeekforStartDay("Sunday")
     model
   end
 

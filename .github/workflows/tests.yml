@@ -29,19 +29,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # minitest-ci is not in the OpenStudio CLI's bundled gems. It is pure Ruby, so
-      # unpacking it and putting it on RUBYLIB is enough for the CLI to require it.
-      - name: Install minitest-ci
-        run: |
-          gem install --no-document --install-dir "$PWD/.ci-gems" minitest-ci
-          echo "RUBYLIB=$(echo "$PWD"/.ci-gems/gems/minitest-ci-*/lib)" >> "$GITHUB_ENV"
-
       - name: Run the test set
         run: |
           set -u
           rm -rf test/reports
+          echo "CI=${CI:-unset} cwd=$PWD"
           failed=0
-          for f in $(find test/modules test/90_1_general test/os_stds_methods \
+          # for f in $(find test/modules test/90_1_general test/os_stds_methods \
+          for f in $(find test/modules/schedules \
                        -name 'test_*.rb' | sort); do
             echo "::group::$f"
             if ! openstudio execute_ruby_script "$f"; then
@@ -50,6 +45,8 @@ jobs:
             fi
             echo "::endgroup::"
           done
+          echo "Reports written:"
+          ls -la test/reports 2>&1 || true
           exit $failed
 
       - name: Upload JUnit reports

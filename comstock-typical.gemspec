@@ -36,7 +36,6 @@ Gem::Specification.new do |spec|
   end
   spec.add_development_dependency 'json_schemer', '~> 2.0'
   spec.add_development_dependency 'minitest', '~> 5.26.0'
-  spec.add_development_dependency 'minitest-ci'
   spec.add_development_dependency 'minitest-reporters', '~> 1.7.1'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rexml', '~> 3.4.4'

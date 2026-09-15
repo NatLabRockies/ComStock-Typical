@@ -183,7 +183,8 @@ class TestSchedulesDataIntegrity < Minitest::Test
           errors << "#{id}: '#{k}' must be numeric" if obj.key?(k) && !numeric?(obj[k])
         end
         errors << "#{id}: derivation_type '#{obj['derivation_type']}' needs response" if !obj['derivation_type'].nil? &&
-                                                                                         obj['derivation_type'] != 'up_down' && !obj.key?('response')
+                                                                                         obj['derivation_type'] != 'up_down' 
+                                                                                         obj['derivation_type'] != 'logistic' && !obj.key?('response')
         if obj['derivation_type'] == 'up_down' && !(obj.key?('start_slope') && obj.key?('end_slope'))
           errors << "#{id}: derivation_type 'up_down' needs start_slope and end_slope"
         end

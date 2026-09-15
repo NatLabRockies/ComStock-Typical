@@ -1,18 +1,18 @@
 $LOAD_PATH.unshift File.expand_path('../../../lib', __FILE__)
 require 'minitest/autorun'
-if ENV['CI'] == 'true'
-  begin
-    require 'minitest/ci'
-    # CI runs each test file in its own process; without this every run wipes the previous reports.
-    Minitest::Ci.clean = false
-    puts "Saving test results to #{Minitest::Ci.report_dir}"
-  rescue LoadError
-    puts 'minitest/ci is unavailable; continuing without CI-specific reporting.'
-  end
-end
 require 'minitest/reporters'
 require 'minitest/reporters/base_reporter'
 require 'minitest/reporters/spec_reporter'
+
+# The top-level minitest/reporters require does not pull in every reporter under the
+# OpenStudio CLI's embedded Ruby, so the JUnit one is loaded explicitly.
+JUNIT_REPORTER_AVAILABLE = begin
+  require 'minitest/reporters/junit_reporter'
+  true
+rescue LoadError => e
+  warn "JUnit XML reporter unavailable (#{e.message}); no test/reports will be written."
+  false
+end
 
 require 'openstudio'
 require 'openstudio/measure/ShowRunnerOutput'
@@ -79,8 +79,12 @@ if ENV['RM_INFO'] || ENV['TEAMCITY_RAKE_RUNNER_MODE'] # RubyMine
 elsif ENV['JENKINS_HOME'] # Jenkins
   puts "Running tests from Jenkins, using JUnit XML test reporter and console-based test reporter."
   Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new, Minitest::Reporters::JUnitReporter.new(reports_dir = "test/reports", empty = false)]
+elsif ENV['CI'] == 'true' && JUNIT_REPORTER_AVAILABLE # GitHub Actions
+  puts "Running tests from CI, using JUnit XML test reporter and console-based test reporter."
+  # empty = false: CI runs each test file in its own process, so the reporter must not wipe test/reports on start.
+  Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new, Minitest::Reporters::JUnitReporter.new(reports_dir = "test/reports", empty = false)]
 else # Terminal or other
-  puts "Running tests from terminal, using console-based test reporter."
+  puts "Running tests from terminal, using console-based test reporter. CI=#{ENV['CI'].inspect} junit=#{JUNIT_REPORTER_AVAILABLE}"
   Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new]
   # line below for PNNL local testing
   # Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new, Minitest::Reporters::JUnitReporter.new(reports_dir="test/reports", empty=false)] 

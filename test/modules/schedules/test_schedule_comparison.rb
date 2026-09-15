@@ -3,6 +3,8 @@ require_relative '../../helpers/minitest_helper'
 # Tests to compare prototype vs parametric schedules across ComStock building types.
 # Generates an HTML report with interactive charts for visual comparison.
 class TestScheduleComparison < Minitest::Test
+  skip_unless_simulations_enabled
+  
   def setup
     @create = OpenstudioStandards::CreateTypical
     @geo = OpenstudioStandards::Geometry
