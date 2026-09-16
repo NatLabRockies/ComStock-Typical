@@ -95,7 +95,6 @@ modules/schedules/test_schedules_create.rb
 modules/schedules/test_schedules_data_integrity.rb
 modules/schedules/test_schedules_information.rb
 modules/schedules/test_schedules_modify.rb
-modules/schedules/test_schedules_parametric.rb
 modules/service_water_heating/test_create_piping_losses.rb
 modules/service_water_heating/test_create_typical.rb
 modules/service_water_heating/test_create_water_heater.rb
@@ -125,6 +124,7 @@ os_stds_methods/test_daylighting_controls.rb
 os_stds_methods/test_minimum_efficiency_lookups.rb
 os_stds_methods/test_misc.rb
 os_stds_methods/test_lazy_standards_data.rb
+os_stds_methods/test_optimum_start.rb
 os_stds_methods/test_radiant_controls.rb
 os_stds_methods/test_service_water_heating.rb
 os_stds_methods/test_space_type.rb
