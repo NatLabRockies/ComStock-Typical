@@ -354,4 +354,98 @@ class TestScheduleTimeWarp < Minitest::Test
     assert_includes times, 20.0
     assert_includes times, 30.0
   end
+
+  # -------------------------------------------------------------------------
+  # Tied anchors resolve in authored order, every time
+  # -------------------------------------------------------------------------
+
+  # Mirrors the shipped 'dining - cafeteria/fast food occupancy' Default profile, whose
+  # st- and et-anchored points share standard times: 'st-2' and 'et-7' both sit at hour 8,
+  # 'st-1' and 'et-6' at hour 9, 'st+3' and 'et-2' at hour 13, 'st+6' and 'et+1' at 16.
+  # collapse_coincident_times keeps the point authored last at a shared time, which only
+  # means something if the sort in front of it is stable. Ruby's sort_by is not, and the
+  # cafeteria in ComStock's hospital 59051 expanded to a different profile from one
+  # process to the next until the sort was made stable.
+  def tied_anchor_profile
+    {
+      name: 'tied', day_types: 'Default', category: 'Occupancy', type: 'parametric',
+      start_date: '2018-01-01T00:00:00+00:00', end_date: '2018-12-31T00:00:00+00:00',
+      base_std: 0.0, peak_std: 0.8, st_std: 10.0, et_std: 15.0, adjustment_mode: 'truncate',
+      control_points: [
+        ['st-7', 'range*0.063'], ['st-2', 'range*0.063'], ['st-1', 'range*0.125'], ['st', 'range*0.5'],
+        ['st+2', 'range*0.5'], ['st+3', 'range*0.25'], ['st+5', 'peak'], ['st+6', 'range*0.875'],
+        ['et-7', 'range*0.25'], ['et-6', 'range*0.313'], ['et-4', 'peak'], ['et-2', 'peak'],
+        ['et-1', 'range*0.625'], ['et+1', 'range*0.25'], ['et+2', 'range*0.25']
+      ]
+    }
+  end
+
+  def test_tied_anchors_keep_the_value_authored_last
+    profile = tied_anchor_profile
+    pairs = anchors(profile, profile[:st_std], profile[:et_std])
+    by_time = pairs.to_h
+    # 'et-7' (range*0.25) is authored after 'st-2' (range*0.063) and both land on hour 8
+    assert_in_delta 0.25 * 0.8, by_time[8.0], 1e-9
+    # 'et-6' (range*0.313) after 'st-1' (range*0.125) at hour 9
+    assert_in_delta 0.313 * 0.8, by_time[9.0], 1e-9
+    # 'et-2' (peak) after 'st+3' (range*0.25) at hour 13
+    assert_in_delta 0.8, by_time[13.0], 1e-9
+    # 'et+1' (range*0.25) after 'st+6' (range*0.875) at hour 16
+    assert_in_delta 0.25 * 0.8, by_time[16.0], 1e-9
+    assert_equal pairs.map(&:first), pairs.map(&:first).uniq, 'coincident anchors were not collapsed'
+  end
+
+  def test_tied_anchors_expand_identically_on_every_call
+    profile = tied_anchor_profile
+    reference = expanded(profile, 7.0, 13.5)
+    50.times do |i|
+      # fresh hashes each time, so no per-object state can carry an ordering over
+      again = expanded(tied_anchor_profile, 7.0, 13.5)
+      assert_equal reference, again, "expansion #{i + 1} differed from the first"
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # Pads that fold onto the same instant keep the base, they do not add up
+  # -------------------------------------------------------------------------
+
+  # Mirrors the shipped 'patient room occupancy' Default profile: a 0.4 floor held by pads
+  # at 'st-9' and 'et+7', which at the 9-17 standard timing sit on hours 0 and 24. Any
+  # other timing folds the leading pad into the previous day, onto the trailing pad's
+  # wrapped time, and the merge used to sum the two into a 0.8 hump.
+  def padded_floor_profile
+    {
+      name: 'padded', day_types: 'Default', category: 'Occupancy', type: 'parametric',
+      start_date: '2018-01-01T00:00:00+00:00', end_date: '2018-12-31T00:00:00+00:00',
+      base_std: 0.4, peak_std: 0.8, st_std: 9.0, et_std: 17.0,
+      control_points: [
+        ['st-9', 'base'], ['st-3', 'base'], ['st-1', 'range*0.5'], ['st', 'peak'],
+        ['et-1', 'peak'], ['et', 'range*0.5'], ['et+1', 'range*0.25'], ['et+3', 'base'], ['et+7', 'base']
+      ]
+    }
+  end
+
+  def test_coincident_wrapped_anchors_keep_the_larger_value
+    merged = @sch.wrap_schedule_pairs([[-1.25, 0.4], [4.5, 0.4], [7.25, 0.8], [22.75, 0.4]])
+    assert_equal [[4.5, 0.4], [7.25, 0.8], [22.75, 0.4]], merged
+    # a genuine overlap keeps the larger of the two, never their sum
+    merged = @sch.wrap_schedule_pairs([[-1.0, 0.3], [23.0, 0.5]])
+    assert_equal [[23.0, 0.5]], merged
+  end
+
+  def test_shifted_hours_do_not_raise_the_overnight_floor
+    profile = padded_floor_profile
+    [[7.25, 16.25], [7.0, 13.5], [9.5, 24.25], [4.75, 11.0]].each do |st, et|
+      # where the two pads fold onto each other: the leading pad's warped time, on the day
+      fold = anchors(profile, st, et).first[0] % 24.0
+      pairs = expanded(profile, st, et)
+      near_fold = pairs.select { |t, _| ((t - fold).abs % 24.0) <= 1.0 || ((t - fold).abs % 24.0) >= 23.0 }
+      refute_empty near_fold
+      near_fold.each do |t, v|
+        assert_in_delta profile[:base_std], v, 1e-9, "hour #{t} rose to #{v} for st #{st} et #{et}"
+      end
+      assert_in_delta profile[:peak_std], pairs.map(&:last).max, 1e-9
+      assert_operator pairs.map(&:last).min, :>=, profile[:base_std] - 1e-9
+    end
+  end
 end

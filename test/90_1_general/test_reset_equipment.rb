@@ -16,7 +16,7 @@ class TestResetEquipment < Minitest::Test
     st.setStandardsSpaceType('Toilet')
     st.setName("Outpatient Toilet - #{initial_template}")
     # set initial electric equipment
-    standard.space_type_apply_internal_loads(st, false, false, true, false, false, false)
+    standard.space_type_apply_internal_loads(st, set_people: false, set_lights: false, set_electric_equipment: true, set_gas_equipment: false, set_ventilation: false)
 
     definition = st.electricEquipment.first.electricEquipmentDefinition
     assert_equal(0.3, definition.fractionRadiant)
@@ -24,7 +24,7 @@ class TestResetEquipment < Minitest::Test
     # new standard
     standard = Standard.build('ComStock 90.1-2013')
     # re-set equipment with different load fractions
-    assert(standard.space_type_apply_internal_loads(st, false, false, true, false, false, false))
+    assert(standard.space_type_apply_internal_loads(st, set_people: false, set_lights: false, set_electric_equipment: true, set_gas_equipment: false, set_ventilation: false))
     definition = st.electricEquipment.first.electricEquipmentDefinition
     assert_equal(0.5, definition.fractionRadiant)
     assert_equal(0.0, definition.fractionLost)

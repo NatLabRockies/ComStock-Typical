@@ -5,8 +5,15 @@ class TestSchedulesCreate < Minitest::Test
     @sch = OpenstudioStandards::Schedules
   end
 
-  def test_create_schedule_type_limits
+  def new_model
     model = OpenStudio::Model::Model.new
+    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model.getYearDescription.setDayofWeekforStartDay("Sunday")
+    model
+  end
+
+  def test_create_schedule_type_limits
+    model = new_model
 
     # test standard schedule type limits
     for type in ['Dimensionless', 'Temperature', 'Humidity Ratio', 'Fraction', 'OnOff', 'Activity']
@@ -56,7 +63,7 @@ class TestSchedulesCreate < Minitest::Test
   end
 
   def test_create_constant_schedule_ruleset
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule = @sch.create_constant_schedule_ruleset(model, 42.0,
                                                      name: 'Test Schedule',
                                                      schedule_type_limit: 'Temperature')
@@ -66,7 +73,7 @@ class TestSchedulesCreate < Minitest::Test
   end
 
   def test_create_simple_schedule
-    model = OpenStudio::Model::Model.new
+    model = new_model
     test_options = {
       'name' => 'Test Create Simple',
       'winter_time_value_pairs' => { 8.0 => 0.0, 16.0 => 1.0, 24.0 => 0.0 },
@@ -79,7 +86,7 @@ class TestSchedulesCreate < Minitest::Test
   end
 
   def test_create_complex_schedule
-    model = OpenStudio::Model::Model.new
+    model = new_model
     rules = []
     rules << ['Tuesdays and Thursdays', '1/1-12/31', 'Tue/Thu', [4, 0], [4.33, 1], [18, 0], [18.66, 1], [24, 0]]
     test_options = {
@@ -95,7 +102,7 @@ class TestSchedulesCreate < Minitest::Test
   end
 
   def test_create_schedule_from_rate_of_change
-    model = OpenStudio::Model::Model.new
+    model = new_model
     test_options = {
       'name' => 'Test Create Rate Of Change',
       'default_time_value_pairs' => { 4.0 => 0.0, 6.0 => 6.0, 8.0 => 15.0, 16 => 7.0, 24 => 0.0 }
@@ -106,7 +113,7 @@ class TestSchedulesCreate < Minitest::Test
   end
 
   def test_create_weighted_merge_schedules
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule1_options = {
       'name' => 'Schedule1',
       'default_time_value_pairs' => { 8.0 => 0.0, 16.0 => 10.0, 24.0 => 0.0 }
@@ -134,7 +141,7 @@ class TestSchedulesCreate < Minitest::Test
   end
 
   def test_create_inverted_schedule_day
-    model = OpenStudio::Model::Model.new
+    model = new_model
     test_options = {
       'name' => 'Test Create Simple',
       'winter_time_value_pairs' => { 8.0 => 0.0, 16.0 => 1.0, 24.0 => 0.0 },
@@ -151,7 +158,7 @@ class TestSchedulesCreate < Minitest::Test
   end
 
   def test_create_inverted_schedule_ruleset
-    model = OpenStudio::Model::Model.new
+    model = new_model
     test_options = {
       'name' => 'Test Create Simple',
       'winter_time_value_pairs' => { 8.0 => 0.0, 16.0 => 1.0, 24.0 => 0.0 },

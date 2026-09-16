@@ -37,138 +37,17 @@ namespace :test do
     t.test_files = file_list
     t.verbose = false
   end
-
-  # These tests only available in the CI environment
-  if ENV['CI'] == 'true'
-
-    desc 'Run CircleCI tests'
-    Rake::TestTask.new('circleci') do |t|
-      # Create a FileList for this task
-      test_list = FileList.new
-      # Read the parallelized list of tests
-      # created by the circleci CLI in config.yml
-      if File.exist?('node_tests.txt')
-        File.open('node_tests.txt', 'r') do |f|
-          f.each_line do |line|
-            # Skip comments the CLI may have included
-            next unless line.include?('.rb')
-
-            # Remove whitespaces
-            line = line.strip
-            # Ensure the file exists
-            pth = File.absolute_path("test/#{line}")
-            unless File.exist?(pth)
-              puts "Skipped #{line} because this file doesn't exist"
-              next
-            end
-            # Add this test to the list
-            test_list.add(pth)
-          end
-        end
-        # Assign the tests to this task
-        t.test_files = test_list
-      else
-        puts 'Could not find parallelized list of CI tests.'
-      end
-    end
-
-    desc 'Summarize the test timing'
-    task 'times' do |t|
-      require 'nokogiri'
-
-      files_to_times = {}
-      tests_to_times = {}
-      Dir['test/reports/*.xml'].each do |xml|
-        doc = File.open(xml) { |f| Nokogiri::XML(f) }
-        doc.css('testcase').each do |testcase|
-          time = testcase.attr('time').to_f
-          file = testcase.attr('file')
-          name = testcase.attr('name')
-          # Add to total for this file
-          if files_to_times[file].nil?
-            files_to_times[file] = time
-          else
-            files_to_times[file] += time
-          end
-          # Record for this test itself
-          if tests_to_times[name].nil?
-            tests_to_times[name] = time
-          else
-            tests_to_times[name] += time
-          end
-        end
-      end
-
-      # Write out the test results to file
-      FileUtils.mkdir_p("#{Dir.pwd}/timing")
-
-      # By file
-      File.open("#{Dir.pwd}/timing/test_by_file.html", 'w') do |html|
-        html.puts '<table><tr><th>File Name</th><th>Time (min)</th></tr>'
-        files_to_times.each do |f, time_s|
-          s = (time_s / 60).round(1) # convert time from sec to min
-          html.puts "<tr><td>#{f}</td><td>#{s}</td></tr>"
-        end
-        html.puts '</table>'
-      end
-
-      # By name
-      File.open("#{Dir.pwd}/timing/test_by_name.html", 'w') do |html|
-        html.puts '<table><tr><th>Test Name</th><th>Time (min)</th></tr>'
-        tests_to_times.each do |f, time_s|
-          s = (time_s / 60).round(1) # convert time from sec to min
-          html.puts "<tr><td>#{f}</td><td>#{s}</td></tr>"
-        end
-        html.puts '</table>'
-      end
-    end
-
-  end
 end
 
-# Tasks to manage the spreadsheet data
-namespace :data do
-  require "#{File.dirname(__FILE__)}/data/standards/manage_OpenStudio_Standards.rb"
+# The spreadsheet pipeline went with the fork. The 90.1 data comes from the building energy
+# standards database at https://github.com/pnnl/building-energy-standards-data, the typical data
+# is edited as JSON beside the module that reads it, and the remaining spreadsheet-generated
+# family, DEER, leaves when Title 24 replaces it. The data:update task and
+# data/standards/manage_OpenStudio_Standards.rb went with it.
 
-  # OpenStudio Standards spreadsheet names
-  # Order matters: most general/shared must be first,
-  # as data may be overwritten when parsing later spreadsheets.
-  spreadsheets_ashrae = [
-    'OpenStudio_Standards-ashrae_90_1',
-    'OpenStudio_Standards-ashrae_90_1(space_types)'
-  ]
-
-  # DEER is kept only until the Title 24 data replaces it (decision D10 in the fork plan);
-  # these two entries go with it in Phase 5.
-  spreadsheets_deer = [
-    'OpenStudio_Standards-deer',
-    'OpenStudio_Standards-deer(space_types)'
-  ]
-
-  spreadsheets_comstock = [
-    'OpenStudio_Standards-ashrae_90_1',
-    'OpenStudio_Standards-ashrae_90_1-ALL-comstock(space_types)',
-    'OpenStudio_Standards-deer',
-    'OpenStudio_Standards-deer-ALL-comstock(space_types)'
-  ]
-
-  spreadsheet_titles = (spreadsheets_ashrae + spreadsheets_deer + spreadsheets_comstock).uniq
-
-  desc 'Generate JSONs from OpenStudio_Standards spreadsheets'
-  task 'update' do
-    export_spreadsheet_to_json(spreadsheet_titles)
-  end
-end
-
-# Tasks to export libraries packaged with
-# the OpenStudio installer
-namespace :library do
-  require "#{File.dirname(__FILE__)}/data/standards/export_OpenStudio_libraries.rb"
-  desc 'Export libraries for OpenStudio installer'
-  task 'export' do
-    export_openstudio_libraries
-  end
-end
+# The OpenStudio-installer library export stays with openstudio-standards (decision D9): no test
+# here invokes it and this gem ships no installer libraries. The library:export task and
+# data/standards/export_OpenStudio_libraries.rb went with it.
 
 require 'yard'
 desc 'Generate the documentation'

@@ -1,30 +1,66 @@
-# OpenStudio-Standards
+# ComStock-Typical
 
-openstudio-standards is a Ruby Gem library that extends the [OpenStudio SDK](https://www.openstudio.net/).
-It has four main use-cases:
+ComStock-Typical is a Ruby gem that extends the [OpenStudio SDK](https://www.openstudio.net/) with
+methods for creating **typical** commercial building energy models. It is a fork of
+[openstudio-standards](https://github.com/NREL/openstudio-standards), trimmed to the typical-building
+path that [ComStock](https://github.com/NREL/ComStock) uses.
 
-1. Provide methods to create OpenStudio models from geometry templates, user geometry, or programmatically generated geometry
-2. Create typical building models in OpenStudio format
-3. Create a code baseline model from a proposed model
-4. Check a model against a code/standard
+It has two main use-cases:
 
-openstudio-standards previously supported making the DOE/PNNL prototype buildings in OpenStudio format. This has since been deprecated, as the DOE/PNNL prototypes are intended for specific code comparisons under the Energy Policy Act and are not intended to accurately represent typical existing or new buildings. While openstudio-standards still creates typical buildings, these are not identical to the DOE/PNNL prototypes.
+1. **Create a typical building model** — geometry, space types, loads, schedules, ventilation,
+   service water heating, refrigeration, exterior lighting and HVAC — from user geometry, from
+   programmatically generated geometry, or from a custom building specification.
+2. **Apply code-minimum performance** to a model from the standards data: envelope constructions,
+   HVAC efficiencies, fan and pump power, lighting power, and so on.
 
-## Overview of Main Features
-If you are looking for a high-level overview of the features of this library, see the [Features](docs/Features.md) page.
+A typical building is not a code-compliance artifact. It follows minimally code-compliant equipment
+efficiencies for its vintage because that is what buildings of that vintage tend to have, but its
+purpose is to represent the existing stock, not to determine code.
 
-## User Quick Start Guide
+## What this fork does not do
 
-If you are a user, see the [User Quick Start Guide](docs/UserQuickStartGuide.md).
+These belong to openstudio-standards and were removed here. If you need one, use openstudio-standards.
 
-## Online Documentation
+| Removed | Where it lives |
+|---|---|
+| DOE/PNNL prototype building creation | openstudio-standards |
+| Appendix G / PRM baseline generation | openstudio-standards |
+| NECB and BTAP (Canada), CBES, OEESC, IECC | openstudio-standards |
+| Construction and material costing (RS-Means) | openstudio-standards |
+| OpenStudio Application library export | openstudio-standards |
 
-If you are a user, please see the [Online Documentation](https://gemdocs.org/gems/openstudio-standards) for an overview of how the library is structured and how it is used.
+The standards that remain are the ASHRAE 90.1 family and DEER. DEER is kept only until the
+California Title 24 data replaces it.
 
-## Developer Information
+## Installing
 
-If you are a developer looking to get started, see the [Developer Information](docs/DeveloperInformation.md) page.
+This gem is not published to RubyGems and is not bundled with the OpenStudio installer. Add it to a
+`Gemfile` from git:
 
-For an overview of the repository structure, see the [Repository Structure](docs/RepositoryStructure.md).
+```ruby
+gem 'comstock-typical', git: 'https://github.com/NatLabRockies/ComStock-Typical.git', ref: 'main'
+```
 
-For an overview of the code architecture, see the [Code Architecture](docs/CodeArchitecture.md).
+The gem is named `comstock-typical`, but the library keeps the `OpenstudioStandards` namespace and
+the `lib/openstudio-standards/` layout so that fixes patch cleanly to and from openstudio-standards.
+Both requires work, and both load the same code:
+
+```ruby
+require 'comstock-typical'
+require 'openstudio-standards'
+```
+
+Because the second one still works, code written against openstudio-standards needs no edits to its
+`require` lines. Do not install both gems into the same bundle: they provide the same file and
+whichever loads first wins.
+
+## Documentation
+
+- [User Quick Start Guide](docs/UserQuickStartGuide.md) — creating a model
+- [Custom Buildings](docs/CustomBuildings.md) — the building specification format
+- [Features](docs/Features.md) — what the library does and how the pieces fit
+- [Repository Structure](docs/RepositoryStructure.md) — what is in each directory
+- [Code Architecture](docs/CodeArchitecture.md) — modules, the Standard class, and template lookup
+- [Developer Information](docs/DeveloperInformation.md) — setup, tests, and the development process
+
+There is no hosted API documentation. Generate it locally with `bundle exec rake doc:show`.

@@ -22,6 +22,13 @@ class TestScheduleTypeLimits < Minitest::Test
     FileUtils.mkdir_p "#{__dir__}/output"
   end
 
+  def new_model
+    model = OpenStudio::Model::Model.new
+    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model.getYearDescription.setDayofWeekforStartDay("Sunday")
+    model
+  end
+
   def fractional?(schedule)
     return false unless schedule.scheduleTypeLimits.is_initialized
 
@@ -44,7 +51,7 @@ class TestScheduleTypeLimits < Minitest::Test
   # The occupancy schedule and every day profile it builds, including its rule days, which
   # are the unnamed "Schedule Day N" objects in the warning list.
   def test_spaces_occupancy_schedule_carries_type_limits
-    model = OpenStudio::Model::Model.new
+    model = new_model
     OpenstudioStandards::Geometry.create_bar_from_building_type_ratios(
       model, { 'total_bldg_floor_area' => 20_000.0, 'bldg_type_a' => 'MediumOffice' }
     )
@@ -67,7 +74,7 @@ class TestScheduleTypeLimits < Minitest::Test
 
   # The zero-occupancy branch returns a different object and needs the limits too.
   def test_zero_occupancy_schedule_carries_type_limits
-    model = OpenStudio::Model::Model.new
+    model = new_model
     space = OpenStudio::Model::Space.new(model)
     schedule = OpenstudioStandards::Space.spaces_get_occupancy_schedule([space])
     refute_equal(false, schedule, 'no schedule was returned for a space with no occupancy')
@@ -80,7 +87,7 @@ class TestScheduleTypeLimits < Minitest::Test
   # nothing to inherit from. Both branches are asserted so the passing one cannot be mistaken
   # for coverage of the other.
   def test_nist_infiltration_schedules_carry_type_limits_with_no_hvac_schedule
-    model = OpenStudio::Model::Model.new
+    model = new_model
     OpenStudio::Model::Space.new(model)
     OpenstudioStandards::Infiltration.model_set_nist_infiltration_schedules(model)
 
@@ -94,7 +101,7 @@ class TestScheduleTypeLimits < Minitest::Test
   end
 
   def test_nist_infiltration_schedules_carry_type_limits_with_an_hvac_schedule
-    model = OpenStudio::Model::Model.new
+    model = new_model
     OpenstudioStandards::Geometry.create_bar_from_building_type_ratios(
       model, { 'total_bldg_floor_area' => 20_000.0, 'bldg_type_a' => 'MediumOffice' }
     )
@@ -127,7 +134,7 @@ class TestScheduleTypeLimits < Minitest::Test
     # a setter that clones, leaving the original in the model with no parent - two empty
     # "Schedule Day N" objects per legacy schedule with design-day rows, reaching the IDF
     # with no type limits (36 lines across the 18 kitchen buildings of a validation run).
-    model = OpenStudio::Model::Model.new
+    model = new_model
     standard = Standard.build('90.1-2013')
     schedule = standard.model_add_schedule(model, 'ApartmentHighRise CLGSETP_APT_SCH')
     ruleset = schedule.to_ScheduleRuleset.get
@@ -145,7 +152,7 @@ class TestScheduleTypeLimits < Minitest::Test
   end
 
   def test_economizer_max_oa_fraction_schedule_carries_type_limits
-    model = OpenStudio::Model::Model.new
+    model = new_model
     standard = Standard.build('90.1-2013')
     standard.apply_economizers('ASHRAE 169-2013-4A', model)
 
@@ -159,7 +166,7 @@ class TestScheduleTypeLimits < Minitest::Test
   # The regression as EnergyPlus sees it: nothing in the translated model may leave the field
   # blank. This is what the 24 warnings on the hospital model were.
   def test_no_translated_schedule_leaves_type_limits_blank
-    model = OpenStudio::Model::Model.new
+    model = new_model
     OpenstudioStandards::Geometry.create_bar_from_building_type_ratios(
       model, { 'total_bldg_floor_area' => 20_000.0, 'bldg_type_a' => 'MediumOffice' }
     )

@@ -1,115 +1,126 @@
 # Developer Information
 
 ## Setup
-1. Install the [latest version of OpenStudio](https://www.openstudio.net/downloads). We recommend a minimum version of OpenStudio 3.7.0.
-2. Install the Ruby version that corresponds to your OpenStudio install. See the [OpenStudio SDK Version Compatibility Matrix](https://github.com/NREL/OpenStudio/wiki/OpenStudio-SDK-Version-Compatibility-Matrix) of the correct version. OpenStudio versions 3.2.0 through 3.7.0 use Ruby 2.7.2, OpenStudio 3.8.0 and above uses Ruby 3.2.2.
-	-	**On Mac**: Install Ruby 2.7.2 using [rbenv](http://octopress.org/docs/setup/rbenv/)
-	- **On Windows**: Install [Ruby+Devkit 2.7.2](https://rubyinstaller.org/downloads/archives)
-	- **On Linux**: Use [rbenv](http://octopress.org/docs/setup/rbenv/) or your package manger to install ruby
-	- **Using BTAP development Environment**: Do nothing.
-	- Call `ruby -v` from command prompt to check installed version.
-3. Connect Ruby to OpenStudio:
-	-	**On Mac**:
-		1. Create a file called `openstudio.rb`
-		2. Contents: `require "/Applications/openstudio-3.7.0/Ruby/openstudio.rb"`. Modify `3.7.0` to the OpenStudio version you installed.
-		3. Save it here: `/usr/lib/ruby/site_ruby/openstudio.rb`
-	-	**On Windows**:
-		1. Create a file called `openstudio.rb`
-		2. Contents: `require "C:/openstudio-3.7.0/Ruby/openstudio.rb"`.  Modify `3.7.0` to the OpenStudio version you installed.
-		3. Save it here: `C:/Ruby27-x64/lib/ruby/site_ruby/openstudio.rb`.  Modify `Ruby27-x64` to the Ruby version you installed.
-		4. Start > right click Computer > Properties > Advanced system settings > Environment variables.  In the User variables section (top) add a new Variable with the name `GEM_PATH` and the Value `C:\Ruby27-x64\lib\ruby\gems\2.5.0`. Modify `Ruby27-x64` to the Ruby version you installed.
-	- **On Linux**:
-		1. Create a file called `openstudio.rb`
-		2. Contents: `require "/usr/local/openstudio-3.7.0/Ruby/openstudio.rb"`. Modify `3.7.0` to the OpenStudio version you installed.
-		3. Save it here: `/usr/local/lib/ruby/site_ruby/openstudio.rb`.
-      - If you are having trouble locating the paths in your specific linux setup, you can find the ruby version with `gem environment` in command prompt and the location of openstudio with `which openstudio`.
-	- **Using BTAP development Environment**:
-		1. Do nothing.
-4. Install [Git](https://git-scm.com/).
-5. Install [GitHub desktop](https://desktop.github.com/) or another GUI that makes Git easier to use.
-6. Clone the [source code](https://github.com/NREL/openstudio-standards.git) using GitHub desktop (easier) or Git (harder).
-7. Install the `bundler` ruby gem. (`gem install bundler` from command prompt)
-8. Run `bundle install` in command prompt from the top level `openstudio-standards` directory. This will install the correct ruby gem versions necessary for development.
 
-## Development Process
+1. Install [OpenStudio 3.10.0](https://www.openstudio.net/downloads). The CI container is
+   `nrel/openstudio:3.10.0`, and the test suite is run with that version.
+2. Install the matching Ruby. OpenStudio 3.8.0 and above use Ruby 3.2.2; see the
+   [OpenStudio SDK Version Compatibility Matrix](https://github.com/NREL/OpenStudio/wiki/OpenStudio-SDK-Version-Compatibility-Matrix).
+   - **Windows**: [Ruby+Devkit 3.2.2](https://rubyinstaller.org/downloads/)
+   - **Mac / Linux**: [rbenv](https://github.com/rbenv/rbenv), or your package manager
+   - `ruby -v` confirms what you have.
+3. Connect Ruby to OpenStudio by creating an `openstudio.rb` in your Ruby installation's
+   `site_ruby` directory whose only content is a require of the OpenStudio SDK's own
+   `openstudio.rb`. On Windows that is
+   `require "C:/openstudio-3.10.0/Ruby/openstudio.rb"` saved to
+   `C:/Ruby32-x64/lib/ruby/site_ruby/openstudio.rb`; on Mac,
+   `require "/Applications/openstudio-3.10.0/Ruby/openstudio.rb"` saved to
+   `/usr/lib/ruby/site_ruby/openstudio.rb`; on Linux, the equivalent under
+   `/usr/local/lib/ruby/site_ruby/`.
+4. Clone [the repository](https://github.com/NatLabRockies/ComStock-Typical).
+5. `gem install bundler`, then `bundle install` from the top level of the clone.
 
-### Summary
-1. Modify the code
-2. Test the code (new code plus old code to make sure you didn't break anything)
-3. Document the code
-5. Push branch to GitHub repository
-6. Continuous automation runs tests
-7. Pull request
-8. Code review and merge
+## Running the tests
 
-This project uses [Rake](http://rake.rubyforge.org/) to run tasks from the terminal.
+The tests need the OpenStudio SDK, so run them through the OpenStudio CLI rather than with `ruby`.
+One file:
 
-`bundle exec rake -T`: List all available commands
-- `bundle exec rake build`                    # Build openstudio-standards-X.X.XX.gem into the pkg directory
-- `bundle exec rake clean`                    # Remove any temporary products
-- `bundle exec rake clobber`                  # Remove any generated files
-- `bundle exec rake data:update`              # Generate JSONs from OpenStudio_Standards spreadsheets locally downloaded to data/standards
-- `bundle exec rake data:export:jsons`        # Export JSONs from OpenStudio_Standards to data library
-- `bundle exec rake data:update:costing`      # Update RS-Means Database
-- `bundle exec rake doc`                      # Generate the documentation
-- `bundle exec rake doc:show`                 # Generate the documentation and show in a web browser
-- `bundle exec rake install`                  # Build and install openstudio-standards-X.X.XX.gem into system gems
-- `bundle exec rake install:local`            # Build and install openstudio-standards-X.X.XX.gem into system gems without network access
-- `bundle exec rake library:export`           # Export libraries for the OpenStudio Application
-- `bundle exec rake release[remote]`          # Create tag vX.X.XX and build and push openstudio-standards-X.X.XX.gem to Rubygems
-- `bundle exec rake rubocop`                  # Check the code for style consistency
-- `bundle exec rake rubocop:auto_correct`     # Auto-correct RuboCop offenses
-- `bundle exec rake rubocop:show`             # Show the rubocop output in a web browser
-- `bundle exec rake test:btap_json_test`      # Run tests for btap_json_test
-- `bundle exec rake test:circ-90_1_general`   # Run tests for circ-90_1_general
-- `bundle exec rake test:circ-90_1_prm`       # Run tests for circ-90_1_prm
-- `bundle exec rake test:circ-all-tests`      # Run tests for circ-all-tests
-- `bundle exec rake test:circ-doe_prototype`  # Run tests for circ-doe_prototype
-- `bundle exec rake test:circ-necb`           # Run tests for circ-necb
-- `bundle exec rake test:circ-necb_bldg`      # Run tests for circ-necb_bldg
-- `bundle exec rake test:necb_local_bldgs_regression_tests`  # Run tests for necb_local_bld...`
+```bash
+openstudio execute_ruby_script test/modules/geometry/test_geometry_information.rb
+```
 
-### Modify the code
-As you add to/modify the code, please follow the code architecture. See the {file:docs/RepositoryStructure.md Repository Structure page} to see how the code is organized.  If you don't understand something or want to discuss your plan before you get started, contact <mailto:matthew.dahlhausen@nrel.gov>.
-1. Make a new branch for your changes.
-2. Modify the code on your branch.
+The CLI takes about 50 seconds to start, so running the suite file by file spends longer starting up
+than testing. `test/baseline_run.rb` loads every kept test file into one process instead:
 
-### Modify the data
-1. 90.1 standards data is available in [this database](https://github.com/pnnl/building-energy-standards-data). All 90.1 changes happen on that database. Data for other standards or templates lives in the .json files in openstudio-standards.
-2. If you have data, modify the .json files and run commands to update the database, as appropriate. Historically, openstudio-standards data used a series of google spreadsheets, and is still used for non-90.1-standards. See [OpenStudio_Standards Google Spreadsheet](https://drive.google.com/drive/folders/1x7yEU4jnKw-gskLBih8IopStwl0KAMEi?usp=sharing). Contact <mailto:matthew.dahlhausen@nrel.gov> for access.
-3. You may edit the spreadsheet or modify a copy of the data, then download the spreadsheet to the `data/standards` directory, and run `bundle exec rake data:update:manual` to update the JSONs.
+```bash
+openstudio execute_ruby_script test/baseline_run.rb
+```
 
-### Test the code
-Tests prove that your code works as expected, but more importantly they help make sure that changes don't break other code. If your code doesn't have tests and someone else makes changes that break it, it's your own fault.
-1. Create a new file called `test_XX.rb` in the `/test/subdirectory` directory.
-2. Put tests into your file. See other test files for examples.
-2. Call `ruby test/sub_directory/test_XX.rb` to run your new test file.
-3. Fix your code and make sure your tests pass.
+Fifty of the tests run EnergyPlus, and they are most of the suite's runtime. Set
+`SKIP_SIMULATION_TESTS` to skip the six classes that dominate it:
 
-### Document the code
-Good documentation is critical. Changes or additions without good documentation will not be accepted. This library uses [YARD](http://yardoc.org/) to generate documentation. You simply write the documentation inline as specially tagged comments. This [YARD cheat sheet](https://gist.github.com/chetan/1827484#methods) quickly shows you how to document things. You can also look at the other methods documented in the code.
+```bash
+SKIP_SIMULATION_TESTS=true openstudio execute_ruby_script test/baseline_run.rb
+```
 
-1. Make sure your methods are documented.
-2. `bundle exec rake doc` Generate the documentation and document any undocumented methods that are listed
-3. `bundle exec rake doc:show` Inspect the documentation in a browser to make sure it looks right.
+That covers 34 tests worth about 73 of the 108 minutes. It does **not** skip every test that runs
+EnergyPlus: fourteen other files run a sizing run of their own and are not guarded, so a run with
+this set is still tens of minutes of simulation.
 
-### Push branch to GitHub
-1. Commit your changes to your branch.
-2. Merge /Master into your branch and resolve any conflicts.
-3. Push your branch to GitHub.
+They run by default, skipped tests report as skips rather than passes, and a run with this set is
+not a green run. **`test/BASELINE.md`** records what the full suite costs, which failures are
+inherited from upstream rather than caused by a change here, and how to check a new failure against
+upstream before calling it a regression. **It also records that a full single-process run currently
+hangs** in `test_comstock_schedule_mod`. Read it before concluding you broke something — and cap a
+full run with `timeout`, and send the log to a file rather than piping it through `tail`, which
+shows nothing at all for a run that never reaches EOF.
 
-### Pull request
-Once your code is done and the tests are passing locally on your branch with Master merged in, go to GitHub and create a Pull Request.  This tells the main developers that you have changes to bring into the main code. They will review and suggest edits or merge.
+A single-process run only works because every test class name in this tree is unique. Upstream reuses
+class names freely, because its CI runs one file per process. Here a second class of the same name
+reopens the first and replaces its `setup`, and the first file's tests then run with no fixture. Keep
+new class names unique — name the class after its file.
 
-### Code Review & Merge
-The main developers will review your changes and either approve the pull request or give you some comments.  If they approve the pull request, you are done and your changes are now part of the main code!
+Tests write their run output into a gitignored `output/` directory beside the test file. A new test
+that runs a simulation or saves a model should do the same, with `"#{__dir__}/output/…"`.
 
-### Look at the continuous integration results
-1. When a commit is made to any branch, the continuous integration machine will run all the tests.
-2. For pull requests, the status of the tests will automatically be posted to GitHub.
-3. Developers will need to be given access to the continuous integration system to see detailed results.
+## Rake tasks
 
-## Issues and New Features
-  - Issues and feature requests are reported on the [GitHub Repository Issues Page](https://github.com/NREL/openstudio-standards/issues).
-  - Issues should be labeled according to the [OpenStudio Issue Prioritization Guide](https://github.com/NREL/OpenStudio/wiki/Issue-Prioritization).
-  - Failing tests do not need to be listed as issues; they should be fixed if they fail.
+`bundle exec rake -T` lists them:
+
+- `bundle exec rake test:parallel_run_all_tests_locally` — run the test files in `test/ci_tests.txt`
+- `bundle exec rake doc` — generate the API documentation
+- `bundle exec rake doc:show` — generate it and open it in a browser
+- `bundle exec rake rubocop` — check code style
+- `bundle exec rake rubocop:show` — check style and open the report in a browser
+- `bundle exec rake build` / `install` / `release` — the standard Bundler gem tasks
+
+The rubocop style file is vendored as `.rubocop-openstudio.yml` so that a style check does not depend
+on an external fetch succeeding.
+
+`test/ci_tests.txt` lists the test files, relative to `test/`. Regenerate it after adding, moving or
+removing a test — the command is in `test/BASELINE.md`.
+
+## Continuous integration
+
+`.github/workflows/tests.yml` runs every `test_*.rb` under `test/modules`, `test/90_1_general` and
+`test/os_stds_methods` in the `nrel/openstudio:3.10.0` container, one file per process, on pushes to
+`main` and on pull requests.
+
+## Development process
+
+1. Branch.
+2. Modify the code, following the existing structure. See the
+   {file:docs/RepositoryStructure.md Repository Structure} and
+   {file:docs/CodeArchitecture.md Code Architecture} pages.
+3. Add tests. Tests are what stop someone else's change from silently breaking yours.
+4. Document the code. This library uses [YARD](https://yardoc.org/); documentation is written inline
+   as tagged comments. `bundle exec rake doc` lists what is undocumented.
+5. Push the branch and open a pull request.
+
+### Modifying the data
+
+- **90.1 standards data** comes from the
+  [building energy standards database](https://github.com/pnnl/building-energy-standards-data).
+  Changes belong there.
+- **Typical data** — occupancy, ventilation, lighting, schedules, refrigeration and the rest — lives
+  in `lib/openstudio-standards/<module>/data/` and is edited here, in the JSON directly.
+- **DEER standards data** is edited as JSON in `lib/openstudio-standards/standards/deer/`. It leaves
+  when the California Title 24 data replaces it.
+
+The split matters: typical data is vintage-agnostic and describes how a building is used, while
+standards data is vintage-specific and describes what was required when it was built. A value that
+changes with the code vintage belongs in the standards data, not beside a module.
+
+## Back-porting to and from openstudio-standards
+
+This repository has no shared git history with openstudio-standards, so there is no cherry-picking
+between the two remotes. Patches move by `git format-patch` and `git am --3way`, which works because
+both trees keep the same `lib/openstudio-standards/` layout. **`BACKPORTS.md`** has the commands,
+what is worth sending back, where the two trees have already diverged, and the log of what has been
+sent.
+
+## Issues
+
+Issues and feature requests are on the
+[repository issues page](https://github.com/NatLabRockies/ComStock-Typical/issues). A failing test is
+a thing to fix, not a thing to file.

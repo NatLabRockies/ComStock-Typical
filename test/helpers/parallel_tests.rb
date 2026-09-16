@@ -161,7 +161,7 @@ class ParallelTests
       data.delete('start')
       data.delete('end')
     end
-    File.open(File.join(File.dirname(__FILE__), 'ci_test_helper', 'timings.json'), 'w') {|file| file.puts(JSON.pretty_generate(timings_json))}
+    File.open(File.join(File.dirname(__FILE__), 'timings.json'), 'w') {|file| file.puts(JSON.pretty_generate(timings_json))}
     return did_all_tests_pass
   end
 end
