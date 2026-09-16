@@ -36,6 +36,10 @@ end
 #
 # @param hvac_arguments [Hash] a hash
 def model_hvac_test(hvac_arguments)
+  # Both entry points run a sizing run and an annual run per case, which is the bulk of the
+  # suite's wall time. Called from a test method, so skip lands on the calling test.
+  skip_unless_simulations_enabled if respond_to?(:skip_unless_simulations_enabled)
+
   # Make the output directory if it doesn't exist
   output_dir = "#{__dir__}/../os_stds_methods/output"
   FileUtils.mkdir output_dir unless Dir.exist? output_dir
@@ -244,6 +248,10 @@ def default_radiant_test_hash
 end
 
 def model_radiant_system_test(arguments)
+  # Both entry points run a sizing run and an annual run per case, which is the bulk of the
+  # suite's wall time. Called from a test method, so skip lands on the calling test.
+  skip_unless_simulations_enabled if respond_to?(:skip_unless_simulations_enabled)
+
   output_dir = "#{__dir__}/../os_stds_methods/output"
   FileUtils.mkdir output_dir unless Dir.exist? output_dir
 

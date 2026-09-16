@@ -135,7 +135,15 @@ module OpenstudioStandards
         end
       end
 
-      # merge both groups by time. If the same time exists, sum the values
+      # Merge both groups by time. Anchors that fold onto the same instant are one point
+      # seen from both ends of the repeating day, not two contributions to add: a profile
+      # padded with 'st-9 base' and 'et+7 base' spans exactly 24 h, and once the warp moves
+      # its hours off the standard timing the leading pad lands before hour 0 and the
+      # trailing pad on the same wrapped time. Summing them (the previous rule, capped at
+      # 1.0) doubled every non-zero base at that point - the patient room's 0.4 became a
+      # 0.8 hump at 22:45 - and the derived lighting and equipment inherited it. Keep the
+      # larger value, which is how {combine_spillover_with_base} already combines a
+      # spilled tail with the day it lands on.
       merged = {}
 
       (wrap_group + normal_group).each do |time, value|
@@ -145,8 +153,7 @@ module OpenstudioStandards
       end
 
       result = merged.map do |time, values|
-        combined = values.size > 1 ? values.reduce(:+) / [values.sum, 1.0].max : values[0]
-        [time, combined]
+        [time, values.max]
       end
 
       result.sort_by { |time, _| time }
@@ -472,7 +479,15 @@ module OpenstudioStandards
       # et-anchored points (the dining profiles put 'st+6' at 22 h ahead of 'et-7' at
       # 19 h); ordering before the warp - which is monotone - makes the resulting order
       # independent of the requested duration rather than a function of the multiplier.
-      time_value_pairs.sort_by! { |pair| pair[0] }
+      #
+      # The sort must be stable. Several authored profiles place an st-anchored and an
+      # et-anchored point on the same standard time (the cafeteria occupancy puts 'st-2'
+      # and 'et-7' both at hour 8), and collapse_coincident_times below keeps the point
+      # authored LAST at a shared time. Ruby's sort_by is not stable, so a bare sort_by
+      # handed collapse an arbitrary survivor and the same profile expanded differently
+      # from one run to the next. Sorting on [time, authored index] keeps the tie in
+      # authored order.
+      time_value_pairs = time_value_pairs.each_with_index.sort_by { |(time, _), index| [time, index] }.map(&:first)
 
       standard_times = OpenstudioStandards::Schedules.compress_standard_span(
         time_value_pairs.map(&:first), st_std.to_f, et_std.to_f
@@ -1312,16 +1327,19 @@ module OpenstudioStandards
       step = 1.0 / timesteps_per_hour
       steps = 24 * timesteps_per_hour
 
-      # precompute the gate value at each timestep
+      # Precompute the gate value at each timestep. The pairs a day schedule is built from
+      # are 'until' times, so the samples run from the end of the first interval to 24:00;
+      # sampling from 0:00 to 23:45 instead left the last interval of every gated day to
+      # OpenStudio's default of zero and put a meaningless 'until 0:00' entry first.
       gate_values = (0...steps).map do |k|
-        d = OpenstudioStandards::Schedules.profile_value_at(dpairs, k * step)
+        d = OpenstudioStandards::Schedules.profile_value_at(dpairs, (k + 1) * step)
         g = on_when_asleep ? (diurnal_weight * d) : (1.0 - (diurnal_weight * d))
         g.clamp(0.0, 1.0)
       end
 
       lambda do |occ_pairs|
         (0...steps).map do |k|
-          t = (k * step).round(6)
+          t = ((k + 1) * step).round(6)
           [t, OpenstudioStandards::Schedules.profile_value_at(occ_pairs, t) * gate_values[k]]
         end
       end
@@ -1485,7 +1503,7 @@ module OpenstudioStandards
         props = day_sch.additionalProperties
         props.setFeature('base', rule_bases[index][0])
         props.setFeature('peak', rule_bases[index][1])
-        props.setFeature('response', response)
+        props.setFeature('response', response) unless response.nil?
         props.setFeature('derived_from', rule.name.get)
       end
 
@@ -1622,16 +1640,30 @@ module OpenstudioStandards
       # Build expansion params from the building hours of operation plus this space
       # use's authored offsets. When building hours are not supplied,
       # params stay empty and expansion falls back to the standalone st_std/et_std.
+      #
+      # A schedule set may opt out of the building hours with follows_building_hours:
+      # false. The sampled hours describe the building's operation, and a residential
+      # space use inside it - a hotel guest room, an apartment - keeps its own clock: guests
+      # are in their rooms when the front desk is quiet, not the other way round. Warping
+      # the guest room's overnight occupancy onto a 08:00-20:45 operating day put the room's
+      # peak in the afternoon and its vacancy at night, and the fixed-clock sleep gate then
+      # had nothing left to gate. Such a set expands at its authored timing whatever hours
+      # the building drew; the authored offsets are moot without hours to offset.
       start_time_offset = space_type_properties[:start_time_offset].nil? ? 0.0 : space_type_properties[:start_time_offset]
       end_time_offset = space_type_properties[:end_time_offset].nil? ? 0.0 : space_type_properties[:end_time_offset]
+      follows_building_hours = space_type_properties[:follows_building_hours] != false
       occ_params = {}
-      unless wkdy_start_time.nil? || wkdy_duration.nil?
-        occ_params[:st] = wkdy_start_time + start_time_offset
-        occ_params[:et] = wkdy_start_time + wkdy_duration + end_time_offset
-      end
-      unless wknd_start_time.nil? || wknd_duration.nil?
-        occ_params[:wknd_st] = wknd_start_time + start_time_offset
-        occ_params[:wknd_et] = wknd_start_time + wknd_duration + end_time_offset
+      if follows_building_hours
+        unless wkdy_start_time.nil? || wkdy_duration.nil?
+          occ_params[:st] = wkdy_start_time + start_time_offset
+          occ_params[:et] = wkdy_start_time + wkdy_duration + end_time_offset
+        end
+        unless wknd_start_time.nil? || wknd_duration.nil?
+          occ_params[:wknd_st] = wknd_start_time + start_time_offset
+          occ_params[:wknd_et] = wknd_start_time + wknd_duration + end_time_offset
+        end
+      elsif !(wkdy_start_time.nil? && wknd_start_time.nil?)
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.Schedules', "Schedule set '#{schedule_set_name}' for #{space_type.name} keeps its authored hours; the building hours of operation are not applied to it.")
       end
 
       # An occupancy override wins over building hours + offsets and the standards.

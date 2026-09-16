@@ -515,7 +515,10 @@ module OpenstudioStandards
     def self.space_get_f_floor_perimeter(space)
       # Find space's floors with ground contact
       floors = []
-      space.surfaces.each do |surface|
+      # Sorted so the floors[0] pick below is the same surface every run. A space with
+      # more than one ground contact floor is warned about rather than rejected, and model
+      # object handles are random, so an unsorted pick can take a different floor each run.
+      space.surfaces.sort.each do |surface|
         if surface.surfaceType == 'Floor' && surface.outsideBoundaryCondition.to_s.downcase.include?('ground')
           floors << surface
         end
@@ -550,7 +553,10 @@ module OpenstudioStandards
     def self.space_get_f_floor_area(space)
       # Find space's floors with ground contact
       floors = []
-      space.surfaces.each do |surface|
+      # Sorted so the floors[0] pick below is the same surface every run. A space with
+      # more than one ground contact floor is warned about rather than rejected, and model
+      # object handles are random, so an unsorted pick can take a different floor each run.
+      space.surfaces.sort.each do |surface|
         if surface.surfaceType == 'Floor' && surface.outsideBoundaryCondition.to_s.downcase.include?('ground')
           floors << surface
         end

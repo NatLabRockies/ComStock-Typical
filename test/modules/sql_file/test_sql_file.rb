@@ -2,7 +2,10 @@ require_relative '../../helpers/minitest_helper'
 
 class TestSqlFile < Minitest::Test
   def setup
-    @sql_file_path = 'output/AR/run/eplusout.sql'
+    # this class runs EnergyPlus in setup
+    skip_unless_simulations_enabled
+
+    @sql_file_path = "#{__dir__}/output/AR/run/eplusout.sql"
 
     template = '90.1-2013'
     climate_zone = 'ASHRAE 169-2013-4A'
@@ -15,7 +18,7 @@ class TestSqlFile < Minitest::Test
     OpenStudio::Model::WeatherFile.setWeatherFile(@model, epw_file)
 
     # run simulation to create the .sql file
-    std.model_run_simulation_and_log_errors(@model, 'output/AR')
+    std.model_run_simulation_and_log_errors(@model, "#{__dir__}/output/AR")
     sql = OpenStudio::SqlFile.new(@sql_file_path)
     @model.setSqlFile(sql)
   end
