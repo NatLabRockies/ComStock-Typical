@@ -8,10 +8,16 @@ class TestSchedulesDerivation < Minitest::Test
     @schedule_data = JSON.parse(File.read("#{File.dirname(__FILE__)}/test_schedules_data.json"), symbolize_names: true)
   end
 
-  def test_schedule_derivation_basic
-    # create a new model
+  def new_model
     model = OpenStudio::Model::Model.new
     model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model.getYearDescription.setDayofWeekforStartDay("Sunday")
+    model
+  end
+
+  def test_schedule_derivation_basic
+    # create a new model
+    model = new_model
 
     # test a range of derivation params
     occ_sch = OpenstudioStandards::Schedules.create_parametric_schedule_full(model, @schedule_data, 'conference occupancy', {})
@@ -44,8 +50,7 @@ class TestSchedulesDerivation < Minitest::Test
     # climbing past it - 'retail - supermarket lighting' (base 0.05, peak 0.9, response
     # 1.15) reached 1.00125 on its default day and EnergyPlus refused the Fractional
     # schedule before the simulation started.
-    model = OpenStudio::Model::Model.new
-    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model = new_model
     occ_sch = OpenstudioStandards::Schedules.create_parametric_schedule_full(model, @schedule_data, 'conference occupancy', {})
     params = {
       "name": "conference lighting",
@@ -69,8 +74,7 @@ class TestSchedulesDerivation < Minitest::Test
   def test_supermarket_lighting_stays_within_its_fractional_limits
     # the shipped definition that reached EnergyPlus at 1.00125 and stopped the grocery's
     # sizing run: built through the same path create_typical uses
-    model = OpenStudio::Model::Model.new
-    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model = new_model
     space_type = OpenStudio::Model::SpaceType.new(model)
     space_type.setName('retail - supermarket')
     space_type.setStandardsSpaceType('retail - supermarket')
@@ -91,7 +95,7 @@ class TestSchedulesDerivation < Minitest::Test
 
   def test_schedule_derivation_slope
     # create a new model
-    model = OpenStudio::Model::Model.new
+    model = new_model
     model.getTimestep.setNumberOfTimestepsPerHour(4)
 
     # test a range of derivation params
@@ -113,8 +117,7 @@ class TestSchedulesDerivation < Minitest::Test
 
   def test_schedule_derivation_up_down
     # create a new model
-    model = OpenStudio::Model::Model.new
-    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model = new_model
 
     # create occupancy schedule and derive with up_down methodology
     occ_sch = OpenstudioStandards::Schedules.create_parametric_schedule_full(model, @schedule_data, 'slope occupancy', {})
@@ -144,8 +147,7 @@ class TestSchedulesDerivation < Minitest::Test
 
   def test_derivation_school
     # create a new model
-    model = OpenStudio::Model::Model.new
-    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model = new_model
 
     # test derivation for school classroom occupancy
     occ_sch = OpenstudioStandards::Schedules.create_parametric_schedule_full(model, @schedule_data, 'school classroom occupancy', {})
@@ -166,8 +168,7 @@ class TestSchedulesDerivation < Minitest::Test
 
   def test_space_type_apply_parametric_internal_load_schedules
     # create a new model
-    model = OpenStudio::Model::Model.new
-    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model = new_model
 
     space_type = OpenStudio::Model::SpaceType.new(model)
     space_type.setName('classroom')

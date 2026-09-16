@@ -1,7 +1,13 @@
-# Phase 1-3 removed NECB/DEER/PRM-only parameters from some surviving methods. Any method whose
-# parameter list changed is a place a stale caller can still pass the old number of arguments.
+# Compare the parameter list of every method present in both this tree and openstudio-standards.
+# Removing a standards family can quietly drop a parameter from a surviving method — the NECB
+# removal took `necb_ref_hp` out of six of them — and a caller that still passes the old number of
+# arguments fails only when that code path runs. This finds every such method in one pass.
+#
+#   UPSTREAM_ROOT=/path/to/openstudio-standards openstudio execute_ruby_script test/arity_diff.rb
+#
 FORK = ENV['FORK_ROOT'] || File.expand_path('..', __dir__)
-UP   = ENV['UPSTREAM_ROOT'] || 'C:/Repos/NREL/openstudio-standards-working'
+UP   = ENV['UPSTREAM_ROOT'].to_s
+abort 'Set UPSTREAM_ROOT to an openstudio-standards checkout.' if UP.empty?
 
 def sigs(root)
   out = {}

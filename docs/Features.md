@@ -1,29 +1,70 @@
 # Features
 
-openstudio-standards is intended for four main use-cases in mind:
+ComStock-Typical has two main use-cases:
 
-1. Provide higher level methods to help BEM users and developers to create OpenStudio models from existing geometry, or programmatically generated geometry
-2. Create typical building models in OpenStudio format
-3. Create a code baseline model from a proposed model
-4. Check a model against a code/standard
+1. **Create a typical building model.** Build geometry, assign space types, and populate occupancy,
+   lighting, plug loads, schedules, ventilation, infiltration, service water heating, refrigeration,
+   exterior lighting and HVAC.
+2. **Apply code-minimum performance.** Set envelope constructions, HVAC efficiencies, fan and pump
+   power, and lighting power from the standards data for a given template and climate zone.
 
-openstudio-standards previously supported making the DOE/PNNL prototype buildings in OpenStudio format. This has since been deprecated, as the DOE/PNNL prototypes are intended for specific code comparisons under the Energy Policy Act and are not intended to accurately represent typical existing or new buildings. While openstudio-standards still creates typical buildings, these are not the same as the highly specific DOE/PNNL prototypes that are used for code determination. Typical buildings may share the same geometry and some component level assumptions, but they strive to be more realistic and are updated regularly to reflect common practice.
+Model QAQC supports both: the {OpenstudioStandards::QAQC QAQC module} reads an EnergyPlus `.sql`
+file back and checks a simulated model's envelope conductances, internal loads, schedules,
+HVAC capacities and part-load ratios against expectations.
 
-The four main use-cases are all highly related, and share many common subtasks.  For example, typical buildings tend to follow minimally code-compliant DX coil efficiencies at the time of construction. Code baseline modeling also requires setting DX coil efficiencies. And checking a model against a code or standard also requires looking up DX coil efficiencies. These methods require access to the information about the minimum efficiencies, u-values, etc. that are defined in the `/data/standards` directory.
+The DOE/PNNL prototype buildings and Appendix G baseline generation are not part of this fork. They
+are code-determination tools and stay in openstudio-standards. A typical building may share geometry
+and some component assumptions with a prototype, but it aims to represent buildings that exist
+rather than buildings that a code describes.
 
-The code has been structured such that several higher level methods may all call the same lower level method. For example, both of the methods below eventually call `space_type_add_loads`.  Rather than having two copies of this code inside of the two top level methods, there is one method.
+## Two kinds of data
 
-	model_create_prototype_building('Small Office, '90.1-2010', 'ASHRAE 169-2013-5A')
-		model_add_schedules
-			space_type_add_schedules
-		model_apply_standard
-			space_type_add_loads(people = true, lights = true, plug_loads = true)
+The split between the two use-cases is a split between two kinds of data, and it is the reason the
+library is organized the way it is.
 
-	model_create_prm_baseline_building('Small Office', '90.1-2010', 'ASHRAE 169-2013-5A', 'Xcel Energy CO EDA', Dir.pwd, false)
-		model_add_baseline_hvac_systems
-		model_apply_standard
-			space_type_add_loads(people = true, lights = true, plug_loads = false)
+**Typical data is vintage-agnostic.** How many people are in a classroom, how many hours a
+restaurant is open, how much outdoor air a patient room needs, what a walk-in freezer looks like:
+these come from ASHRAE 62.1 and 170, CBECS, and field studies, and they do not change because a
+building was built in 1985 rather than 2013. This data lives beside the module that consumes it, in
+`lib/openstudio-standards/<module>/data/`.
 
-Where a method needs to operate **slightly differently** in two different situations, instead of duplicating the code, we make an input argument to tell that method what to do.  In the example above, `space_type_add_loads` is called with `plug_loads = true` when creating the prototype building, but `plug_loads = false` when creating the baseline model, since plug loads stay the same as the proposed model in Appendix G.
+**Standards data is vintage-specific.** The minimum efficiency of a 7.5-ton packaged unit, the
+maximum lighting power density for an office, the required roof R-value in climate zone 5: these are
+exactly what changes with the code vintage. This data lives under
+`lib/openstudio-standards/standards/<family>/data/`, keyed by template.
 
-Where a method needs to operate **very differently** in two different situations, it should be broken out into a separate method.
+A typical model of a 1985 building therefore gets 1985 equipment efficiencies and present-day
+occupancy assumptions, which is the intent: the loads describe how the building is used, and the
+template describes what it was legal to install when it was built.
+
+## One method, many callers
+
+The use-cases share subtasks, so the code is structured so that higher-level methods call the same
+lower-level ones rather than carrying their own copies. The two entry points for building a model
+converge almost immediately:
+
+	OpenstudioStandards::CreateTypical.create_custom_building_from_spec(model, spec)
+		OpenstudioStandards::CreateTypical.validate_custom_building_spec
+		OpenstudioStandards::Geometry.create_bar_from_space_type_ratios
+		OpenstudioStandards::CreateTypical.create_typical_building_from_model
+
+	OpenstudioStandards::CreateTypical.create_typical_building_from_model(model, template)
+		OpenstudioStandards::Occupancy.create_typical_occupancy
+		OpenstudioStandards::InteriorLighting.create_typical_interior_lighting
+		OpenstudioStandards::Equipment.create_typical_equipment
+		OpenstudioStandards::Ventilation.create_typical_ventilation
+		OpenstudioStandards::ServiceWaterHeating.create_typical_service_water_heating
+		OpenstudioStandards::Refrigeration.create_typical_refrigeration
+		OpenstudioStandards::HVAC.add_cbecs_hvac_system
+		Standard#model_apply_prototype_hvac_assumptions
+		Standard#model_apply_hvac_efficiency_standard
+
+Where a method needs to behave **slightly differently** in two situations, it takes an argument
+saying which. Where it needs to behave **very differently**, it is split into separate methods.
+
+## Building from a specification
+
+A building specification — a hash or JSON file naming a mix of space types with area ratios,
+building form, schedule overrides and load overrides — is the most direct way to build a model of a
+building that is not one of the standard building types. The format, its schema, and worked examples
+are in the {file:docs/CustomBuildings.md Custom Buildings page}.

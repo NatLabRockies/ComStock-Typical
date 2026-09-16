@@ -9,13 +9,13 @@
     "type": "parametric",
     "base_std": 0.0,
     "peak_std": 1.0,
-    "st_std": 23,
-    "et_std": 31,
+    "st_std": 6,
+    "et_std": 23,
     "control_points": [
-      ["st-1", "base"],
-      ["st", "peak"],
-      ["et", "peak"],
-      ["et+1", "base"]
+      ["st-3", "peak"],
+      ["st+3", "base"],
+      ["et-3", "base"],
+      ["et+3", "peak"]
     ]
   }
 ]

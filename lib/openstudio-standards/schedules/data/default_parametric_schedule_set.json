@@ -1125,7 +1125,8 @@
         "hot_water_equipment_provenance":  "legacy",
         "applies_to":  [
             "guest room"
-        ]
+        ],
+        "follows_building_hours":  false
     },
     {
         "schedule_set_name":  "imaging schedule set",

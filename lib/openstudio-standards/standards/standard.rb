@@ -11,8 +11,8 @@ class Standard
   # https://stackoverflow.com/questions/1515577/factory-methods-in-ruby and clakes post. Which I think is the cleanest
   # implementation.
   # This creates a constant HASH to be set  during class instantiation.
-  # When adding standards you must register the class by invoking 'register_standard ('NECB2011')' for example for
-  # NECB2011.
+  # When adding a standard you must register the class by invoking, for example,
+  # `register_standard 'ComStock 90.1-2013'` in the class body.
 
   # A list of available Standards subclasses that can
   # be created using the Standard.build() method.
@@ -26,11 +26,12 @@ class Standard
   # Create an instance of a Standard by passing it's name
   #
   # @param name [String] the name of the Standard to build.
-  #   valid choices are: DOE Pre-1980, DOE 1980-2004, 90.1-2004,
-  #   90.1-2007, 90.1-2010, 90.1-2013, 90.1-2016, 90.1-2019,
-  #   NREL ZNE Ready 2017, NECB2011
+  #   Valid choices are the names in Standard::STANDARDS_LIST, which every concrete Standard
+  #   class registers at load time: the ASHRAE 90.1 family (for example 90.1-2013, DOE Ref
+  #   Pre-1980, NREL ZNE Ready 2017), the DEER vintages, and the ComStock variant of each.
+  #   The name is matched exactly; an unregistered name raises.
   # @example Create a new Standard object by name
-  #   standard = Standard.build('NECB2011')
+  #   standard = Standard.build('ComStock 90.1-2013')
   def self.build(name)
     if STANDARDS_LIST[name].nil?
       raise "ERROR: Did not find a class called '#{name}' to create in #{JSON.pretty_generate(STANDARDS_LIST)}"

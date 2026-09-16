@@ -6228,18 +6228,18 @@
     "type": "parametric",
     "base_std": 0.1,
     "peak_std": 1.0,
-    "st_std": 17,
-    "et_std": 33,
+    "st_std": 9,
+    "et_std": 17,
     "control_points": [
-      ["st-1", "base"],
-      ["st", "range*0.11111111"],
-      ["st+2", "range*0.55555556"],
-      ["st+4", "range*0.88888889"],
-      ["st+6", "peak"],
-      ["et-4", "peak"],
-      ["et-2", "range*0.77777778"],
-      ["et", "range*0.16666667"],
-      ["et+1", "base"]
+      ["st-4", "peak"],
+      ["st-2", "range*0.77777778"],
+      ["st", "range*0.16666667"],
+      ["st+1", "base"],
+      ["et-1", "base"],
+      ["et", "range*0.11111111"],
+      ["et+2", "range*0.55555556"],
+      ["et+4", "range*0.88888889"],
+      ["et+6", "peak"]
     ],
     "adjustment_mode": "stretch",
     "review": {
@@ -6247,7 +6247,7 @@
       "reviewed_by": "project owner",
       "reviewed_on": "2026-07-29",
       "supersedes_source": "recalibrated daytime profile (st=8, et=18)",
-      "rationale": "A hotel bedroom is occupied overnight. The shipped profile ran 08:00-18:00 with the room empty at 03:00, which is backwards, and it defeats the `sleep awake` diurnal gate - the gate exists so that a room can be fully occupied overnight while its lighting and equipment fall away. Re-authored as evening check-in, occupied through the night, morning checkout, low daytime vacancy. The load reduction overnight is the gate's job, not the occupancy schedule's."
+      "rationale": "A hotel bedroom is occupied overnight. The shipped profile ran 08:00-18:00 with the room empty at 03:00, which is backwards, and it defeats the `sleep awake` diurnal gate - the gate exists so that a room can be fully occupied overnight while its lighting and equipment fall away. Re-authored as evening check-in, occupied through the night, morning checkout, low daytime vacancy. The load reduction overnight is the gate's job, not the occupancy schedule's. 2026-09-14: the st/et span is now the daytime vacancy (checkout done at st, check-in from et) with the control points reordered to match, so the profile begins the day occupied, empties, and refills; and the guest room schedule set carries follows_building_hours: false, since the sampled building hours describe the hotel's operation and warping an overnight room onto them put its peak in the afternoon. The lighting and equipment records now name the `sleep awake` gate, which was defined but never applied."
     }
   },
   {
@@ -6260,17 +6260,17 @@
     "type": "parametric",
     "base_std": 0.15,
     "peak_std": 1.0,
-    "st_std": 16,
-    "et_std": 34,
+    "st_std": 10,
+    "et_std": 16,
     "control_points": [
-      ["st-1", "base"],
-      ["st", "range*0.11764706"],
-      ["st+3", "range*0.64705882"],
-      ["st+6", "peak"],
-      ["et-5", "peak"],
-      ["et-2", "range*0.70588235"],
-      ["et", "range*0.17647059"],
-      ["et+1", "base"]
+      ["st-5", "peak"],
+      ["st-2", "range*0.70588235"],
+      ["st", "range*0.17647059"],
+      ["st+1", "base"],
+      ["et-1", "base"],
+      ["et", "range*0.11764706"],
+      ["et+3", "range*0.64705882"],
+      ["et+6", "peak"]
     ],
     "adjustment_mode": "stretch",
     "review": {
@@ -6278,7 +6278,7 @@
       "reviewed_by": "project owner",
       "reviewed_on": "2026-07-29",
       "supersedes_source": "recalibrated daytime profile (st=8, et=18)",
-      "rationale": "A hotel bedroom is occupied overnight. The shipped profile ran 08:00-18:00 with the room empty at 03:00, which is backwards, and it defeats the `sleep awake` diurnal gate - the gate exists so that a room can be fully occupied overnight while its lighting and equipment fall away. Re-authored as evening check-in, occupied through the night, morning checkout, low daytime vacancy. The load reduction overnight is the gate's job, not the occupancy schedule's."
+      "rationale": "A hotel bedroom is occupied overnight. The shipped profile ran 08:00-18:00 with the room empty at 03:00, which is backwards, and it defeats the `sleep awake` diurnal gate - the gate exists so that a room can be fully occupied overnight while its lighting and equipment fall away. Re-authored as evening check-in, occupied through the night, morning checkout, low daytime vacancy. The load reduction overnight is the gate's job, not the occupancy schedule's. 2026-09-14: the st/et span is now the daytime vacancy (checkout done at st, check-in from et) with the control points reordered to match, so the profile begins the day occupied, empties, and refills; and the guest room schedule set carries follows_building_hours: false, since the sampled building hours describe the hotel's operation and warping an overnight room onto them put its peak in the afternoon. The lighting and equipment records now name the `sleep awake` gate, which was defined but never applied."
     }
   },
   {
@@ -6302,7 +6302,7 @@
       "reviewed_by": "project owner",
       "reviewed_on": "2026-07-29",
       "supersedes_source": "recalibrated daytime profile (st=8, et=18)",
-      "rationale": "A hotel bedroom is occupied overnight. The shipped profile ran 08:00-18:00 with the room empty at 03:00, which is backwards, and it defeats the `sleep awake` diurnal gate - the gate exists so that a room can be fully occupied overnight while its lighting and equipment fall away. Re-authored as evening check-in, occupied through the night, morning checkout, low daytime vacancy. The load reduction overnight is the gate's job, not the occupancy schedule's."
+      "rationale": "A hotel bedroom is occupied overnight. The shipped profile ran 08:00-18:00 with the room empty at 03:00, which is backwards, and it defeats the `sleep awake` diurnal gate - the gate exists so that a room can be fully occupied overnight while its lighting and equipment fall away. Re-authored as evening check-in, occupied through the night, morning checkout, low daytime vacancy. The load reduction overnight is the gate's job, not the occupancy schedule's. 2026-09-14: the st/et span is now the daytime vacancy (checkout done at st, check-in from et) with the control points reordered to match, so the profile begins the day occupied, empties, and refills; and the guest room schedule set carries follows_building_hours: false, since the sampled building hours describe the hotel's operation and warping an overnight room onto them put its peak in the afternoon. The lighting and equipment records now name the `sleep awake` gate, which was defined but never applied."
     }
   },
   {
@@ -6326,7 +6326,7 @@
       "reviewed_by": "project owner",
       "reviewed_on": "2026-07-29",
       "supersedes_source": "recalibrated daytime profile (st=8, et=18)",
-      "rationale": "A hotel bedroom is occupied overnight. The shipped profile ran 08:00-18:00 with the room empty at 03:00, which is backwards, and it defeats the `sleep awake` diurnal gate - the gate exists so that a room can be fully occupied overnight while its lighting and equipment fall away. Re-authored as evening check-in, occupied through the night, morning checkout, low daytime vacancy. The load reduction overnight is the gate's job, not the occupancy schedule's."
+      "rationale": "A hotel bedroom is occupied overnight. The shipped profile ran 08:00-18:00 with the room empty at 03:00, which is backwards, and it defeats the `sleep awake` diurnal gate - the gate exists so that a room can be fully occupied overnight while its lighting and equipment fall away. Re-authored as evening check-in, occupied through the night, morning checkout, low daytime vacancy. The load reduction overnight is the gate's job, not the occupancy schedule's. 2026-09-14: the st/et span is now the daytime vacancy (checkout done at st, check-in from et) with the control points reordered to match, so the profile begins the day occupied, empties, and refills; and the guest room schedule set carries follows_building_hours: false, since the sampled building hours describe the hotel's operation and warping an overnight room onto them put its peak in the afternoon. The lighting and equipment records now name the `sleep awake` gate, which was defined but never applied."
     }
   },
   {

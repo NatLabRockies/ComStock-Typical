@@ -46,6 +46,20 @@ with it: `coil_dx_find_search_criteria`, `coil_{cooling,heating}_dx_single_speed
 `coil_{cooling,heating}_dx_single_speed_apply_efficiency_and_curves` and
 `model_apply_hvac_efficiency_standard` each lost that argument here.
 
+## Defects worth raising upstream
+
+Found here, but present in openstudio-standards too, so they are upstream's to fix rather than
+ours to diverge on.
+
+- **Five 90.1 override files are never required.** `openstudio-standards.rb` requires
+  `nrel_zne_ready_2017.ZoneHVACComponent` and `ze_aedg_multifamily.ZoneHVACComponent` but not the
+  2013, 2016 or 2019 ones, so `zone_hvac_component_vestibule_heating_control_required?` falls
+  through to the base implementation and vestibule heating control is never applied for those
+  three vintages. The two `comstock_ashrae_90_1_*.AirLoopHVAC.rb` files are unrequired for the same
+  reason, so their flat `FixedDryBulb` economizer never takes effect. **This fork has wired in the
+  three vintage files and deliberately left the two ComStock ones unloaded**; see the note at the
+  top of each. Upstream is unchanged either way.
+
 ## Log
 
 Record every patch sent upstream, so the two trees can be reconciled later.
