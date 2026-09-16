@@ -1503,7 +1503,7 @@ module OpenstudioStandards
         props = day_sch.additionalProperties
         props.setFeature('base', rule_bases[index][0])
         props.setFeature('peak', rule_bases[index][1])
-        props.setFeature('response', response)
+        props.setFeature('response', response) unless response.nil?
         props.setFeature('derived_from', rule.name.get)
       end
 

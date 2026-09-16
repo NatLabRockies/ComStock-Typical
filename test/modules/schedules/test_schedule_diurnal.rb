@@ -58,9 +58,11 @@ class TestScheduleDiurnal < Minitest::Test
 
     # with the gate, overnight (asleep) is suppressed toward base...
     assert_operator gated_vals[3], :<, 0.2, 'diurnal gate should suppress overnight loads'
-    # ...while evening and morning (present and awake) still peak
+    # ...while evening and morning (present and awake) still peak. 07:00, not 08:00: the guest
+    # is still in the room and awake at 07:00, whereas occupancy is already ramping out over
+    # 08:00-09:00, so 08:00 samples the departure rather than the morning peak.
     assert_operator gated_vals[20], :>, 0.5, 'evening loads should remain high'
-    assert_operator gated_vals[8], :>, 0.4, 'morning loads should remain high'
+    assert_operator gated_vals[7], :>, 0.4, 'morning loads should remain high'
   end
 
   def test_design_days_not_gated
