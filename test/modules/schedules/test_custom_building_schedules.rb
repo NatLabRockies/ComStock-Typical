@@ -11,6 +11,13 @@ class TestCustomBuildingSchedules < Minitest::Test
     FileUtils.mkdir "#{__dir__}/output" unless Dir.exist? "#{__dir__}/output"
   end
 
+  def new_model
+    model = OpenStudio::Model::Model.new
+    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model.getYearDescription.setDayofWeekforStartDay("Sunday")
+    model
+  end
+
   # returns the additionalProperties 'standards_space_type' feature, or nil if unset
   def standards_space_type_property(space_type)
     prop = space_type.additionalProperties.getFeatureAsString('standards_space_type')
@@ -31,8 +38,7 @@ class TestCustomBuildingSchedules < Minitest::Test
     climate_zone = 'ASHRAE 169-2013-4A'
 
     # build a bar-shaped model from custom space type ratios spanning multiple building types
-    model = OpenStudio::Model::Model.new
-    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model = new_model
 
     bar_args = {
       template: template,

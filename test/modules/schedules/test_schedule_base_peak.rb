@@ -7,6 +7,13 @@ class TestScheduleBasePeak < Minitest::Test
     @sch = OpenstudioStandards::Schedules
   end
 
+  def new_model
+    model = OpenStudio::Model::Model.new
+    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model.getYearDescription.setDayofWeekforStartDay("Sunday")
+    model
+  end
+  
   # A resolved base and peak are products of the inputs, so compare them with a tolerance
   # rather than for equality: 0.2 * 0.8 is not 0.16 in binary floating point.
   def assert_base_peak(expected, actual, message = nil)
@@ -171,8 +178,7 @@ class TestScheduleBasePeak < Minitest::Test
   # runs, so a ratio describing unoccupied hours has nothing to say about it. Without this
   # a winter design day authored flat at zero is lifted, which changes heating sizing.
   def test_ratio_leaves_design_days_alone
-    model = OpenStudio::Model::Model.new
-    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model = new_model
     profiles = @sch.schedule_data(:interior_lighting)
                    .select { |row| row[:name] == 'corridor lighting' && row[:control_points] }
     refute(profiles.empty?)
@@ -198,8 +204,7 @@ class TestScheduleBasePeak < Minitest::Test
   # weekday profile then runs all seven days and the weekend setback never happens.
   # create_complex_schedule splits its day-type field on '/', so 'Sat|Sun' matches nothing.
   def test_thermostat_schedule_weekend_rule_applies_to_the_weekend
-    model = OpenStudio::Model::Model.new
-    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model = new_model
     schedule = OpenstudioStandards::ThermalZone.create_thermostat_schedule(
       model, name: 'Htg test', setpoint: 21.0, setback_delta: 5.0, heating: true,
              hours: { wkdy_start: 8.0, wkdy_end: 18.0, wknd_start: 10.0, wknd_end: 14.0 }

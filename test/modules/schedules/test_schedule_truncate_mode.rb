@@ -11,9 +11,10 @@ class TestScheduleTruncateMode < Minitest::Test
   def new_model
     model = OpenStudio::Model::Model.new
     model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model.getYearDescription.setDayofWeekforStartDay("Sunday")
     model
   end
-
+  
   # three meal-time humps anchored to absolute times (breakfast 9, lunch 13, dinner 19)
   def restaurant_profile(mode)
     [{

@@ -1,38 +1,18 @@
-=begin
-require 'simplecov'
-require 'codecov'
-
-# Get the code coverage in html for local viewing
-# and in JSON for CI codecov
-if ENV['CI'] == 'true'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
-else
-  SimpleCov.formatter = SimpleCov::Formatter::HTMLFormatter
-end
-
-# Ignore some of the code in coverage testing
-SimpleCov.start do
-  add_filter '/.idea/'
-  add_filter '/.yardoc/'
-  add_filter '/data/'
-  add_filter '/doc/'
-  add_filter '/docs/'
-  add_filter '/pkg/'
-  add_filter '/test/'
-  add_filter '/hvac_sizing/'
-  add_filter 'version'  
-end
-=end
-
 $LOAD_PATH.unshift File.expand_path('../../../lib', __FILE__)
 require 'minitest/autorun'
-if ENV['CI'] == 'true'
-  require 'minitest/ci'
-  puts "Saving test results to #{Minitest::Ci.report_dir}"
-end
 require 'minitest/reporters'
 require 'minitest/reporters/base_reporter'
 require 'minitest/reporters/spec_reporter'
+
+# The top-level minitest/reporters require does not pull in every reporter under the
+# OpenStudio CLI's embedded Ruby, so the JUnit one is loaded explicitly.
+JUNIT_REPORTER_AVAILABLE = begin
+  require 'minitest/reporters/junit_reporter'
+  true
+rescue LoadError => e
+  warn "JUnit XML reporter unavailable (#{e.message}); no test/reports will be written."
+  false
+end
 
 require 'openstudio'
 require 'openstudio/measure/ShowRunnerOutput'
@@ -48,6 +28,47 @@ rescue LoadError
   puts 'Using installed openstudio-standards gem.' 
 end
 
+# Control for the six test classes that dominate the runtime.
+#
+# 50 of the suite's 664 tests take 90% of its 108 minutes, and nearly all of that is EnergyPlus:
+# sizing runs, and annual runs whose results the test then reads back. That is fine in CI and
+# painful when iterating on a single module, so those classes can be asked to skip.
+#
+# This covers 34 tests worth about 73 of the 108 minutes: the four sql_file classes, TestQAQC, and
+# the two entry points in hvac_system_test_helper.rb. It is NOT every test that runs EnergyPlus.
+# Fourteen other files run a sizing run of their own through sizing_run_directory: or
+# model_run_sizing_run and are not guarded, so a run with this set still simulates for tens of
+# minutes. Guard a new class here only if its simulation is worth that much time.
+#
+# Simulations run by default, so CI, the archived Phase 3 baseline and anyone who sets nothing
+# are unaffected. Set SKIP_SIMULATION_TESTS to a true-ish value to skip them:
+#
+#   SKIP_SIMULATION_TESTS=true openstudio execute_ruby_script test/baseline_run.rb
+#
+# A skipped test is reported as a skip, not a pass, so a run that skipped them cannot be mistaken
+# for a full one. Do not use this to get a green run: the simulation tests are the only ones that
+# check a model actually holds setpoint.
+module OpenstudioStandardsTesting
+  SKIP_SIMULATIONS = %w[1 true yes on].include?(ENV['SKIP_SIMULATION_TESTS'].to_s.strip.downcase)
+
+  def self.simulations_enabled?
+    !SKIP_SIMULATIONS
+  end
+end
+
+class Minitest::Test
+  # Call from the setup of any test class that runs EnergyPlus.
+  def skip_unless_simulations_enabled
+    return if OpenstudioStandardsTesting.simulations_enabled?
+
+    skip 'SKIP_SIMULATION_TESTS is set; this test runs EnergyPlus'
+  end
+end
+
+if OpenstudioStandardsTesting::SKIP_SIMULATIONS
+  puts 'SKIP_SIMULATION_TESTS is set: tests that run EnergyPlus will be skipped, not run.'
+end
+
 # Set the output reporting format based on the run environment
 if ENV['RM_INFO'] || ENV['TEAMCITY_RAKE_RUNNER_MODE'] # RubyMine
   puts "Running tests from RubyMine, using RubyMine test reporter."
@@ -58,8 +79,14 @@ if ENV['RM_INFO'] || ENV['TEAMCITY_RAKE_RUNNER_MODE'] # RubyMine
 elsif ENV['JENKINS_HOME'] # Jenkins
   puts "Running tests from Jenkins, using JUnit XML test reporter and console-based test reporter."
   Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new, Minitest::Reporters::JUnitReporter.new(reports_dir = "test/reports", empty = false)]
+elsif ENV['CI'] == 'true' && JUNIT_REPORTER_AVAILABLE # GitHub Actions
+  puts "Running tests from CI, using JUnit XML test reporter and console-based test reporter."
+  # empty = false stops each per-file process from wiping the previous ones' reports, but it also
+  # skips the reporter's own mkdir_p, so the directory has to exist before the run.
+  FileUtils.mkdir_p('test/reports')
+  Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new, Minitest::Reporters::JUnitReporter.new(reports_dir = "test/reports", empty = false)]
 else # Terminal or other
-  puts "Running tests from terminal, using console-based test reporter."
+  puts "Running tests from terminal, using console-based test reporter. CI=#{ENV['CI'].inspect} junit=#{JUNIT_REPORTER_AVAILABLE}"
   Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new]
   # line below for PNNL local testing
   # Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new, Minitest::Reporters::JUnitReporter.new(reports_dir="test/reports", empty=false)] 

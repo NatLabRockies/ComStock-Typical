@@ -7,8 +7,15 @@ class TestSchedulesInformation < Minitest::Test
     @create = OpenstudioStandards::CreateTypical
   end
 
-  def test_schedule_get_min_max
+  def new_model
     model = OpenStudio::Model::Model.new
+    model.getTimestep.setNumberOfTimestepsPerHour(4)
+    model.getYearDescription.setDayofWeekforStartDay("Sunday")
+    model
+  end
+
+  def test_schedule_get_min_max
+    model = new_model
 
     # test ScheduleConstant
     schedule = OpenStudio::Model::ScheduleConstant.new(model)
@@ -43,7 +50,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_get_design_day_min_max
-    model = OpenStudio::Model::Model.new
+    model = new_model
 
     # test ScheduleConstant
     schedule = OpenStudio::Model::ScheduleConstant.new(model)
@@ -90,7 +97,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_get_equivalent_full_load_hours
-    model = OpenStudio::Model::Model.new
+    model = new_model
 
     # test ScheduleConstant
     schedule = OpenStudio::Model::ScheduleConstant.new(model)
@@ -111,7 +118,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_get_hourly_values
-    model = OpenStudio::Model::Model.new
+    model = new_model
 
     # test ScheduleConstant
     schedule = OpenStudio::Model::ScheduleConstant.new(model)
@@ -153,7 +160,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_constant_get_min_max
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule = OpenStudio::Model::ScheduleConstant.new(model)
     schedule.setValue(42.0)
     result = @sch.schedule_constant_get_min_max(schedule)
@@ -162,7 +169,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_constant_get_equivalent_full_load_hours
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule = OpenStudio::Model::ScheduleConstant.new(model)
     schedule.setValue(42.0)
     result = @sch.schedule_constant_get_equivalent_full_load_hours(schedule)
@@ -174,7 +181,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_constant_get_hourly_values
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule = OpenStudio::Model::ScheduleConstant.new(model)
     schedule.setValue(42.0)
     result = @sch.schedule_constant_get_hourly_values(schedule)
@@ -188,7 +195,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_compact_get_min_max
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule = OpenStudio::Model::ScheduleCompact.new(model)
     schedule.setString(3, 'Through: 12/31')
     schedule.setString(4, 'For: AllDays')
@@ -202,7 +209,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_compact_get_design_day_min_max
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule = OpenStudio::Model::ScheduleCompact.new(model)
     schedule.setString(3, 'Through: 12/31')
     schedule.setString(4, 'For: Weekdays SummerDesignDay')
@@ -231,7 +238,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_day_get_min_max
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule_day = OpenStudio::Model::ScheduleDay.new(model)
     schedule_day.addValue(OpenStudio::Time.new(0, 9, 0, 0), 0.6)
     schedule_day.addValue(OpenStudio::Time.new(0, 11, 0, 0), 0.8)
@@ -242,7 +249,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_day_get_equivalent_full_load_hours
-    model = OpenStudio::Model::Model.new
+    model = new_model
     schedule_day = OpenStudio::Model::ScheduleDay.new(model)
     schedule_day.addValue(OpenStudio::Time.new(0, 9, 0, 0), 0.6)
     schedule_day.addValue(OpenStudio::Time.new(0, 11, 0, 0), 0.8)
@@ -252,7 +259,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_day_get_hourly_values
-    model = OpenStudio::Model::Model.new
+    model = new_model
     model.getTimestep.setNumberOfTimestepsPerHour(10)
     schedule_day = OpenStudio::Model::ScheduleDay.new(model)
     schedule_day.addValue(OpenStudio::Time.new(0, 9, 0, 0), 1.0)
@@ -268,7 +275,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_min_max
-    model = OpenStudio::Model::Model.new
+    model = new_model
     test_options = {
       'name' => 'Simple Schedule',
       'winter_time_value_pairs' => { 8.0 => 4.0, 16.0 => 12.0, 24.0 => 5.0 },
@@ -315,7 +322,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_design_day_min_max
-    model = OpenStudio::Model::Model.new
+    model = new_model
     test_options = {
       'name' => 'Simple Schedule',
       'winter_time_value_pairs' => { 8.0 => 4.0, 16.0 => 12.0, 24.0 => 5.0 },
@@ -332,7 +339,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_equivalent_full_load_hours
-    model = OpenStudio::Model::Model.new
+    model = new_model
     # test ScheduleRuleset
     test_options = {
       'name' => 'Simple Schedule',
@@ -350,7 +357,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_hourly_values
-    model = OpenStudio::Model::Model.new
+    model = new_model
     rules = []
     rules << ['Tuesdays and Thursdays', '1/1-12/31', 'Tue/Thu', [4, 0], [4.33, 1], [18, 0], [18.66, 1], [24, 0]]
     rules << ['Wednesdays and Fridays', '1/1-12/31', 'Wed/Fri', [6, 0], [6.33, 1], [16, 0], [16.66, 1], [24, 0]]
@@ -373,7 +380,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_hours_above_value
-    model = OpenStudio::Model::Model.new
+    model = new_model
     # test ScheduleRuleset
     test_options = {
       'name' => 'Simple Schedule',
@@ -391,7 +398,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_start_and_end_times
-    model = OpenStudio::Model::Model.new
+    model = new_model
     test_options = {
       'name' => 'Simple Schedule',
       'winter_time_value_pairs' => { 8.0 => 4.0, 16.0 => 12.0, 24.0 => 5.0 },
@@ -405,7 +412,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_timeseries
-    model = OpenStudio::Model::Model.new
+    model = new_model
     test_options = {
       'name' => 'Simple Schedule',
       'winter_time_value_pairs' => { 8.0 => 4.0, 16.0 => 12.0, 24.0 => 5.0 },
@@ -419,7 +426,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_annual_days_used
-    model = OpenStudio::Model::Model.new
+    model = new_model
     model.getYearDescription.setCalendarYear(2018) # starts on a Monday
     rules = []
     rules << ['SpringWeekends', '1/1-5/31', 'Sat/Sun', [10, 0], [18, 1], [24, 0]]
@@ -477,7 +484,7 @@ class TestSchedulesInformation < Minitest::Test
   end
 
   def test_schedule_ruleset_get_schedule_day_rule_indices
-    model = OpenStudio::Model::Model.new
+    model = new_model
     model.getYearDescription.setCalendarYear(2018) # starts on a Monday
     rules = []
     rules << ['SpringWeekends', '1/1-5/31', 'Sat/Sun', [10, 0], [18, 1], [24, 0]]

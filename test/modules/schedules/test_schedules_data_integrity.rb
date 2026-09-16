@@ -16,6 +16,10 @@ class TestSchedulesDataIntegrity < Minitest::Test
   EXPANSIONS = %w[control_points slope].freeze
   ADJUSTMENT_MODES = %w[stretch truncate].freeze
   DERIVATION_TYPES = %w[linear exponential exponential-inverse up_down logistic saturating first_order].freeze
+  # the subset of derivation types that actually consume `response`. The others are shaped by
+  # their own parameters instead: logistic by midpoint/steepness, saturating by threshold,
+  # first_order by alpha_rise/alpha_fall, up_down by start_slope/end_slope.
+  RESPONSE_DERIVATION_TYPES = %w[linear exponential exponential-inverse].freeze
   DIURNAL_MODES = %w[off_when_asleep on_when_asleep].freeze
 
   # One file per category. Each load file holds both forms a schedule can take: a
@@ -182,8 +186,9 @@ class TestSchedulesDataIntegrity < Minitest::Test
         %w[base peak response].each do |k|
           errors << "#{id}: '#{k}' must be numeric" if obj.key?(k) && !numeric?(obj[k])
         end
-        errors << "#{id}: derivation_type '#{obj['derivation_type']}' needs response" if !obj['derivation_type'].nil? &&
-                                                                                         obj['derivation_type'] != 'up_down' && !obj.key?('response')
+        if RESPONSE_DERIVATION_TYPES.include?(obj['derivation_type']) && !obj.key?('response')
+          errors << "#{id}: derivation_type '#{obj['derivation_type']}' needs response"
+        end
         if obj['derivation_type'] == 'up_down' && !(obj.key?('start_slope') && obj.key?('end_slope'))
           errors << "#{id}: derivation_type 'up_down' needs start_slope and end_slope"
         end
@@ -254,6 +259,9 @@ class TestSchedulesDataIntegrity < Minitest::Test
 
       %w[start_time_offset end_time_offset].each do |k|
         errors << "#{id}: '#{k}' must be numeric" if set.key?(k) && !set[k].nil? && !numeric?(set[k])
+      end
+      if set.key?('follows_building_hours') && ![true, false].include?(set['follows_building_hours'])
+        errors << "#{id}: 'follows_building_hours' must be true or false"
       end
 
       occ = set['occupancy_schedule']
