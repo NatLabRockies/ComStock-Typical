@@ -12,11 +12,20 @@ require_relative '../../helpers/minitest_helper'
 class TestGeometryDeterminism < Minitest::Test
   BUILDS = 25
 
+  def setup
+    # Both fixtures below return an object out of a model they built. A ModelObject only holds a
+    # weak pointer back to its Model, so once the fixture returns, nothing keeps that model alive
+    # and the object the test is holding can be left dangling by the next collection, which
+    # segfaults rather than raising. Hold every model until the test ends.
+    @models = []
+  end
+
   # A space with two ground-contact floors of different size. The library warns about this case
   # rather than rejecting it, so whichever floor is picked becomes the area and perimeter of the
   # F-factor foundation construction.
   def space_with_two_ground_floors
     model = OpenStudio::Model::Model.new
+    @models << model
     space = OpenStudio::Model::Space.new(model)
     space.setName('two ground floors')
     # Created largest first, and named so that sorting by name reverses that order: if the pick
@@ -93,6 +102,7 @@ class TestGeometryDeterminism < Minitest::Test
   # whichever space came back first. Two identical spaces make the tie certain.
   def zone_with_two_equal_spaces
     model = OpenStudio::Model::Model.new
+    @models << model
     zone = OpenStudio::Model::ThermalZone.new(model)
     zone.setName('tied zone')
     %w[zzz_space aaa_space].each do |name|

@@ -5,11 +5,17 @@ require_relative '../../helpers/minitest_helper'
 class TestCreateConstructionSet < Minitest::Test
   def setup
     @constructions = OpenstudioStandards::Constructions
+    @models = []
   end
 
   def model_for(climate_zone)
     model = OpenStudio::Model::Model.new
     OpenstudioStandards::Weather.model_set_building_location(model, climate_zone: climate_zone)
+    # A ModelObject only holds a weak pointer back to its Model, so several tests here that keep a
+    # construction set but not the model it came from would let the model be collected out from
+    # under it, and the next access raises bad_weak_ptr or segfaults depending on the build. Hold
+    # every model until the test ends.
+    @models << model
     model
   end
 
