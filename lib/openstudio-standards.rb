@@ -163,6 +163,7 @@ module OpenstudioStandards
 
   ### Standards ###
   # Standards classes
+  require_relative "#{stds}/lazy_standards_data"
   require_relative "#{stds}/standard"
 
   require_relative "#{stds}/ashrae_90_1/ashrae_90_1"
