@@ -120,6 +120,11 @@ class TestSliceAdjacency < Minitest::Test
     # overruns the story, so it continues onto the next one where the partner still follows it
     refute(@geometry.defer_slice_for_adjacency?(150.0, 50.0, false, 100.0, min_slice, false))
 
+    # exactly fills the story: place it, the partner follows on the next story. Deferring here
+    # left story 1 of a two-story restaurant empty and dropped food preparation entirely.
+    refute(@geometry.defer_slice_for_adjacency?(100.0, 100.0, false, 100.0, min_slice, false))
+    refute(@geometry.defer_slice_for_adjacency?(100.0 - 1e-6, 100.0, false, 100.0, min_slice, false))
+
     # the partner is already on this story
     refute(@geometry.defer_slice_for_adjacency?(95.0, 50.0, true, 100.0, min_slice, false))
 
@@ -157,6 +162,38 @@ class TestSliceAdjacency < Minitest::Test
     assert_includes(names, 'dining', 'dining did not land on the same story as the kitchen')
     assert_equal(1, (names.index('food preparation') - names.index('dining')).abs,
                  "kitchen and dining were not consecutive slices: #{names.inspect}")
+  end
+
+  # A two-story quick service restaurant is half dining and half food preparation, so each space
+  # type fills one story exactly. Both must be placed: leg D lost food preparation on all six.
+  def test_two_story_restaurant_places_both_halves
+    model = OpenStudio::Model::Model.new
+    areas = { 'dining' => 2750.0, 'food preparation' => 2750.0 }
+    space_types = {}
+    entries_for(model, areas).each { |key, hash| space_types[key] = hash }
+    pairs = @hvac.exhaust_makeup_air_pairs(areas.keys)
+
+    # a square footprint that holds exactly half the floor area, as create_bar sizes it
+    length = Math.sqrt(space_types.values.sum { |v| v[:floor_area] } / 2.0)
+    width = length
+    story_hash = {}
+    2.times do |i|
+      story_hash["story #{i}"] = { space_origin_z: i * 3.0, space_height: 3.0, multiplier: 1, partial_story_multiplier: 1.0 }
+    end
+
+    running = deep_copy(space_types)
+    footprints = @geometry.create_sliced_bar_multi_polygons(running, length, width,
+                                                           OpenStudio::Point3d.new(0.0, 0.0, 0.0), story_hash,
+                                                           adjacency_pairs: pairs)
+
+    per_story = footprints.map { |f| slice_names(f) }
+    assert_equal(2, per_story.size)
+    per_story.each_with_index { |names, i| refute_empty(names, "story #{i} was left empty: #{per_story.inspect}") }
+    placed = per_story.flatten
+    assert_includes(placed, 'dining')
+    assert_includes(placed, 'food preparation', "food preparation was not placed on any story: #{per_story.inspect}")
+    # the running hash is drawn down as slices are placed, so nothing may be left over
+    running.each { |st, v| assert_in_delta(0.0, v[:floor_area], 0.01, "#{st.name} still has area left to place") }
   end
 
   # Same model, no pairs: the ordering is the floor area ordering, and the pair is split. This is

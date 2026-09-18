@@ -252,8 +252,10 @@ module OpenstudioStandards
     # The greedy story fill takes space types in ascending area order, so a story boundary can
     # fall between a pair that {order_slices_for_adjacency} deliberately put side by side. Where
     # this slice fits on the story but leaves the partner no room, both go to the next story
-    # instead. A slice that overruns the story is not held back: it continues onto the next story
-    # where its partner still follows it in the ordering.
+    # instead. A slice that overruns or exactly fills the story is not held back: it continues
+    # onto (or is followed by its partner on) the next story, where the partner still follows it
+    # in the ordering. Holding back a slice that fills the story would leave the story empty and,
+    # on a two-story building whose two space types each fill a story, drop the second one.
     #
     # @param own_area_m2 [Double] floor area of this slice still to be placed
     # @param partner_area_m2 [Double] floor area of the partner slice still to be placed
@@ -267,7 +269,7 @@ module OpenstudioStandards
       return false if final_story
       return false if partner_on_story
       return false if partner_area_m2 <= 0.0001
-      return false if own_area_m2 > remaining_footprint_m2
+      return false if own_area_m2 >= remaining_footprint_m2 - 0.0001
 
       (remaining_footprint_m2 - own_area_m2) < min_slice_area_m2
     end
