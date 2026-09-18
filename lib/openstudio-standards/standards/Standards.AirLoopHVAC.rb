@@ -2364,15 +2364,20 @@ class Standard
 
     # Set the control for any VAV reheat terminals on this airloop.
     control_type_set = false
-    air_loop_hvac.demandComponents.each do |equip|
-      if equip.to_AirTerminalSingleDuctVAVReheat.is_initialized
+    air_loop_hvac.thermalZones.sort.each do |zone|
+      zone.equipment.each do |equip|
+        next unless equip.to_AirTerminalSingleDuctVAVReheat.is_initialized
+
         term = equip.to_AirTerminalSingleDuctVAVReheat.get
         # Dual maximum only applies to terminals with HW reheat coils
         if damper_action == 'Dual Maximum'
           if term.reheatCoil.to_CoilHeatingWater.is_initialized
             term.setDamperHeatingAction(damper_action_eplus)
             control_type_set = true
-            term.setMaximumFlowFractionDuringReheat(0.5)
+            # 50% of the cooling maximum, or more where the zone heating design flow needs it:
+            # EnergyPlus sizes the reheat coil on this flow and cannot size it below the zone's
+            # heating airflow (see the terminal method).
+            air_terminal_single_duct_vav_reheat_apply_dual_maximum_reheat_fraction(term, zone)
           end
         else
           term.setDamperHeatingAction(damper_action_eplus)

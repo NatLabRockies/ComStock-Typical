@@ -63,6 +63,7 @@ modules/hvac/test_curves.rb
 modules/hvac/test_helpers.rb
 modules/hvac/test_hvac_exhaust.rb
 modules/hvac/test_hvac_exhaust_all_level.rb
+modules/hvac/test_hvac_exhaust_vertical_makeup.rb
 modules/hvac/test_vav_sizing_inputs.rb
 modules/infiltration/test_infiltration.rb
 modules/infiltration/test_nist_infiltration.rb
@@ -127,4 +128,5 @@ os_stds_methods/test_optimum_start.rb
 os_stds_methods/test_radiant_controls.rb
 os_stds_methods/test_service_water_heating.rb
 os_stds_methods/test_space_type.rb
+os_stds_methods/test_vav_dual_maximum_reheat_fraction.rb
 os_stds_methods/test_vav_terminal_minimum_flow.rb
