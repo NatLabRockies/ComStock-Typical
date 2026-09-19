@@ -1239,6 +1239,164 @@ module OpenstudioStandards
       end
     end
 
+    # Path to the shipped space area constraint data
+    SPACE_AREA_CONSTRAINTS_PATH = File.join(__dir__, 'data', 'space_area_constraints.json')
+
+    # The parsed space area constraint data, loaded once.
+    #
+    # @return [Hash] with 'default' and 'categories' keys, see the data file
+    def self.space_area_constraints_data
+      @space_area_constraints_data ||= JSON.parse(File.read(SPACE_AREA_CONSTRAINTS_PATH))
+    end
+
+    # Resolve the area constraints for a space type: per-entry overrides, then the first
+    # keyword category whose keyword is a case-insensitive substring of the standards space
+    # type name, then the default row.
+    #
+    # @param space_type_name [String] standards space type name, e.g. 'lobby' or 'Conference'
+    # @param overrides [Hash] optional :min_area (ft2), :drop_priority, :essential from a ratio entry
+    # @return [Hash] { min_area: Double (ft2), drop_priority: Integer, essential: Boolean }
+    def self.space_type_area_constraints(space_type_name, overrides = {})
+      data = OpenstudioStandards::Geometry.space_area_constraints_data
+      row = data['default']
+      name = space_type_name.to_s.downcase
+      data['categories'].each do |category|
+        next unless category['keywords'].any? { |keyword| name.include?(keyword.downcase) }
+
+        row = category
+        break
+      end
+      overrides = (overrides || {}).transform_keys(&:to_sym)
+      {
+        min_area: (overrides[:min_area] || row['min_area_ip'] || 0.0).to_f,
+        drop_priority: (overrides[:drop_priority] || row['drop_priority'] || 50).to_i,
+        essential: overrides.key?(:essential) ? overrides[:essential] == true : row['essential'] == true
+      }
+    end
+
+    # Enforce a realistic minimum floor area per space type on a building type hash before its
+    # geometry is generated, dropping space types too small to matter and re-normalizing the
+    # ratios so the building still totals the requested area.
+    #
+    # Why: the bar generator turns each ratio into a floor area with no floor, so a 5,500 ft2
+    # hotel asks for a 38 ft2 laundry, a 46 ft2 storage room and a 50 ft2 kitchen. Each is
+    # narrower than the 3 ft minimum slice, the story fill has to shuffle area between the
+    # slices to place them, and the per-space-type area check that follows fails by hundreds of
+    # square feet. Dropping the types that cannot exist at that size and giving their area to
+    # the rest leaves slices the fill can place exactly.
+    #
+    # Only entries that generate geometry take part (space_type_gen not false). Under-minimum
+    # types are dropped one at a time, lowest drop_priority first (ties: smallest area), and the
+    # dropped fraction goes to the survivors in proportion to their fractions. When only
+    # essential types are under their minimum they are bumped up to it, the deficit taken from
+    # the types above their own minimum in proportion to their surplus; if the surplus cannot
+    # cover it the lowest-priority type is dropped, essential or not, with a warning. The last
+    # surviving type is never dropped. The hash is modified in place: dropped entries are
+    # removed, surviving ratios become building-total fractions, and each building type's
+    # :frac_bldg_area becomes the sum of its surviving fractions, so the downstream
+    # ratio_adjustment_multiplier and area check see an ordinary, consistent hash.
+    #
+    # @param building_type_hash [Hash] as built by create_bar_from_space_type_ratios or
+    #   create_bar_from_building_type_ratios: building type => { frac_bldg_area:, space_types: { name => { ratio:, ... } } }
+    # @param total_area_ft2 [Double] building-total floor area in ft2
+    # @return [Hash] { dropped: [[building_type, space_type_name, area_ft2, reason]], bumped: [[building_type, space_type_name, from_ft2, to_ft2]] }
+    def self.apply_space_area_constraints(building_type_hash, total_area_ft2)
+      tol = 1e-6
+      report = { dropped: [], bumped: [] }
+      return report unless total_area_ft2.to_f > 0.0
+
+      # flatten the geometry-producing entries with their building-total fractions, which is
+      # how the generator turns them into areas: ratio over the building type's generating
+      # ratios, times the building type's fraction of the building
+      entries = []
+      building_type_hash.each do |building_type, hash|
+        gen = hash[:space_types].reject { |_name, st| st[:space_type_gen] == false }
+        sum_ratios = gen.values.sum { |st| st[:ratio].to_f }
+        next unless sum_ratios > 0.0
+
+        gen.each do |name, st|
+          constraints = OpenstudioStandards::Geometry.space_type_area_constraints(name, st.slice(:min_area, :drop_priority, :essential))
+          entries << { building_type: building_type, name: name,
+                       fraction: st[:ratio].to_f / sum_ratios * hash[:frac_bldg_area].to_f }.merge(constraints)
+        end
+      end
+      return report if entries.empty?
+
+      # normalize so the fractions describe the whole building
+      total_fraction = entries.sum { |e| e[:fraction] }
+      entries.each { |e| e[:fraction] /= total_fraction } if total_fraction > 0.0
+
+      label = ->(e) { [e[:building_type], e[:name]].compact.join(' | ') }
+      area = ->(e) { e[:fraction] * total_area_ft2 }
+      redistribute = lambda do |freed, pool|
+        pool_total = pool.sum { |e| e[:fraction] }
+        pool.each { |e| e[:fraction] += freed * (e[:fraction] / pool_total) } if pool_total > 0.0
+      end
+      drop = lambda do |entry, reason, level|
+        dropped_area = area.call(entry)
+        entries.delete(entry)
+        redistribute.call(entry[:fraction], entries)
+        report[:dropped] << [entry[:building_type], entry[:name], dropped_area.round(1), reason]
+        OpenStudio.logFree(level, 'openstudio.standards.Geometry.Create', "Dropping space type #{label.call(entry)}: #{reason}. Its #{dropped_area.round} ft^2 goes to the remaining space types.")
+      end
+
+      loop do
+        underfit = entries.select { |e| e[:min_area] > 0.0 && area.call(e) < e[:min_area] - tol }
+        break if underfit.empty?
+        break if entries.size == 1 # a building needs a space; nothing left to trade with
+
+        droppable = underfit.reject { |e| e[:essential] }
+        unless droppable.empty?
+          victim = droppable.min_by { |e| [e[:drop_priority], e[:fraction]] }
+          drop.call(victim, "#{area.call(victim).round} ft^2 is below its #{victim[:min_area].round} ft^2 minimum", OpenStudio::Info)
+          next
+        end
+
+        # only essential types are under their minimum: bump them from the types with surplus
+        deficit = underfit.sum { |e| e[:min_area] / total_area_ft2 - e[:fraction] }
+        donors = entries.reject { |e| underfit.include?(e) }.select { |e| area.call(e) > e[:min_area] + tol }
+        surplus = donors.sum { |e| e[:fraction] - e[:min_area] / total_area_ft2 }
+        if surplus >= deficit - tol
+          donors.each { |e| e[:fraction] -= deficit * ((e[:fraction] - e[:min_area] / total_area_ft2) / surplus) }
+          underfit.each do |e|
+            report[:bumped] << [e[:building_type], e[:name], area.call(e).round(1), e[:min_area]]
+            OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.Geometry.Create', "Raising space type #{label.call(e)} from #{area.call(e).round} ft^2 to its #{e[:min_area].round} ft^2 minimum.")
+            e[:fraction] = e[:min_area] / total_area_ft2
+          end
+          break
+        end
+
+        victim = entries.min_by { |e| [e[:drop_priority], e[:fraction]] }
+        drop.call(victim, 'the building is too small to hold every essential space type at its minimum area', OpenStudio::Warn)
+      end
+
+      # write back: surviving ratios as building-total fractions, building type fractions as
+      # their sums, dropped entries removed, building types left with nothing removed
+      survivors = entries.group_by { |e| e[:building_type] }
+      building_type_hash.keys.each do |building_type|
+        hash = building_type_hash[building_type]
+        kept = survivors[building_type] || []
+        hash[:space_types].keys.each do |name|
+          st = hash[:space_types][name]
+          next if st[:space_type_gen] == false
+
+          entry = kept.find { |e| e[:name] == name }
+          if entry.nil?
+            hash[:space_types].delete(name)
+          else
+            st[:ratio] = entry[:fraction]
+          end
+        end
+        if hash[:space_types].reject { |_n, st| st[:space_type_gen] == false }.empty?
+          building_type_hash.delete(building_type)
+        else
+          hash[:frac_bldg_area] = kept.sum { |e| e[:fraction] }
+        end
+      end
+
+      report
+    end
+
     # create bar from arguments and building type hash
     #
     # @param args [Hash] user arguments
@@ -1263,6 +1421,7 @@ module OpenstudioStandards
     # @option args [Boolean] :top_story_exterior_exposed_roof (true) Is the top story an exterior roof
     # @option args [String] :story_multiplier_method ('Basements Ground Mid Top') Calculation method for story multiplier. Options are 'None' and 'Basements Ground Mid Top'
     # @option args [Boolean] :make_mid_story_surfaces_adiabatic (true) Make mid story floor surfaces adiabatic. If set to true, this will skip surface intersection and make mid story floors and celings adiabatic, not just at multiplied gaps.
+    # @option args [Boolean] :enforce_space_area_constraints (false) Drop space types whose share of the building falls below a realistic minimum floor area (geometry/data/space_area_constraints.json, overridable per ratio entry) and give their area to the remaining space types before generating geometry. See apply_space_area_constraints.
     # @option args [String] :bar_division_method ('Multiple Space Types - Individual Stories Sliced') Division method for bar space types. Options are 'Multiple Space Types - Simple Sliced', 'Multiple Space Types - Individual Stories Sliced', 'Single Space Type - Core and Perimeter'
     # @option args [String] :double_loaded_corridor ('Primary Space Type') Method for double loaded corridor. Add double loaded corridor for building types that have a defined circulation space type, to the selected space types. Options are 'None' and 'Primary Space Type'
     # @option args [String] :space_type_sort_logic ('Building Type > Size') Space type sorting method. Options are 'Size' and 'Building Type > Size'
@@ -1298,6 +1457,7 @@ module OpenstudioStandards
       args[:double_loaded_corridor] = args.fetch(:double_loaded_corridor, 'Primary Space Type')
       args[:space_type_sort_logic] = args.fetch(:space_type_sort_logic, 'Building Type > Size')
       args[:template] = args.fetch(:template, '90.1-2013')
+      args[:enforce_space_area_constraints] = args.fetch(:enforce_space_area_constraints, false)
 
       # get defaults for the primary building type. User-supplied :building_form_defaults
       # values win over the built-in lookup, which returns nil for non-standard building types.
@@ -1366,6 +1526,17 @@ module OpenstudioStandards
 
       # remove non-resource objects not removed by removing the building
       # remove_non_resource_objects(model)
+
+      # drop space types too small to exist at this building size, before any is created
+      if args[:enforce_space_area_constraints]
+        num_stories_for_area = args[:num_stories_below_grade] + args[:num_stories_above_grade]
+        total_area_ft2 = args[:single_floor_area] > 0.0 ? args[:single_floor_area] * num_stories_for_area : args[:total_bldg_floor_area]
+        OpenstudioStandards::Geometry.apply_space_area_constraints(building_type_hash, total_area_ft2)
+        if building_type_hash.empty?
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.Geometry.Create', 'No space types remain after enforcing the space area constraints.')
+          return false
+        end
+      end
 
       # creating space types for requested building types
       building_type_hash.each do |building_type, building_type_hash|
@@ -2233,6 +2404,14 @@ module OpenstudioStandards
           OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.Geometry.Create', ":space_type_ratios entry #{i} (#{[entry[:building_type], entry[:space_type]].compact.join(' | ')}) must include a positive numeric :ratio")
           return nil
         end
+        if !entry[:min_area].nil? && !(entry[:min_area].is_a?(Numeric) && entry[:min_area] >= 0.0)
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.Geometry.Create', ":space_type_ratios entry #{i} (#{entry[:space_type]}) :min_area must be a number of ft^2 at or above zero")
+          return nil
+        end
+        if !entry[:drop_priority].nil? && !entry[:drop_priority].is_a?(Integer)
+          OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.Geometry.Create', ":space_type_ratios entry #{i} (#{entry[:space_type]}) :drop_priority must be an integer")
+          return nil
+        end
         entries << entry
       end
 
@@ -2247,7 +2426,9 @@ module OpenstudioStandards
     # @option args [Array<Hash>, String] :space_type_ratios array of space type ratio entries, or a JSON string encoding one.
     #   Each entry requires :space_type and :ratio (fractions should add up to 1.0), and may include
     #   :story_height (ft), :wwr, :default (Boolean), :circ (Boolean), and :space_type_gen (Boolean) which
-    #   override the values harvested from the standards space type lookup. With a :building_type, the building
+    #   override the values harvested from the standards space type lookup, and :min_area (ft2),
+    #   :drop_priority (Integer) and :essential (Boolean) which override the shipped space area constraints
+    #   when :enforce_space_area_constraints is set. With a :building_type, the building
     #   and space types should come from the selected OpenStudio Standards template. Entries without a
     #   :building_type name a typical space type directly (e.g. from
     #   lib/openstudio-standards/space_type/data/level_1_space_types.json) and produce space types with no
@@ -2297,7 +2478,7 @@ module OpenstudioStandards
         end
 
         # user-supplied per-entry metadata wins over harvested values
-        %i[story_height wwr default circ space_type_gen].each do |key|
+        %i[story_height wwr default circ space_type_gen min_area drop_priority essential].each do |key|
           space_type_info_hash[key] = entry[key] unless entry[key].nil?
         end
 

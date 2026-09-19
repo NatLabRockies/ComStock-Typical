@@ -196,6 +196,41 @@ class TestSliceAdjacency < Minitest::Test
     running.each { |st, v| assert_in_delta(0.0, v[:floor_area], 0.01, "#{st.name} still has area left to place") }
   end
 
+  # Bar B of the 21,000 ft2 four-story primary school from the 2026-09 Kestrel run, drawn as
+  # ground, a doubled mid story and top: six small space types and a 681 m2 classroom group on a
+  # 6.89 x 35.38 m bar. Two sliver moves lost area here. On the doubled story the "move the
+  # smallest slice out" rule handed its slot to electrical/mechanical, already exhausted, so it
+  # went 22 m2 over and the classroom group 22 m2 short; on the final story the "leave room for
+  # the next story" swap held back 162 m2 of classroom that nothing could place. Every space
+  # type has to land within a square metre of its target with nothing left over.
+  def test_multi_story_slicing_with_multipliers_conserves_every_space_type
+    model = OpenStudio::Model::Model.new
+    areas_m2 = { 'food preparation - primary school' => 47.6, 'lobby - primary school' => 48.6, 'restroom - primary school' => 54.0,
+                 'electrical/mechanical' => 71.6, 'dining - primary school' => 22.0, 'office' => 50.1, 'classroom/lecture/training' => 681.5 }
+    space_types = {}
+    areas_m2.sort_by { |_, a| a }.each { |name, a| space_types[space_type(model, name)] = { floor_area: a } }
+    pairs = @hvac.exhaust_makeup_air_pairs(areas_m2.keys)
+
+    # four floors drawn as three stories; the bar length is what makes them hold exactly the
+    # areas above, as create_bar sizes it from the total
+    width = 35.38
+    length = areas_m2.values.sum / (4.0 * width)
+    story_hash = { 'ground' => { space_origin_z: 0.0, space_height: 4.0, multiplier: 1, partial_story_multiplier: 1.0 },
+                   'mid' => { space_origin_z: 4.0, space_height: 4.0, multiplier: 2, partial_story_multiplier: 1.0 },
+                   'top' => { space_origin_z: 12.0, space_height: 4.0, multiplier: 1, partial_story_multiplier: 1.0 } }
+    running = deep_copy(space_types)
+    footprints = @geometry.create_sliced_bar_multi_polygons(running, length, width, OpenStudio::Point3d.new(0.0, 0.0, 0.0), story_hash,
+                                                           adjacency_pairs: pairs)
+
+    running.each { |st, v| assert_in_delta(0.0, v[:floor_area], 0.05, "#{st.name} still has area left to place") }
+    placed = Hash.new(0.0)
+    footprints.each_with_index do |footprint, i|
+      multiplier = story_hash.values[i][:multiplier]
+      footprint.each_value { |v| placed[v[:space_type].name.to_s] += OpenStudio.getArea(v[:polygon]).get * multiplier }
+    end
+    areas_m2.each { |name, target| assert_in_delta(target, placed[name], 1.0, "#{name}: placed #{placed[name].round(1)} m2 against #{target} m2") }
+  end
+
   # Same model, no pairs: the ordering is the floor area ordering, and the pair is split. This is
   # the behavior every existing caller gets, so it has to be preserved.
   def test_multi_story_slicing_without_pairs_is_unchanged

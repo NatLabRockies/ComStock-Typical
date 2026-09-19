@@ -392,23 +392,33 @@ module OpenstudioStandards
             # get first/smallest space type to move to another story
             first_space = space_types_local_count.first
 
+            # building floor area the moved slice frees on this story; local counts are per
+            # floor, the running counts are for all the floors the story represents
+            moved_area = first_space[1][:floor_area] * v[:multiplier]
+
             # adjustments running counter for space type being removed from this story
             space_types_running_count.each do |k2, v2|
               next if k2 != first_space[0]
 
-              v2[:floor_area] += first_space[1][:floor_area] * v[:multiplier]
+              v2[:floor_area] += moved_area
             end
 
-            # adjust running count for current space type
-            space_type_hash[:floor_area] -= first_space[1][:floor_area] * v[:multiplier]
-
-            # add to local count for current space type
-            space_types_local_count[space_type][:floor_area] += first_space[1][:floor_area]
+            # the current space type takes over the freed slot, but only as much of it as it
+            # still has to place: handing it the whole slot regardless put an already exhausted
+            # type over its target by the slot and left the largest type short by the same
+            # amount. What it cannot absorb stays open on this story for the types after it.
+            absorbed_area = [moved_area, space_type_hash[:floor_area]].min
+            space_type_hash[:floor_area] -= absorbed_area
+            space_types_local_count[space_type][:floor_area] += absorbed_area / v[:multiplier].to_f
+            current_footprint_area -= (moved_area - absorbed_area)
 
             # remove from local count for removed space type
             space_types_local_count.shift
 
-          elsif test_b
+          elsif test_b && i + 1 < story_hash.size
+            # the swap holds back part of this space type so the next story gets more than a
+            # sliver of it; on the final story there is no next story, and area held back here
+            # is never placed while the story's slices are stretched to fill the plate
 
             # swap size
             swap_size = valid_bar_area_min_m2 * 5.0 # currently equal to default perimeter zone depth of 15'
