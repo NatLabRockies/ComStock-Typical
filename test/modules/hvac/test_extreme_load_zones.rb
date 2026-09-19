@@ -141,6 +141,26 @@ class TestExtremeLoadZones < Minitest::Test
     assert_match(/CRAC/, loop_of(data_center).name.to_s)
   end
 
+  # The CRAC and CRAH builders leave the zone heating design supply temperature at 55 F, below
+  # ComStock's 18 C heating setpoint. With a design heating load that gives EnergyPlus a zone
+  # heating air flow in the tens of thousands of kg/s and a coil in the hundreds of megawatts;
+  # in the 2026-09 rerun building 3924's zone temperatures overflowed and the run died.
+  def test_data_center_zone_heating_sizing_temperature_is_above_the_heating_setpoint
+    ['PVAV with PFP boxes', 'VAV chiller with PFP boxes'].each do |system|
+      model = OpenStudio::Model::Model.new
+      office, data_center = office_with_data_center(model)
+      assert(@hvac.add_cbecs_hvac_system(model, @std, system, [office, data_center]))
+      sizing = data_center.sizingZone
+      assert_equal('SupplyAirTemperature', sizing.zoneHeatingDesignSupplyAirTemperatureInputMethod)
+      htg_setpoint_c = 21.0 # the test thermostat; ComStock's data centers use 18 C
+      assert_operator(sizing.zoneHeatingDesignSupplyAirTemperature, :>, htg_setpoint_c + 2.0, "#{system}: heating supply must clear the setpoint by the 2 C EnergyPlus check")
+      expected = @std.standard_design_sizing_temperatures['zn_htg_dsgn_sup_air_temp_c']
+      assert_in_delta(expected, sizing.zoneHeatingDesignSupplyAirTemperature, 1e-6, system)
+      # cooling side is untouched: the unit's 55 F supply
+      assert_in_delta(OpenStudio.convert(55.0, 'F', 'C').get, sizing.zoneCoolingDesignSupplyAirTemperature, 1e-6, system)
+    end
+  end
+
   # An extreme load that is not a data center gets its own packaged unit, not a CRAC.
   def test_other_extreme_loads_get_their_own_packaged_unit
     model = OpenStudio::Model::Model.new

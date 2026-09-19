@@ -113,17 +113,46 @@ module OpenstudioStandards
                                                                           chilled_water_loop_cooling_type: source[:chilled_water_loop_cooling_type])
         result = standard.model_add_crah(model, thermal_zones, chilled_water_loop: chilled_water_loop)
         OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.HVAC', "Data center zones #{names} are served by a CRAH on #{chilled_water_loop.name}, the chilled water plant of the #{hvac_system_type} system, rather than by that system.")
-        return !result.is_a?(FalseClass) # the builders return model objects on success
+      else
+        climate_zone = OpenstudioStandards::Weather.model_get_climate_zone(model)
+        if climate_zone.empty?
+          climate_zone = 'ASHRAE 169-2013-4A'
+          OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.HVAC', "The model has no climate zone; the CRAC economizer decision for #{names} assumes #{climate_zone}.")
+        end
+        result = standard.model_add_crac(model, thermal_zones, climate_zone)
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.HVAC', "Data center zones #{names} are served by DX CRAC units rather than by the #{hvac_system_type} system.")
       end
+      return false if result.is_a?(FalseClass) # the builders return model objects on success
 
-      climate_zone = OpenstudioStandards::Weather.model_get_climate_zone(model)
-      if climate_zone.empty?
-        climate_zone = 'ASHRAE 169-2013-4A'
-        OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.HVAC', "The model has no climate zone; the CRAC economizer decision for #{names} assumes #{climate_zone}.")
+      set_data_center_zone_heating_sizing_temperature(standard, thermal_zones)
+      return true
+    end
+
+    # Give data center zones a zone heating design supply air temperature above their heating
+    # setpoint.
+    #
+    # model_add_crac and model_add_crah set the zone heating design supply air temperature to
+    # 55 F, the unit's cooling supply temperature, because the unit has no heating coil. That
+    # is fine for the prototypes, whose data centers carry their ITE load on the heating design
+    # day and so have no heating load. ComStock's data centers do have a design heating load,
+    # and with a supply temperature below the 18 C heating setpoint EnergyPlus's zone heating
+    # air flow (load over cp times supply-minus-zone temperature) runs to tens of thousands of
+    # kg/s. That flow sizes the air loop and the DX coil at hundreds of megawatts; in the
+    # 2026-09 rerun one office's zone temperatures then overflowed and the run died. The
+    # standard's default zone heating supply temperature (104 F) gives a finite, small heating
+    # flow; the unit still has no heating coil, so nothing else changes.
+    #
+    # @param standard [Standard] a Standard object
+    # @param thermal_zones [Array<OpenStudio::Model::ThermalZone>] data center zones
+    # @return [Double] the heating design supply air temperature applied, in C
+    def self.set_data_center_zone_heating_sizing_temperature(standard, thermal_zones)
+      htg_c = standard.standard_design_sizing_temperatures['zn_htg_dsgn_sup_air_temp_c']
+      thermal_zones.each do |zone|
+        sizing_zone = zone.sizingZone
+        sizing_zone.setZoneHeatingDesignSupplyAirTemperatureInputMethod('SupplyAirTemperature')
+        sizing_zone.setZoneHeatingDesignSupplyAirTemperature(htg_c)
       end
-      result = standard.model_add_crac(model, thermal_zones, climate_zone)
-      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.HVAC', "Data center zones #{names} are served by DX CRAC units rather than by the #{hvac_system_type} system.")
-      return !result.is_a?(FalseClass) # the builders return model objects on success
+      htg_c
     end
 
     # Serve extreme load zones that are not data centers with a packaged single-zone unit on
