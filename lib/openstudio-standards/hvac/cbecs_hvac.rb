@@ -14,6 +14,17 @@ module OpenstudioStandards
     # @param zones [Array<OpenStudio::Model::ThermalZone>] Array of OpenStudio ThermalZone objects
     # @return [Boolean] returns true if successful, false if not
     def self.add_cbecs_hvac_system(model, standard, hvac_system_type, zones)
+      # zones whose loads are far above the rest of the building get their own systems: data
+      # centers and computer rooms a CRAC or CRAH on the building's cooling source, other
+      # extreme loads a packaged single-zone unit. See extreme_load_zones.rb for why.
+      groups = OpenstudioStandards::HVAC.split_extreme_load_zones(zones)
+      zones = groups[:main]
+      if zones.empty?
+        result = OpenstudioStandards::HVAC.add_data_center_systems(model, standard, hvac_system_type, groups[:data_center])
+        result &= OpenstudioStandards::HVAC.add_extreme_load_zone_systems(model, standard, hvac_system_type, groups[:extreme])
+        return result
+      end
+
       # the 'zones' argument includes zones that have heating, cooling, or both
       # if the HVAC system type serves a single zone, handle zones with only heating separately by adding unit heaters
       # applies to system types PTAC, PTHP, PSZ-AC, and Window AC
@@ -637,6 +648,10 @@ module OpenstudioStandards
         OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.HVAC', "CBECS HVAC system type #{hvac_system_type} not recognized.")
         return false
       end
+
+      return false unless OpenstudioStandards::HVAC.add_data_center_systems(model, standard, hvac_system_type, groups[:data_center])
+      return false unless OpenstudioStandards::HVAC.add_extreme_load_zone_systems(model, standard, hvac_system_type, groups[:extreme])
+
       return true
     end
   end

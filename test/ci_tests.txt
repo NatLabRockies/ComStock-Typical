@@ -36,6 +36,7 @@ modules/geometry/test_geometry_determinism.rb
 modules/geometry/test_geometry_group.rb
 modules/geometry/test_geometry_information.rb
 modules/geometry/test_geometry_modify.rb
+modules/geometry/test_geometry_space_area_constraints.rb
 modules/geometry/test_slice_adjacency.rb
 modules/hvac/components/test_air_conditioner_vrf.rb
 modules/hvac/components/test_air_terminal.rb
@@ -64,6 +65,7 @@ modules/hvac/test_helpers.rb
 modules/hvac/test_hvac_exhaust.rb
 modules/hvac/test_hvac_exhaust_all_level.rb
 modules/hvac/test_hvac_exhaust_vertical_makeup.rb
+modules/hvac/test_extreme_load_zones.rb
 modules/hvac/test_vav_sizing_inputs.rb
 modules/infiltration/test_infiltration.rb
 modules/infiltration/test_nist_infiltration.rb
