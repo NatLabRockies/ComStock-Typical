@@ -1965,6 +1965,27 @@ module OpenstudioStandards
         end
       end
 
+      # The split above hands a bar any share of a space type down to 0.0001 m2. A share
+      # smaller than the narrowest slice the bar can hold (3 ft across the bar's width) becomes
+      # a sliver space: in the 2026-09 run three outpatient buildings carried 0.05 m2 recovery
+      # rooms, 1 cm wide, and a school a 2.3 cm dining slice, and EnergyPlus's heat balance
+      # diverged in them. Trade such shares against a type present in both bars.
+      if dual_bar
+        min_slice_width_m = OpenStudio.convert(3.0, 'ft', 'm').get
+        secondary_width = if mirror_ns_ew && dual_bar_calc_approach == 'dual_bar'
+                            dual_double_end_width
+                          elsif dual_bar_calc_approach == 'dual_bar'
+                            bar_b_length
+                          elsif mirror_ns_ew
+                            adiabatic_dual_double_end_width
+                          else
+                            adiabatic_bar_b_length
+                          end
+        OpenstudioStandards::Geometry.rebalance_bar_split_slivers(space_types_hash, space_types_hash_secondary,
+                                                                  min_slice_width_m * bars['primary'][:width],
+                                                                  min_slice_width_m * secondary_width)
+      end
+
       # setup bar_hash and run create_bar
       bars['primary'][:space_types_hash] = space_types_hash
       bars['primary'][:args] = args
