@@ -640,6 +640,13 @@
               "type": "number",
               "minimum": 0,
               "description": "Electric equipment power density in W/ft^2."
+            },
+            "electric_equipment_space_type_name": {
+              "oneOf": [
+                { "type": "string", "minLength": 1 },
+                { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+              ],
+              "description": "One or more pre-defined electric equipment objects from lib/openstudio-standards/equipment/data/electric_equipment_space_types.json (electric_equipment_space_type_name values) to create in the space type in place of its default equipment, one instance per name. Not combined with w_per_area."
             }
           }
         },
@@ -651,6 +658,13 @@
               "type": "number",
               "minimum": 0,
               "description": "Gas equipment power density in Btu/hr per ft^2."
+            },
+            "natural_gas_equipment_space_type_name": {
+              "oneOf": [
+                { "type": "string", "minLength": 1 },
+                { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+              ],
+              "description": "One or more pre-defined natural gas equipment objects from lib/openstudio-standards/equipment/data/gas_equipment_space_types.json (natural_gas_equipment_space_type_name values, e.g. 'kitchen - primary school', 'bakery') to create in the space type in place of its default equipment, one instance per name. Not combined with btu_per_hr_per_area."
             }
           }
         },

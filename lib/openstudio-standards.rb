@@ -74,6 +74,7 @@ module OpenstudioStandards
 
   # Space Type Module
   require_relative 'openstudio-standards/space_type/standards_space_type'
+  require_relative 'openstudio-standards/space_type/information'
 
   # Thermal Zone Module
   require_relative 'openstudio-standards/thermal_zone/information'

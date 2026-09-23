@@ -37,6 +37,7 @@ modules/geometry/test_geometry_group.rb
 modules/geometry/test_geometry_information.rb
 modules/geometry/test_geometry_modify.rb
 modules/geometry/test_geometry_space_area_constraints.rb
+modules/geometry/test_geometry_bar_slivers.rb
 modules/geometry/test_slice_adjacency.rb
 modules/hvac/components/test_air_conditioner_vrf.rb
 modules/hvac/components/test_air_terminal.rb
@@ -110,6 +111,7 @@ modules/service_water_heating/test_swh_sizing_zone_multipliers.rb
 modules/service_water_heating/test_swh_supply_temperature.rb
 modules/space/test_space.rb
 modules/space_type/test_space_type.rb
+modules/space_type/test_space_type_information.rb
 modules/sql_file/test_energy_use.rb
 modules/sql_file/test_fenestration.rb
 modules/sql_file/test_sql_file.rb
@@ -127,6 +129,8 @@ os_stds_methods/test_daylighting_controls.rb
 os_stds_methods/test_minimum_efficiency_lookups.rb
 os_stds_methods/test_misc.rb
 os_stds_methods/test_optimum_start.rb
+os_stds_methods/test_residential_air_flow_floor.rb
+os_stds_methods/test_dx_coil_rated_shr_cap.rb
 os_stds_methods/test_radiant_controls.rb
 os_stds_methods/test_service_water_heating.rb
 os_stds_methods/test_space_type.rb

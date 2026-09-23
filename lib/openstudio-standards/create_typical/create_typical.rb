@@ -74,6 +74,8 @@ module OpenstudioStandards
     # @param load_overrides [Array<Hash>, String] runtime internal load overrides, as a Ruby array or JSON string.
     #   Each entry is keyed by `space_type` (matched against the schedule set name or standards space type) or `"*"`,
     #   with optional `people`/`lighting`/`electric_equipment`/`gas_equipment`/`ventilation` field hashes.
+    #   The equipment hashes take either a density or the name(s) of pre-defined equipment objects
+    #   (`electric_equipment_space_type_name`, `natural_gas_equipment_space_type_name`).
     #   See CreateTypical.space_type_apply_load_overrides for fields and units.
     # @param thermostat_overrides [Array<Hash>, String] runtime thermostat setpoint overrides, as a Ruby array
     #   or JSON string. Each entry is keyed by `space_type` (matched against the schedule set name or standards
