@@ -139,6 +139,95 @@ class TestGeometryBarSlivers < Minitest::Test
     ]
   }.freeze
 
+  # Hospital 21000 ft2 x 5 stories, ComStock DOE Ref Pre-1980. The story fill held back a
+  # whole 64 m2 dining slice for the next story but left the type in the story's list with
+  # 0.0 m2, which became a zero-width surface and a fatal in the 2026-09 run.
+  ARGS_83001 = {
+    bar_division_method: 'Multiple Space Types - Individual Stories Sliced',
+    bar_sep_dist_mult: 10.0,
+    bar_width: 0.0,
+    bottom_story_ground_exposed_floor: true,
+    building_rotation: 225.0,
+    custom_height_bar: true,
+    double_loaded_corridor: 'Primary Space Type',
+    floor_height: 0.0,
+    make_mid_story_surfaces_adiabatic: true,
+    ns_to_ew_ratio: 2.0,
+    num_stories_above_grade: 5,
+    num_stories_below_grade: 0,
+    party_wall_fraction: 0.0,
+    party_wall_stories_east: 0,
+    party_wall_stories_north: 0,
+    party_wall_stories_south: 0,
+    party_wall_stories_west: 0,
+    perim_mult: 0.0,
+    single_floor_area: 0.0,
+    space_type_sort_logic: 'Building Type > Size',
+    top_story_exterior_exposed_roof: true,
+    total_bldg_floor_area: 21000.0,
+    wwr: 0.06,
+    building_form_defaults: { aspect_ratio: 1.33, wwr: 0.16, typical_story: 14.0, perim_mult: 1.0 },
+    template: 'ComStock DOE Ref Pre-1980', primary_building_type: 'Hospital',
+    space_type_ratios: [
+      { space_type: 'electrical/mechanical', ratio: 0.1667, default: false, space_type_gen: false },
+      { space_type: 'corridor - hospital', ratio: 0.1741, default: false, circ: true, space_type_gen: true },
+      { space_type: 'dining - cafeteria/fast food', ratio: 0.0311, default: false, space_type_gen: true },
+      { space_type: 'exam/treatment', ratio: 0.0374, default: false, space_type_gen: true },
+      { space_type: 'nurses station', ratio: 0.2572, default: false, space_type_gen: true },
+      { space_type: 'emergency room', ratio: 0.0075, default: false, space_type_gen: true },
+      { space_type: 'patient room', ratio: 0.096, default: false, space_type_gen: true },
+      { space_type: 'food preparation', ratio: 0.0414, default: false, space_type_gen: true },
+      { space_type: 'laboratory', ratio: 0.0236, default: false, space_type_gen: true },
+      { space_type: 'lobby', ratio: 0.0657, default: false, space_type_gen: true },
+      { space_type: 'office', ratio: 0.0286, default: false, space_type_gen: true },
+      { space_type: 'operating room', ratio: 0.0273, default: false, space_type_gen: true },
+      { space_type: 'physical therapy', ratio: 0.0217, default: false, space_type_gen: true },
+      { space_type: 'imaging', ratio: 0.0217, default: false, space_type_gen: true }
+    ]
+  }.freeze
+
+  # PrimarySchool 2000 ft2 x 2 stories, ComStock DOE Ref Pre-1980: two bars 2 m wide. The
+  # story fill held back the last two types on a story of the second bar with nothing after
+  # them to fill it, so the restroom was stretched to twice its area.
+  ARGS_73508 = {
+    bar_division_method: 'Multiple Space Types - Individual Stories Sliced',
+    bar_sep_dist_mult: 10.0,
+    bar_width: 0.0,
+    bottom_story_ground_exposed_floor: true,
+    building_rotation: 0.0,
+    custom_height_bar: true,
+    double_loaded_corridor: 'Primary Space Type',
+    floor_height: 0.0,
+    make_mid_story_surfaces_adiabatic: true,
+    ns_to_ew_ratio: 5.0,
+    num_stories_above_grade: 2,
+    num_stories_below_grade: 0,
+    party_wall_fraction: 0.0,
+    party_wall_stories_east: 0,
+    party_wall_stories_north: 0,
+    party_wall_stories_south: 0,
+    party_wall_stories_west: 0,
+    perim_mult: 0.0,
+    single_floor_area: 0.0,
+    space_type_sort_logic: 'Building Type > Size',
+    top_story_exterior_exposed_roof: true,
+    total_bldg_floor_area: 2000.0,
+    wwr: 0.38,
+    building_form_defaults: { aspect_ratio: 2.8, wwr: 0.35, typical_story: 13.0, perim_mult: 1.914 },
+    template: 'ComStock DOE Ref Pre-1980', primary_building_type: 'PrimarySchool',
+    space_type_ratios: [
+      { space_type: 'dining - primary school', ratio: 0.0458, default: false, space_type_gen: true },
+      { space_type: 'classroom/lecture/training', ratio: 0.561, default: true, space_type_gen: true },
+      { space_type: 'corridor - primary school', ratio: 0.1633, default: false, circ: true, space_type_gen: true },
+      { space_type: 'playing area - primary school', ratio: 0.052, default: false, space_type_gen: true },
+      { space_type: 'food preparation - primary school', ratio: 0.0244, default: false, space_type_gen: true },
+      { space_type: 'lobby - primary school', ratio: 0.0249, default: false, space_type_gen: true },
+      { space_type: 'electrical/mechanical', ratio: 0.0367, default: false, space_type_gen: true },
+      { space_type: 'office', ratio: 0.0642, default: false, space_type_gen: true },
+      { space_type: 'restroom - primary school', ratio: 0.0277, default: false, space_type_gen: true }
+    ]
+  }.freeze
+
   def build(args)
     model = OpenStudio::Model::Model.new
     copy = Marshal.load(Marshal.dump(args)) # the generator edits its arguments
@@ -229,6 +318,28 @@ class TestGeometryBarSlivers < Minitest::Test
     ok, model = build(ARGS_40396)
     assert(ok, 'the school should build')
     assert_no_slivers(model, 'school 40396')
+  end
+
+  def test_hospital_swapped_out_slice_leaves_the_story_and_builds
+    ok, model = build(ARGS_83001)
+    assert(ok, 'the hospital should build: a slice held back for the next story must not stay as a 0 m2 entry')
+    model.getSurfaces.each { |s| assert_operator(s.grossArea, :>, 0.01, "#{s.name} has no area") }
+    # the story fill tests slice areas against the whole multiplied story, so an 11 m2 per
+    # floor food preparation slice on the x3 mid story passes as 33 m2 and comes out 0.79 m
+    # wide; that is a separate blind spot, so only zero-width slices are ruled out here
+    model.getSpaces.each { |space| assert_operator(narrowest_extent_m(space), :>=, 0.5, "#{space.name} is #{narrowest_extent_m(space).round(3)} m across") }
+  end
+
+  def test_tiny_two_bar_school_keeps_its_areas
+    ok, model = build(ARGS_73508)
+    assert(ok, 'the school should build: every space type within 1 m2 of target')
+    areas = areas_by_type_ft2(model)
+    # 65 ft2: its ratio over the five types the area constraint keeps (dining, playing area,
+    # food preparation and lobby are under their minimums at 2,000 ft2)
+    assert_in_delta(2000.0 * 0.0277 / 0.8529, areas['restroom - primary school'], 2.0, 'the restroom is not stretched to fill a story')
+    # the bars are 2 m wide, so the double loaded corridor children are narrow by construction;
+    # the slices are still real, not zero-width
+    model.getSpaces.each { |space| assert_operator(space.floorArea, :>=, 0.5, "#{space.name} has #{space.floorArea.round(3)} m2") }
   end
 
   def test_three_story_warehouse_places_both_storage_types

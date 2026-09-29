@@ -384,7 +384,7 @@ module OpenstudioStandards
         current_footprint_area = 0.0
         space_types_local_count = {}
 
-        space_types_running_count.each do |space_type, space_type_hash|
+        space_types_running_count.each_with_index do |(space_type, space_type_hash), type_index|
           # next if floor area is full or space type is empty
 
           tol_value = 0.0001
@@ -500,16 +500,30 @@ module OpenstudioStandards
               swap_size = space_types_local_count[space_type][:floor_area] * v[:multiplier].to_f
             end
 
-            # adjust running count for current space type
-            space_type_hash[:floor_area] += swap_size
+            # The types after this one in the fill order are what fill the swapped-out area on
+            # this story. When they do not hold that much, the swap leaves the story short and
+            # its slices are stretched to fill the plate: a 2,000 ft2 two-bar school in the
+            # 2026-09 run swapped out its last two types on a story and doubled its restroom.
+            # Keep the slice instead; the remainder is a sliver on the next story, which is the
+            # lesser harm.
+            following_area = space_types_running_count[(type_index + 1)..].sum { |_k2, v2| v2[:floor_area] }
+            if following_area + tol_value >= swap_size
+              # adjust running count for current space type
+              space_type_hash[:floor_area] += swap_size
 
-            # remove from local count for current space type
-            space_types_local_count[space_type][:floor_area] -= swap_size / v[:multiplier].to_f
+              # remove from local count for current space type; a slice swapped out entirely
+              # leaves the story's list, or it becomes a zero-width surface (two hospitals in
+              # the 2026-09 run, a whole dining slice swapped out and kept at 0.0 m2)
+              space_types_local_count[space_type][:floor_area] -= swap_size / v[:multiplier].to_f
+              space_types_local_count.delete(space_type) if space_types_local_count[space_type][:floor_area] <= tol_value
 
-            # adjust footprint used
-            current_footprint_area -= swap_size
+              # adjust footprint used
+              current_footprint_area -= swap_size
 
-            # the next larger space type will be brought down to fill out the footprint without any additional code
+              # the next larger space type will be brought down to fill out the footprint without any additional code
+            else
+              OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.Geometry.Create', "Keeping the #{raw_footprint_area_used.round(1)} m2 slice of #{space_type.name} on story #{i + 1}: the #{space_type_hash[:floor_area].round(1)} m2 left for the next story is under the minimum slice, but no later space type could fill the story if it were held back.")
+            end
           end
         end
 
