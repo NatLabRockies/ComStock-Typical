@@ -369,26 +369,6 @@
           "flow_rate_schedule": "OfficeMedium BLDG_SWH_SCH",
           "sensible_fraction": 0.2,
           "latent_fraction": 0.05
-        },
-        {
-          "equipment_name": null,
-          "peak_flow_rate_gph": null,
-          "peak_flow_rate_gph_per_floor_area_ft2": 0.02,
-          "loop_type": "Shared",
-          "mixed_water_temperature_f": 110.0,
-          "flow_rate_schedule": "OfficeMedium BLDG_SWH_SCH",
-          "sensible_fraction": 0.2,
-          "latent_fraction": 0.05
-        },
-        {
-          "equipment_name": null,
-          "peak_flow_rate_gph": null,
-          "peak_flow_rate_gph_per_floor_area_ft2": 0.02,
-          "loop_type": "Shared",
-          "mixed_water_temperature_f": 110.0,
-          "flow_rate_schedule": "OfficeSmall BLDG_SWH_SCH",
-          "sensible_fraction": 0.2,
-          "latent_fraction": 0.05
         }
       ],
       "all_level_space_types": [
@@ -967,18 +947,8 @@
           "latent_fraction": 0.05
         }
       ],
-      "all_level_space_types": [
-        "classroom/lecture/training",
-        "classroom/lecture/training - art classroom",
-        "classroom/lecture/training - classrooms (ages 5-8)",
-        "classroom/lecture/training - daycare (through age 4)",
-        "classroom/lecture/training - lecture classroom",
-        "classroom/lecture/training - lecture hall (fixed seats)",
-        "classroom/lecture/training - music/theater/dance",
-        "classroom/lecture/training - penitentiary",
-        "classroom/lecture/training - preschool to 12th grade"
-      ],
-      "all_level_mapping_tier": "ashrae_space_type_map"
+      "all_level_space_types": [],
+      "all_level_mapping_tier": "excluded: the DEER relocatable classroom building's whole draw keyed on its one space type; classrooms carry no fixtures of their own, the school restroom and kitchen records do"
     }
   ]
 }

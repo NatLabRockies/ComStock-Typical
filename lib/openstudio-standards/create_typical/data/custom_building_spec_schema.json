@@ -914,6 +914,11 @@
               "flow_rate_schedule": {
                 "type": "string",
                 "description": "Name of the draw profile schedule. Only used when the space type has no parametric schedule set of its own, which otherwise supplies the profile."
+              },
+              "loop_type": {
+                "type": "string",
+                "enum": ["Shared", "One Per Space", "One Per Unit"],
+                "description": "Which loop serves the draw: the building's shared service water loop, a dedicated point-of-use heater for each space, or one per dwelling unit. Lets a building type whose record is per-space, such as a standalone retail store inheriting the strip mall tenant record, put the draw on one shared heater instead."
               }
             }
           }

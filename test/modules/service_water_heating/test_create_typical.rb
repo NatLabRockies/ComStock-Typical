@@ -174,12 +174,12 @@ class TestCreateTypicalServiceWaterHeating < Minitest::Test
     non_booster_volume_gal = OpenStudio::convert(non_booster_volume, 'm^3', 'gal').get
 
     # # check results
-    # The large hotel's guest room floors carry a zone multiplier, and the sizing now
-    # weights each fixture's flow by it, as EnergyPlus does to the draws themselves. That
-    # raised the shared heater from about 215 to about 316 kBtu/hr; the old expectation was
-    # the unmultiplied draw.
-    assert_in_epsilon(316.0, non_booster_capacity_kbtu_hr, 0.40)
-    assert_in_epsilon(316.0, non_booster_volume_gal, 0.40)
+    # The large hotel's guest room floors carry a zone multiplier. Each fixture is sized on
+    # its own space's area and the heater sizing weights the flow by the multiplier, as
+    # EnergyPlus does to the draws themselves. Sizing the fixtures on the multiplied area as
+    # well had counted the multiplier twice and put this heater at about 316 kBtu/hr.
+    assert_in_epsilon(215.0, non_booster_capacity_kbtu_hr, 0.40)
+    assert_in_epsilon(215.0, non_booster_volume_gal, 0.40)
     model.save("#{output_dir}/out.osm", true)
   end
 

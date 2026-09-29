@@ -24,6 +24,9 @@ module OpenstudioStandards
     #   Used to modify efficiencies for water heaters based on individual component size while avoiding having to model
     #   lots of individual water heaters (for runtime sake).
     # @param service_water_loop [OpenStudio::Model::PlantLoop] if provided, add the water heater to this loop
+    # @param loss_coefficient_w_per_k [Double, nil] on- and off-cycle loss coefficient to ambient in W/K for
+    #   the heater, or for all the heaters the object stands for. When nil the fuel's default applies:
+    #   1.053 W/K for an electric tank, 6.0 W/K for a fuel-fired one, both a 40 gal tank's.
     # @return [OpenStudio::Model::WaterHeaterMixed] OpenStudio WaterHeaterMixed object
     def self.create_water_heater(model,
                                  water_heater_capacity: nil,
@@ -38,7 +41,8 @@ module OpenstudioStandards
                                  flowrate_schedule: nil,
                                  water_heater_thermal_zone: nil,
                                  number_of_water_heaters: 1,
-                                 service_water_loop: nil)
+                                 service_water_loop: nil,
+                                 loss_coefficient_w_per_k: nil)
       # create water heater object
       # @todo Standards - Change water heater methodology to follow 'Model Enhancements Appendix A.'
       water_heater = OpenStudio::Model::WaterHeaterMixed.new(model)
@@ -120,6 +124,12 @@ module OpenstudioStandards
         water_heater.setOnCycleLossCoefficienttoAmbientTemperature(1.053)
       else
         OpenStudio.logFree(OpenStudio::Error, 'openstudio.standards.ServiceWaterHeating', "#{water_heater_fuel} is not a valid water heater fuel.  Valid choices are NaturalGas, Electricity, and HeatPump.")
+      end
+
+      # a standby loss stated by the caller replaces the fuel's 40 gal default
+      unless loss_coefficient_w_per_k.nil?
+        water_heater.setOffCycleLossCoefficienttoAmbientTemperature(loss_coefficient_w_per_k)
+        water_heater.setOnCycleLossCoefficienttoAmbientTemperature(loss_coefficient_w_per_k)
       end
 
       # set water temperature properties

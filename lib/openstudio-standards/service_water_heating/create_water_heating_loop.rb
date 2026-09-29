@@ -27,6 +27,8 @@ module OpenstudioStandards
     #   If nil, will use the total building floor area. Only used if piping losses is true and the system is circulating.
     # @param number_of_stories [Integer] the number of stories served by the service water heating loop
     #   If nil, will use the total building number of stories. Only used if piping losses is true and the system is circulating.
+    # @param loss_coefficient_w_per_k [Double, nil] water heater standby loss coefficient to ambient in W/K, for
+    #   all the heaters the object stands for; nil takes the fuel's 40 gal default. See create_water_heater.
     # @return [OpenStudio::Model::PlantLoop] OpenStudio PlantLoop object of the service water loop
     def self.create_service_water_heating_loop(model,
                                                system_name: 'Service Water Loop',
@@ -43,7 +45,8 @@ module OpenstudioStandards
                                                add_piping_losses: false,
                                                pipe_insulation_thickness: 0.0127,
                                                floor_area: nil,
-                                               number_of_stories: nil)
+                                               number_of_stories: nil,
+                                               loss_coefficient_w_per_k: nil)
 
       # create service water heating loop
       service_water_loop = OpenStudio::Model::PlantLoop.new(model)
@@ -141,7 +144,8 @@ module OpenstudioStandards
                                                                      flowrate_schedule: nil,
                                                                      water_heater_thermal_zone: water_heater_thermal_zone,
                                                                      number_of_water_heaters: number_of_water_heaters,
-                                                                     service_water_loop: service_water_loop)
+                                                                     service_water_loop: service_water_loop,
+                                                                     loss_coefficient_w_per_k: loss_coefficient_w_per_k)
       end
 
       # add pipe losses if requested

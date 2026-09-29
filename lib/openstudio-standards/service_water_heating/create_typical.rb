@@ -44,8 +44,29 @@ module OpenstudioStandards
     # Fields a service water heating override may set on one water use equipment entry
     SERVICE_WATER_OVERRIDE_FIELDS = %i[
       peak_flow_rate_gph peak_flow_rate_gph_per_floor_area_ft2 mixed_water_temperature_f
-      sensible_fraction latent_fraction flow_rate_schedule
+      sensible_fraction latent_fraction flow_rate_schedule loop_type
     ].freeze
+
+    # A dedicated point-of-use heater is sized to the draws it serves, with the floor of a small
+    # under-counter electric unit: 6 gal and 1.5 kW.
+    POINT_OF_USE_MINIMUM_VOLUME_GAL = 6.0
+    POINT_OF_USE_MINIMUM_CAPACITY_W = 1500.0
+    # The fuel defaults in create_water_heater are a 40 gal tank's standby loss; a tank of another
+    # size loses in proportion to its surface, which goes with volume to the two-thirds power.
+    REFERENCE_TANK_VOLUME_GAL = 40.0
+
+    # Standby loss coefficient for a number of identical tanks of a given size, scaled from the
+    # fuel's 40 gal default by the tank surface.
+    #
+    # @param volume_gal_per_heater [Double] one tank's volume in gallons
+    # @param number_of_water_heaters [Integer] tanks the water heater object stands for
+    # @param fuel [String] water heater fuel
+    # @return [Double] loss coefficient in W/K for all the tanks together
+    def self.tank_loss_coefficient_w_per_k(volume_gal_per_heater, number_of_water_heaters, fuel)
+      reference = %w[Electricity Electric Elec HeatPump SimpleHeatPump].include?(fuel) ? 1.053 : 6.0
+      scale = (volume_gal_per_heater / REFERENCE_TANK_VOLUME_GAL)**(2.0 / 3.0)
+      reference * scale * number_of_water_heaters
+    end
 
     # Apply runtime service water heating overrides to a space type's water use equipment.
     #
@@ -109,8 +130,14 @@ module OpenstudioStandards
       model.getSpaces.sort.each do |space|
         next unless space.spaceType.is_initialized
 
+        # A space in a zone with a multiplier stands for that many identical spaces, and
+        # EnergyPlus multiplies each WaterUse:Equipment draw by the zone multiplier itself. So a
+        # fixture is sized on the space's own floor area, once; the multiplied area below is for
+        # the dedicated loop that serves all the copies. Sizing the fixture on the multiplied area
+        # counted the multiplier twice, which on a mid-story zone with a multiplier of 10 drew
+        # ten times the water the space type data says.
+        space_floor_area_ft2 = OpenStudio.convert(space.floorArea, 'm^2', 'ft^2').get
         total_space_floor_area_m2 = space.floorArea * space.multiplier
-        total_space_floor_area_ft2 = OpenStudio.convert(total_space_floor_area_m2, 'm^2', 'ft^2').get
         space_type = space.spaceType.get
 
         next unless space_type.standardsSpaceType.is_initialized
@@ -158,12 +185,17 @@ module OpenstudioStandards
 
         # store one per unit equipment
         space_water_use_equipment = []
+        space_loop_types = []
 
+        # Units in this one physical space, for 'One Per Unit' draws; the zone multiplier
+        # supplies the copies. The dedicated loop below serves every copy, so its heaters
+        # count units times multiplier.
         if space.hasAdditionalProperties && space.additionalProperties.hasFeature('num_units')
-          num_units = space.additionalProperties.getFeatureAsInteger('num_units').get
+          units_in_space = space.additionalProperties.getFeatureAsInteger('num_units').get
         else # assume 1 space is 1 unit
-          num_units = space.multiplier
+          units_in_space = 1
         end
+        num_units = units_in_space * space.multiplier
 
         # loop through and add water use equipment to space
         water_use_equipment.each do |w|
@@ -207,17 +239,17 @@ module OpenstudioStandards
           when 'One Per Unit'
             # calculate peak flow rate
             if peak_flow_rate_gal_per_hr.zero? && peak_flow_rate_gal_per_hr_per_ft2 > 0.0
-              peak_flow_rate_gal_per_hr = num_units * peak_flow_rate_gal_per_hr_per_ft2 * total_space_floor_area_ft2
+              peak_flow_rate_gal_per_hr = units_in_space * peak_flow_rate_gal_per_hr_per_ft2 * space_floor_area_ft2
             else
-              peak_flow_rate_gal_per_hr *= num_units
+              peak_flow_rate_gal_per_hr *= units_in_space
             end
 
             # update water use name
-            water_use_name = "#{water_use_name} #{num_units} unit(s)"
+            water_use_name = "#{water_use_name} #{units_in_space} unit(s)"
           else
             # calculate peak flow rate
             if peak_flow_rate_gal_per_hr.zero? && peak_flow_rate_gal_per_hr_per_ft2 > 0.0
-              peak_flow_rate_gal_per_hr = peak_flow_rate_gal_per_hr_per_ft2 * total_space_floor_area_ft2
+              peak_flow_rate_gal_per_hr = peak_flow_rate_gal_per_hr_per_ft2 * space_floor_area_ft2
             end
           end
 
@@ -246,6 +278,7 @@ module OpenstudioStandards
             end
           when 'One Per Space', 'One Per Unit'
             space_water_use_equipment << water_use_equip
+            space_loop_types << loop_type
           else
             OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.ServiceWaterHeating', "Water use equipment service loop type #{loop_type} not recognized. Cannot attach equipment to a loop.")
           end
@@ -253,12 +286,34 @@ module OpenstudioStandards
 
         # create water loop for 'One Per Space' and 'One Per Unit' equipment
         unless space_water_use_equipment.empty?
-          water_heater_capacity_w = num_units * OpenStudio.convert(20.0, 'kBtu/hr', 'W').get
-          water_heater_volume_m3 = num_units * OpenStudio.convert(50.0, 'gal', 'm^3').get
-          num_water_heaters = num_units
-
           # default to electricity for single units
           dedicated_water_heating_fuel = water_heating_fuel || 'Electricity'
+          num_water_heaters = num_units
+
+          if space_loop_types.include?('One Per Unit')
+            # a dwelling unit gets the 50 gal, 20 kBtu/hr tank of the residential prototypes
+            water_heater_capacity_w = num_units * OpenStudio.convert(20.0, 'kBtu/hr', 'W').get
+            water_heater_volume_m3 = num_units * OpenStudio.convert(50.0, 'gal', 'm^3').get
+          else
+            # A point-of-use heater serving one space is sized to that space's draws, the way the
+            # shared heater is sized to the building's, with the floor of a small under-counter
+            # electric unit. Giving every such space a 50 gal, 20 kBtu/hr tank put a tank sized for
+            # a whole small building on a strip mall tenant's 1.8 gph restroom sink, and with one
+            # tank per sliced retail space the stock's retail water heating was mostly standby.
+            # The sizing weights each draw by its zone multiplier, so a loop that serves several
+            # copies of a space is sized for all of them.
+            sizing = OpenstudioStandards::ServiceWaterHeating.water_heater_sizing_from_water_use_equipment(
+              space_water_use_equipment,
+              water_heater_efficiency: 1.0,
+              minimum_volume: POINT_OF_USE_MINIMUM_VOLUME_GAL * num_units
+            )
+            water_heater_capacity_w = [sizing[:water_heater_capacity], POINT_OF_USE_MINIMUM_CAPACITY_W * num_units].max
+            water_heater_volume_m3 = sizing[:water_heater_volume]
+          end
+
+          # one object stands for every tank on the loop, and loses heat as all of them
+          volume_gal_per_heater = OpenStudio.convert(water_heater_volume_m3, 'm^3', 'gal').get / num_water_heaters
+          loss_coefficient_w_per_k = OpenstudioStandards::ServiceWaterHeating.tank_loss_coefficient_w_per_k(volume_gal_per_heater, num_water_heaters, dedicated_water_heating_fuel)
 
           # default to 140F
           service_water_loop_temperature_c = OpenStudio.convert(140.0, 'F', 'C').get
@@ -284,7 +339,8 @@ module OpenstudioStandards
                                                                                                 number_of_water_heaters: num_water_heaters,
                                                                                                 add_piping_losses: false,
                                                                                                 floor_area: total_space_floor_area_m2,
-                                                                                                number_of_stories: 1)
+                                                                                                number_of_stories: 1,
+                                                                                                loss_coefficient_w_per_k: loss_coefficient_w_per_k)
 
           # add loop to array
           swh_systems << swh_loop
