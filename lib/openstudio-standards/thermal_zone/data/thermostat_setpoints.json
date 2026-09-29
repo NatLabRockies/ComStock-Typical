@@ -94,21 +94,21 @@
     },
     {
       "space_type_name": "datacenter/high ite",
-      "heating_setpoint_c": 15.0,
+      "heating_setpoint_c": 18.0,
       "heating_setback_delta_c": 0.0,
-      "cooling_setpoint_c": 35.0,
+      "cooling_setpoint_c": 27.0,
       "cooling_setback_delta_c": 0.0,
-      "source_building_type": "LargeDataCenterHighITE",
-      "source": "DataCenter HTGSETP_SCH / DataCenter CLGSETP_SCH"
+      "source_building_type": "LargeOffice",
+      "source": "OfficeLarge HTGSETP_DC_SCH / OfficeLarge CLGSETP_DC_SCH (curated: the standalone DataCenter prototype's 15/35 C pair is a supply-air-controlled ITE zone; at 35 C the zone reads as uncooled and the packaged VAV branches leave it with only a baseboard)"
     },
     {
       "space_type_name": "datacenter/low ite",
-      "heating_setpoint_c": 15.0,
+      "heating_setpoint_c": 18.0,
       "heating_setback_delta_c": 0.0,
-      "cooling_setpoint_c": 35.0,
+      "cooling_setpoint_c": 27.0,
       "cooling_setback_delta_c": 0.0,
-      "source_building_type": "LargeDataCenterLowITE",
-      "source": "DataCenter HTGSETP_SCH / DataCenter CLGSETP_SCH"
+      "source_building_type": "LargeOffice",
+      "source": "OfficeLarge HTGSETP_DC_SCH / OfficeLarge CLGSETP_DC_SCH (curated: the standalone DataCenter prototype's 15/35 C pair is a supply-air-controlled ITE zone; at 35 C the zone reads as uncooled and the packaged VAV branches leave it with only a baseboard)"
     },
     {
       "space_type_name": "dining",

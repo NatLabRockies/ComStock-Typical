@@ -249,11 +249,70 @@ module OpenstudioStandards
 
     # Whether a space type slice should be held back to the next story to stay with its partner.
     #
+    # Trade away any share of a space type that is too small for the bar it was split into.
+    #
+    # A building drawn as two bars splits every space type's area between them, and the split
+    # hands a bar whatever is left when it fills, down to a fraction of a square metre. Each
+    # bar then slices its share into a strip across its width, so a share below
+    # 3 ft x bar width is a sliver strip: in the 2026-09 run three outpatient buildings carried
+    # 0.05 m2 recovery rooms, 1 cm wide, and a school a 2.3 cm dining slice, and EnergyPlus's
+    # heat balance diverged in them.
+    #
+    # Such a share moves whole to the other bar, where the type already has a share (so it
+    # only grows), and a donor type that has a valid share in both bars gives the same area
+    # back the other way, keeping every type's total and both bars' footprints exact. The
+    # donor is the type with the most to give; it has to keep a share at or above the minimum
+    # in the bar it gives from, or give exactly all of it. A sliver with no such donor, or with
+    # no share in the other bar to grow, is left alone and logged.
+    #
+    # @param primary [Hash] space type key => { floor_area: m2, ... } for the primary bar; edited in place
+    # @param secondary [Hash] the same for the secondary bar; edited in place
+    # @param min_primary_m2 [Double] smallest slice the primary bar can hold without becoming a sliver
+    # @param min_secondary_m2 [Double] the same for the secondary bar
+    # @param tol_m2 [Double] shares at or below this count as nothing
+    # @return [Array<Array>] one [space type key, area m2, from bar, to bar] per share moved
+    def self.rebalance_bar_split_slivers(primary, secondary, min_primary_m2, min_secondary_m2, tol_m2: 0.01)
+      moves = []
+      trade = lambda do |from, to, min_from, min_to, from_name, to_name|
+        skipped = []
+        loop do
+          key, entry = from.find { |k, v| !skipped.include?(k) && v[:floor_area] > tol_m2 && v[:floor_area] < min_from }
+          break if key.nil?
+
+          area = entry[:floor_area]
+          name = entry[:space_type].respond_to?(:name) ? entry[:space_type].name.to_s : key.to_s
+          grows_to_valid = to.key?(key) && to[key][:floor_area] + area >= min_to
+          donor = from.keys.select { |k2| k2 != key && from[k2][:floor_area] >= min_from && to.key?(k2) }
+          donor = donor.select { |k2| left = to[k2][:floor_area] - area; left >= min_to || left.abs <= tol_m2 }
+          donor = donor.max_by { |k2| to[k2][:floor_area] }
+          if !grows_to_valid || donor.nil?
+            skipped << key
+            OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.Geometry.Create', "#{name} has #{area.round(2)} m2 in the #{from_name} bar, below the #{min_from.round(1)} m2 of its narrowest slice, and no other space type can trade places with it; it will be a sliver space.")
+            next
+          end
+
+          to[key][:floor_area] += area
+          from.delete(key)
+          from[donor][:floor_area] += area
+          to[donor][:floor_area] -= area
+          to.delete(donor) if to[donor][:floor_area] <= tol_m2
+          donor_name = from[donor][:space_type].respond_to?(:name) ? from[donor][:space_type].name.to_s : donor.to_s
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.Geometry.Create', "Moved the #{area.round(2)} m2 of #{name} in the #{from_name} bar, below the #{min_from.round(1)} m2 of its narrowest slice, to the #{to_name} bar and the same area of #{donor_name} the other way.")
+          moves << [key, area, from_name, to_name]
+        end
+      end
+      trade.call(secondary, primary, min_secondary_m2, min_primary_m2, 'secondary', 'primary')
+      trade.call(primary, secondary, min_primary_m2, min_secondary_m2, 'primary', 'secondary')
+      moves
+    end
+
     # The greedy story fill takes space types in ascending area order, so a story boundary can
     # fall between a pair that {order_slices_for_adjacency} deliberately put side by side. Where
     # this slice fits on the story but leaves the partner no room, both go to the next story
-    # instead. A slice that overruns the story is not held back: it continues onto the next story
-    # where its partner still follows it in the ordering.
+    # instead. A slice that overruns or exactly fills the story is not held back: it continues
+    # onto (or is followed by its partner on) the next story, where the partner still follows it
+    # in the ordering. Holding back a slice that fills the story would leave the story empty and,
+    # on a two-story building whose two space types each fill a story, drop the second one.
     #
     # @param own_area_m2 [Double] floor area of this slice still to be placed
     # @param partner_area_m2 [Double] floor area of the partner slice still to be placed
@@ -267,7 +326,7 @@ module OpenstudioStandards
       return false if final_story
       return false if partner_on_story
       return false if partner_area_m2 <= 0.0001
-      return false if own_area_m2 > remaining_footprint_m2
+      return false if own_area_m2 >= remaining_footprint_m2 - 0.0001
 
       (remaining_footprint_m2 - own_area_m2) < min_slice_area_m2
     end
@@ -384,29 +443,55 @@ module OpenstudioStandards
 
           # identify very small slices and re-arrange spaces to different stories to avoid this
           # only apply test_a when there is more than one space type on this story; if there is only one,
-          # shifting it out would leave space_types_local_count empty and crash create_sliced_bar_simple_polygons
-          if test_a && space_types_local_count.size > 1
+          # shifting it out would leave space_types_local_count empty and crash create_sliced_bar_simple_polygons.
+          # On the final story there is no next story to move a type to: a 2,000 ft2 three-story
+          # warehouse in the 2026-09 run moved its 606 ft2 storage type "up" from the top story
+          # on every pass and never placed it. A slice below the minimum on the last story is
+          # kept as it is.
+          if test_a && space_types_local_count.size > 1 && i + 1 < story_hash.size
 
-            # get first/smallest space type to move to another story
-            first_space = space_types_local_count.first
+            # the slice of this space type is a sliver. Free room for it by moving another type
+            # off this story to the next one and letting this type absorb the freed slot. The
+            # moved type has to be big enough for the slot to lift this slice past the minimum:
+            # moving whichever type was placed first, however small, left the sliver in place
+            # (a 0.2 m2 dining slice was moved and a 1.75 m2 classroom slice grew to 1.95 m2).
+            # Take the smallest type that is big enough, or the first placed if none is.
+            shortfall_m2 = valid_bar_area_min_m2 - raw_footprint_area_used
+            candidates = space_types_local_count.reject { |k2, _v2| k2 == space_type }
+            first_space = candidates.min_by { |_k2, v2| v2[:floor_area] }
+            big_enough = candidates.select { |_k2, v2| v2[:floor_area] * v[:multiplier] >= shortfall_m2 }
+            first_space = big_enough.min_by { |_k2, v2| v2[:floor_area] } unless big_enough.empty?
 
-            # adjustments running counter for space type being removed from this story
+            # building floor area the moved slice frees on this story; local counts are per
+            # floor, the running counts are for all the floors the story represents
+            moved_area = first_space[1][:floor_area] * v[:multiplier]
+
+            # adjustments running counter for space type being removed from this story. A
+            # double loaded corridor type is keyed by its parent in the running count and by
+            # its default child in the local count.
             space_types_running_count.each do |k2, v2|
-              next if k2 != first_space[0]
+              child = v2.key?(:children) ? v2[:children][:default][:space_type] : nil
+              next unless k2 == first_space[0] || child == first_space[0]
 
-              v2[:floor_area] += first_space[1][:floor_area] * v[:multiplier]
+              v2[:floor_area] += moved_area
             end
 
-            # adjust running count for current space type
-            space_type_hash[:floor_area] -= first_space[1][:floor_area] * v[:multiplier]
-
-            # add to local count for current space type
-            space_types_local_count[space_type][:floor_area] += first_space[1][:floor_area]
+            # the current space type takes over the freed slot, but only as much of it as it
+            # still has to place: handing it the whole slot regardless put an already exhausted
+            # type over its target by the slot and left the largest type short by the same
+            # amount. What it cannot absorb stays open on this story for the types after it.
+            absorbed_area = [moved_area, space_type_hash[:floor_area]].min
+            space_type_hash[:floor_area] -= absorbed_area
+            space_types_local_count[space_type][:floor_area] += absorbed_area / v[:multiplier].to_f
+            current_footprint_area -= (moved_area - absorbed_area)
 
             # remove from local count for removed space type
-            space_types_local_count.shift
+            space_types_local_count.delete(first_space[0])
 
-          elsif test_b
+          elsif test_b && i + 1 < story_hash.size
+            # the swap holds back part of this space type so the next story gets more than a
+            # sliver of it; on the final story there is no next story, and area held back here
+            # is never placed while the story's slices are stretched to fill the plate
 
             # swap size
             swap_size = valid_bar_area_min_m2 * 5.0 # currently equal to default perimeter zone depth of 15'

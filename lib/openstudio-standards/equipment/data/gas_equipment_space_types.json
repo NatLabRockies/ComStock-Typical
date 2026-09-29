@@ -117,8 +117,8 @@
     "gas_equipment_fraction_lost": 0.63
   },
   {
-    "natural_gas_equipment_space_type_name": "kitchen",
-    "standards_building_type": "PrimarySchool",
+    "natural_gas_equipment_space_type_name": "kitchen - primary school",
+    "standards_building_type": null,
     "gas_equipment_per_area": 453.7,
     "gas_equipment_per_area_units": "Btu/hr*ft^2",
     "gas_equipment_fraction_latent": 0.1,
@@ -162,8 +162,8 @@
     "gas_equipment_fraction_lost": 0.63
   },
   {
-    "natural_gas_equipment_space_type_name": "kitchen",
-    "standards_building_type": "SecondarySchool",
+    "natural_gas_equipment_space_type_name": "kitchen - secondary school",
+    "standards_building_type": null,
     "gas_equipment_per_area": 532.1,
     "gas_equipment_per_area_units": "Btu/hr*ft^2",
     "gas_equipment_fraction_latent": 0.1,

@@ -306,6 +306,11 @@ class Standard
       OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.CoilCoolingDXSingleSpeed', "For #{coil_cooling_dx_single_speed.name}, cannot find cool_plf_fplr curve, will not be set.")
     end
 
+    # Keep the rated sensible heat ratio where EnergyPlus can solve the coil bypass factor.
+    # Before the rename below: the sized flow and ratio are looked up by the coil's name in
+    # the sizing run's results.
+    coil_cooling_dx_single_speed_apply_rated_shr_cap(coil_cooling_dx_single_speed, capacity_w: multiplier.nil? ? capacity_w : capacity_w / multiplier)
+
     # Preserve the original name
     orig_name = coil_cooling_dx_single_speed.name.to_s
 
@@ -321,5 +326,120 @@ class Standard
     end
 
     return sql_db_vars_map
+  end
+
+  # EnergyPlus rated inlet air for DX cooling coils: 26.67 C dry bulb, 19.44 C wet bulb.
+  DX_RATED_INLET_AIR_TEMP_C = 26.6667
+  DX_RATED_INLET_AIR_HUM_RAT = 0.0111847
+  DX_STANDARD_PRESSURE_PA = 101_325.0
+
+  # Rated coil bypass factor of a single speed DX cooling coil, as EnergyPlus computes it
+  # from the rated capacity, air flow and sensible heat ratio (DXCoils::CalcCBF).
+  #
+  # The outlet air state at rated conditions follows from the capacity and the sensible heat
+  # ratio; the apparatus dew point is where the line from the inlet through the outlet meets
+  # the saturation curve; the bypass factor is the outlet's position on that line. A rated
+  # outlet at or beyond saturation gives a zero or negative bypass factor, which EnergyPlus
+  # treats as fatal.
+  #
+  # @param capacity_w [Double] gross rated total cooling capacity in W
+  # @param flow_m3_per_s [Double] rated air flow rate in m3/s
+  # @param shr [Double] rated sensible heat ratio
+  # @return [Double, nil] the bypass factor, nil if the outlet state cannot be reached
+  def coil_cooling_dx_single_speed_rated_bypass_factor(capacity_w, flow_m3_per_s, shr)
+    return nil unless capacity_w.to_f > 0.0 && flow_m3_per_s.to_f > 0.0 && shr.to_f > 0.0
+
+    enthalpy = ->(t, w) { (1.00484e3 * t) + (w * (2.50094e6 + (1.85895e3 * t))) }
+    hum_rat_from_enthalpy = ->(t, h) { (h - (1.00484e3 * t)) / (2.50094e6 + (1.85895e3 * t)) }
+    saturation_hum_rat = lambda do |t_c|
+      t = t_c + 273.15 # Hyland-Wexler saturation pressure over water
+      p_ws = Math.exp((-5800.2206 / t) + 1.3914993 - (0.048640239 * t) + (0.41764768e-4 * t**2) - (0.14452093e-7 * t**3) + (6.5459673 * Math.log(t)))
+      0.621945 * p_ws / (DX_STANDARD_PRESSURE_PA - p_ws)
+    end
+
+    # the outlet state as EnergyPlus defines it: the latent share of the enthalpy drop is
+    # taken at the inlet temperature to give the outlet humidity, then the outlet
+    # temperature follows from the outlet enthalpy and humidity
+    t_in = DX_RATED_INLET_AIR_TEMP_C
+    w_in = DX_RATED_INLET_AIR_HUM_RAT
+    h_in = enthalpy.call(t_in, w_in)
+    rho = DX_STANDARD_PRESSURE_PA / (287.0 * (t_in + 273.15) * (1.0 + (1.6078 * w_in)))
+    delta_h = capacity_w / (flow_m3_per_s * rho)
+    w_out = hum_rat_from_enthalpy.call(t_in, h_in - ((1.0 - shr) * delta_h))
+    h_out = h_in - delta_h
+    t_out = (h_out - (w_out * 2.50094e6)) / (1.00484e3 + (1.85895e3 * w_out))
+    return nil if t_out <= -20.0 || t_out >= t_in || w_out <= 0.0
+    return 0.0 if w_out >= saturation_hum_rat.call(t_out) # outlet at or past saturation
+
+    # apparatus dew point: bisection on the line through inlet and outlet, below the outlet
+    slope = (w_in - w_out) / (t_in - t_out)
+    on_line = ->(t) { w_out - (slope * (t_out - t)) }
+    lo = -20.0
+    hi = t_out
+    return nil unless (saturation_hum_rat.call(lo) - on_line.call(lo)).negative?
+
+    40.times do
+      mid = 0.5 * (lo + hi)
+      (saturation_hum_rat.call(mid) - on_line.call(mid)).negative? ? lo = mid : hi = mid
+    end
+    t_adp = 0.5 * (lo + hi)
+    h_adp = enthalpy.call(t_adp, saturation_hum_rat.call(t_adp))
+    (h_out - h_adp) / (h_in - h_adp)
+  end
+
+  # The largest rated sensible heat ratio, at or below the one given, whose rated bypass
+  # factor clears a floor.
+  #
+  # EnergyPlus autosizes the ratio from a correlation on air flow per unit capacity
+  # (0.431 + 6086 x m3/s per W), then walks it up in 0.001 steps until the apparatus dew
+  # point is consistent (DXCoils::ValidateADP). For a small coil on a zone with little
+  # cooling load that walk ends with the rated outlet air on the saturation curve: a 7 kBtu/h
+  # storage-room coil in the 2026-09 100k run came out at 0.796 with 5.25e-5 m3/s per W,
+  # a hair under saturation, and the simulation's own bypass factor iteration then came out
+  # slightly negative, which is fatal. Stepping the ratio down moves the outlet off the
+  # curve; the loads and flows drift a few percent between the sizing runs that follow, so
+  # the floor leaves a margin rather than stopping at zero. Typical coils sit at 0.1 to 0.2.
+  #
+  # @param capacity_w [Double] gross rated total cooling capacity in W
+  # @param flow_m3_per_s [Double] rated air flow rate in m3/s
+  # @param shr [Double] rated sensible heat ratio to cap
+  # @param min_bypass_factor [Double] smallest acceptable rated bypass factor
+  # @param step [Double] amount the ratio is lowered per try
+  # @param floor [Double] lowest ratio returned
+  # @return [Double] the ratio, unchanged if it already clears the floor
+  def coil_cooling_dx_single_speed_feasible_rated_shr(capacity_w, flow_m3_per_s, shr, min_bypass_factor: 0.1, step: 0.005, floor: 0.5)
+    candidate = shr
+    while candidate > floor
+      cbf = coil_cooling_dx_single_speed_rated_bypass_factor(capacity_w, flow_m3_per_s, candidate)
+      return candidate if cbf.nil? || cbf >= min_bypass_factor
+
+      candidate = (candidate - step).round(6)
+    end
+    floor
+  end
+
+  # Cap a coil's rated sensible heat ratio where its sized capacity and air flow leave
+  # EnergyPlus no room to solve the bypass factor, see
+  # {#coil_cooling_dx_single_speed_feasible_rated_shr}. Needs sized values, so it does
+  # nothing before a sizing run; a ratio that already clears the floor is left autosized.
+  #
+  # @param coil_cooling_dx_single_speed [OpenStudio::Model::CoilCoolingDXSingleSpeed] coil cooling dx single speed object
+  # @param capacity_w [Double, nil] the coil's gross rated total cooling capacity in W, looked up when nil
+  # @return [Double, nil] the ratio set, nil if the coil was left alone
+  def coil_cooling_dx_single_speed_apply_rated_shr_cap(coil_cooling_dx_single_speed, capacity_w: nil)
+    coil = coil_cooling_dx_single_speed
+    capacity_w = OpenstudioStandards::HVAC.coil_cooling_dx_single_speed_get_capacity(coil) if capacity_w.nil?
+    flow = coil.ratedAirFlowRate.is_initialized ? coil.ratedAirFlowRate.get : coil.autosizedRatedAirFlowRate
+    shr = coil.ratedSensibleHeatRatio.is_initialized ? coil.ratedSensibleHeatRatio.get : coil.autosizedRatedSensibleHeatRatio
+    flow = flow.get if flow.respond_to?(:is_initialized) && flow.is_initialized
+    shr = shr.get if shr.respond_to?(:is_initialized) && shr.is_initialized
+    return nil unless capacity_w.to_f > 0.0 && flow.is_a?(Numeric) && shr.is_a?(Numeric)
+
+    capped = coil_cooling_dx_single_speed_feasible_rated_shr(capacity_w, flow, shr)
+    return nil if capped >= shr
+
+    coil.setRatedSensibleHeatRatio(capped)
+    OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CoilCoolingDXSingleSpeed', "For #{coil.name}, the rated sensible heat ratio #{shr.round(3)} at #{capacity_w.round} W and #{flow.round(4)} m3/s puts the rated outlet air at saturation; set to #{capped} so EnergyPlus can solve the coil bypass factor.")
+    capped
   end
 end

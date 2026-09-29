@@ -219,12 +219,23 @@ module OpenstudioStandards
     #   people:             { people_per_1000_ft2: Numeric, keep_standard_design_level: Boolean }
     #   lighting:           { w_per_area: Numeric (W/ft^2), w_per_person: Numeric (W/person) }
     #   electric_equipment: { w_per_area: Numeric (W/ft^2) }
+    #                       { electric_equipment_space_type_name: String or Array<String> }
     #   gas_equipment:      { btu_per_hr_per_area: Numeric (Btu/hr*ft^2) }
+    #                       { natural_gas_equipment_space_type_name: String or Array<String> }
     #   ventilation:        { cfm_per_person: Numeric, cfm_per_area: Numeric (cfm/ft^2), ach: Numeric }
     #
     # When an override targets a load the standards data created no instance for
     # (e.g. adding people to a space type with zero standard occupant density), the
     # load instance and definition are created.
+    #
+    # The equipment space type name fields replace the space type's equipment with the
+    # typical equipment objects of those names from electric_equipment_space_types.json and
+    # gas_equipment_space_types.json, one instance per name, and record the names in the
+    # space type's 'electric_equipment_space_type' / 'natural_gas_equipment_space_type'
+    # additional property. This is how a building spec picks a pre-defined load object for a
+    # space type ('kitchen - primary school', 'bakery', a named density tier) without stating
+    # a density. A density field in the same section is applied afterwards to the first
+    # instance, so the two are not meant to be combined; spec validation refuses the mix.
     #
     # When the people override sets keep_standard_design_level true, the design occupancy
     # level from the standard input is kept, and the space type's occupancy schedule peak is
@@ -309,6 +320,16 @@ module OpenstudioStandards
         end
       end
 
+      # electric equipment objects by name
+      if overrides[:electric_equipment].is_a?(Hash)
+        names = Array(overrides[:electric_equipment][:electric_equipment_space_type_name]).compact.map(&:to_s).reject(&:empty?)
+        unless names.empty?
+          OpenstudioStandards::Equipment.space_type_apply_typical_electric_equipment(space_type, names, building_type_fallback: true)
+          space_type.additionalProperties.setFeature('electric_equipment_space_type', OpenstudioStandards::Equipment.equipment_space_type_feature_value(names))
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "#{space_type.name} load override set electric equipment to #{names.join(', ')}.")
+        end
+      end
+
       # electric equipment
       if overrides[:electric_equipment].is_a?(Hash) && overrides[:electric_equipment][:w_per_area].is_a?(Numeric)
         w_per_area = overrides[:electric_equipment][:w_per_area]
@@ -323,6 +344,16 @@ module OpenstudioStandards
         end
         instance.electricEquipmentDefinition.setWattsperSpaceFloorArea(OpenStudio.convert(w_per_area, 'W/ft^2', 'W/m^2').get)
         OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "#{space_type.name} load override set EPD to #{w_per_area} W/ft^2.")
+      end
+
+      # gas equipment objects by name
+      if overrides[:gas_equipment].is_a?(Hash)
+        names = Array(overrides[:gas_equipment][:natural_gas_equipment_space_type_name]).compact.map(&:to_s).reject(&:empty?)
+        unless names.empty?
+          OpenstudioStandards::Equipment.space_type_apply_typical_gas_equipment(space_type, names, building_type_fallback: true)
+          space_type.additionalProperties.setFeature('natural_gas_equipment_space_type', OpenstudioStandards::Equipment.equipment_space_type_feature_value(names))
+          OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.CreateTypical', "#{space_type.name} load override set gas equipment to #{names.join(', ')}.")
+        end
       end
 
       # gas equipment

@@ -651,6 +651,77 @@ module OpenstudioStandards
       return adjacent_zones
     end
 
+    # Return the zones stacked directly above or below the zone, with the footprint area they
+    # share, largest first.
+    #
+    # Adjacency here is geometric only: a ceiling of this zone and a floor of another lie in the
+    # same horizontal plane and their footprints overlap, or the reverse. Nothing about the
+    # surfaces is read beyond their vertices, so the surfaces do not need to be matched and can
+    # stay adiabatic, which is how bar models are built (make_mid_story_surfaces_adiabatic).
+    # The overlap is measured with the polygon intersection the surface intersection code uses,
+    # on the footprints projected to the plane, with no change to the model.
+    #
+    # @param thermal_zone [OpenStudio::Model::ThermalZone] OpenStudio ThermalZone object
+    # @param tolerance_m [Double] plane height and polygon tolerance in meters
+    # @return [Array<Array>] [zone, shared_area_m2] pairs sorted by shared area descending
+    def self.thermal_zone_get_vertically_adjacent_zones(thermal_zone, tolerance_m: 0.01)
+      own = thermal_zone_horizontal_footprints(thermal_zone)
+      return [] if own.empty?
+
+      shared = Hash.new(0.0)
+      thermal_zone.model.getThermalZones.sort.each do |other_zone|
+        next if other_zone == thermal_zone
+
+        thermal_zone_horizontal_footprints(other_zone).each do |other|
+          own.each do |mine|
+            # a ceiling meets a floor above it, a floor meets a ceiling below it
+            next unless mine[:type] != other[:type]
+            next unless (mine[:z] - other[:z]).abs <= tolerance_m
+
+            result = OpenStudio.intersect(mine[:polygon], other[:polygon], tolerance_m)
+            next if result.empty?
+
+            area = OpenStudio.getArea(result.get.polygon1)
+            next if area.empty? || area.get <= 0.0
+
+            shared[other_zone] += area.get
+          end
+        end
+      end
+
+      return shared.to_a.sort_by { |zone, area| [-area, zone.name.to_s] }
+    end
+
+    # The horizontal floor and ceiling footprints of a zone in building coordinates, projected
+    # to the plane and wound clockwise seen from above, which is what the polygon utilities
+    # expect. Each entry is { type: 'Floor' or 'RoofCeiling', z:, polygon: }.
+    #
+    # @param thermal_zone [OpenStudio::Model::ThermalZone] OpenStudio ThermalZone object
+    # @return [Array<Hash>] footprints
+    def self.thermal_zone_horizontal_footprints(thermal_zone)
+      footprints = []
+      thermal_zone.spaces.each do |space|
+        transformation = space.transformation
+        space.surfaces.each do |surface|
+          type = surface.surfaceType
+          next unless type == 'Floor' || type == 'RoofCeiling'
+
+          vertices = transformation * surface.vertices
+          zs = vertices.map(&:z)
+          next unless zs.max - zs.min <= 0.01 # not horizontal
+
+          flat = OpenStudio::Point3dVector.new
+          vertices.each { |point| flat << OpenStudio::Point3d.new(point.x, point.y, 0.0) }
+          normal = OpenStudio.getOutwardNormal(flat)
+          next if normal.empty?
+
+          flat = OpenStudio.reverse(flat) if normal.get.z > 0.0
+          footprints << { type: type, z: zs.sum / zs.size, polygon: flat }
+        end
+      end
+      return footprints
+    end
+
     # @!endgroup Information:ThermalZone
 
     # @!group Information:ThermalZones

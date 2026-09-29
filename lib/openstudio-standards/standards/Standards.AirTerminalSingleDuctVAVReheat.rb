@@ -1,6 +1,68 @@
 class Standard
   # @!group AirTerminalSingleDuctVAVReheat
 
+  # The maximum flow fraction during reheat for a dual-maximum (ReverseWithLimits) terminal.
+  #
+  # 90.1 dual-maximum control caps the reheat airflow at 50% of the cooling maximum. EnergyPlus
+  # sizes a ReverseWithLimits terminal's reheat coil on that reheat airflow (SingleDuct.cc,
+  # since PR 10763 in 25.1), so where the zone's heating design airflow is larger than the cap -
+  # a heating-dominated zone - the coil is asked to carry the zone heating load on less air than
+  # the zone sizing found it needs. The required leaving air temperature then exceeds the hot
+  # water temperature and the UA autosizing cannot bracket a solution: "Autosizing of heating
+  # coil UA failed", fatal in 25.1 (NREL/EnergyPlus#11078; 26.1 only adds a diagnostic naming
+  # this fraction). Left at Autocalculate, EnergyPlus would set the reheat flow to the zone
+  # heating design flow itself. This returns the larger of the default fraction and that
+  # heating design flow over the terminal maximum, capped at 1.0, so cooling-dominated zones
+  # keep the 50% rule and heating-dominated zones get the air their coil sizing needs.
+  #
+  # @param heating_design_flow_m3_per_s [Double, nil] zone heating design airflow from the sizing run
+  # @param maximum_flow_m3_per_s [Double, nil] terminal maximum airflow
+  # @param default_fraction [Double] the dual-maximum cap, 0.5 per 90.1
+  # @return [Double] the maximum flow fraction during reheat
+  def air_terminal_single_duct_vav_reheat_dual_maximum_reheat_fraction(heating_design_flow_m3_per_s, maximum_flow_m3_per_s, default_fraction = 0.5)
+    return default_fraction if heating_design_flow_m3_per_s.nil? || maximum_flow_m3_per_s.nil?
+    return default_fraction unless maximum_flow_m3_per_s > 0.0
+    return default_fraction unless heating_design_flow_m3_per_s > default_fraction * maximum_flow_m3_per_s
+
+    return [heating_design_flow_m3_per_s / maximum_flow_m3_per_s, 1.0].min
+  end
+
+  # Set a dual-maximum terminal's maximum flow fraction during reheat from its zone's heating
+  # design airflow. See air_terminal_single_duct_vav_reheat_dual_maximum_reheat_fraction. Needs
+  # a sizing run first: without the zone heating design flow or the terminal maximum flow the
+  # default fraction is applied and a warning logged.
+  #
+  # @param air_terminal_single_duct_vav_reheat [OpenStudio::Model::AirTerminalSingleDuctVAVReheat] terminal
+  # @param zone [OpenStudio::Model::ThermalZone] the zone the terminal serves
+  # @param default_fraction [Double] the dual-maximum cap, 0.5 per 90.1
+  # @return [Double] the fraction applied
+  def air_terminal_single_duct_vav_reheat_apply_dual_maximum_reheat_fraction(air_terminal_single_duct_vav_reheat, zone, default_fraction = 0.5)
+    terminal = air_terminal_single_duct_vav_reheat
+
+    max_flow = terminal.maximumAirFlowRate
+    max_flow = terminal.autosizedMaximumAirFlowRate unless max_flow.is_initialized
+    max_flow = max_flow.is_initialized ? max_flow.get : nil
+
+    htg_flow = zone.autosizedHeatingDesignAirFlowRate
+    htg_flow = htg_flow.is_initialized ? htg_flow.get : nil
+
+    if max_flow.nil? || htg_flow.nil?
+      OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.AirTerminalSingleDuctVAVReheat', "For #{terminal.name}: the terminal maximum flow or the zone heating design flow is not available (run a sizing run first); the maximum flow fraction during reheat is #{default_fraction} without checking that the reheat coil can carry the zone heating load.")
+      terminal.setMaximumFlowFractionDuringReheat(default_fraction)
+      return default_fraction
+    end
+
+    fraction = air_terminal_single_duct_vav_reheat_dual_maximum_reheat_fraction(htg_flow, max_flow, default_fraction)
+    terminal.setMaximumFlowFractionDuringReheat(fraction)
+    if fraction > default_fraction
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirTerminalSingleDuctVAVReheat', "For #{terminal.name}: the zone heating design flow of #{htg_flow.round(4)} m^3/s exceeds #{default_fraction} of the #{max_flow.round(4)} m^3/s maximum; maximum flow fraction during reheat raised to #{fraction.round(3)} so the reheat coil sizes on the air the zone needs.")
+    else
+      OpenStudio.logFree(OpenStudio::Debug, 'openstudio.standards.AirTerminalSingleDuctVAVReheat', "For #{terminal.name}: maximum flow fraction during reheat set to #{fraction}.")
+    end
+
+    return fraction
+  end
+
   # Set the minimum damper position based on OA rate of the space and the template.
   # Zones with low OA per area get lower initial guesses.
   # Final position will be adjusted upward as necessary by Standards.AirLoopHVAC.adjust_minimum_vav_damper_positions

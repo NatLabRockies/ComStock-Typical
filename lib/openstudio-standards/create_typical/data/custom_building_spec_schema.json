@@ -504,6 +504,10 @@
           "type": "boolean",
           "description": "When true (default), mid-story floor/ceiling surfaces are adiabatic instead of intersected and matched."
         },
+        "enforce_space_area_constraints": {
+          "type": "boolean",
+          "description": "When true, space types whose share of the building would fall below a realistic minimum floor area (geometry/data/space_area_constraints.json, overridable per ratio entry with min_area, drop_priority and essential) are dropped, least important first, and their area is given to the remaining space types before the geometry is generated. Default false."
+        },
         "bar_division_method": {
           "type": "string",
           "enum": [
@@ -636,6 +640,13 @@
               "type": "number",
               "minimum": 0,
               "description": "Electric equipment power density in W/ft^2."
+            },
+            "electric_equipment_space_type_name": {
+              "oneOf": [
+                { "type": "string", "minLength": 1 },
+                { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+              ],
+              "description": "One or more pre-defined electric equipment objects from lib/openstudio-standards/equipment/data/electric_equipment_space_types.json (electric_equipment_space_type_name values) to create in the space type in place of its default equipment, one instance per name. Not combined with w_per_area."
             }
           }
         },
@@ -647,6 +658,13 @@
               "type": "number",
               "minimum": 0,
               "description": "Gas equipment power density in Btu/hr per ft^2."
+            },
+            "natural_gas_equipment_space_type_name": {
+              "oneOf": [
+                { "type": "string", "minLength": 1 },
+                { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+              ],
+              "description": "One or more pre-defined natural gas equipment objects from lib/openstudio-standards/equipment/data/gas_equipment_space_types.json (natural_gas_equipment_space_type_name values, e.g. 'kitchen - primary school', 'bakery') to create in the space type in place of its default equipment, one instance per name. Not combined with btu_per_hr_per_area."
             }
           }
         },
@@ -991,6 +1009,19 @@
         "space_type_gen": {
           "type": "boolean",
           "description": "When false, the space type is created but no geometry is generated for it (used for undeveloped or basement space types)."
+        },
+        "min_area": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum realistic building-total floor area for this space type in ft2, used when form.enforce_space_area_constraints is true. Overrides the shipped constraint table; 0 disables the minimum."
+        },
+        "drop_priority": {
+          "type": "integer",
+          "description": "Order in which under-minimum space types are dropped when form.enforce_space_area_constraints is true: lower is dropped first. Overrides the shipped constraint table."
+        },
+        "essential": {
+          "type": "boolean",
+          "description": "When true the space type is kept and raised to its minimum area rather than dropped, as long as any non-essential space type can be dropped instead. Overrides the shipped constraint table."
         }
       }
     },

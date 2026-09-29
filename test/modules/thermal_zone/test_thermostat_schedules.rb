@@ -166,6 +166,21 @@ class TestThermalZoneThermostatSchedules < Minitest::Test
     end
   end
 
+  # The data center rows carry the large office data center pair. The standalone DataCenter
+  # prototype's 15/35 C pair belongs to a supply-air-controlled ITE zone: at 35 C the zone
+  # falls above the cooled-zone cutoff, the packaged VAV branches leave it with only a
+  # baseboard, and its ITE load blew up every large office sizing run in leg D.
+  def test_data_center_rows_read_as_cooled_zones
+    cooled_below_c = OpenStudio.convert(91.0, 'F', 'C').get
+    ['datacenter/high ite', 'datacenter/low ite'].each do |name|
+      record = @zone.space_type_thermostat_setpoints(name)
+      refute_nil(record, "no setpoint record for #{name}")
+      assert_in_delta(18.0, record[:heating_setpoint_c], 0.01, "#{name} heating setpoint")
+      assert_in_delta(27.0, record[:cooling_setpoint_c], 0.01, "#{name} cooling setpoint")
+      assert_operator(record[:cooling_setpoint_c], :<, cooled_below_c, "#{name} would not count as a cooled zone")
+    end
+  end
+
   # A space type that carries people but resolves to no setpoint record is built
   # unconditioned, silently, since the thermostat pass only logs at info level per zone.
   # Every occupied all-level space type has to resolve, by its own name or its level-1

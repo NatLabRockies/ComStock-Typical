@@ -220,11 +220,58 @@ class Standard
     return opt_start_required
   end
 
-  # Adds optimum start control to the airloop.
+  # Whether the air loop's availability schedule turns the fan on at some point on every day
+  # type it can simulate, the summer and winter design days included.
+  #
+  # A loop whose fan schedule is off all day has nothing for optimum start to start early, and
+  # on EnergyPlus 25.1 and 25.2 it is worse than useless: AvailabilityManager:OptimumStart
+  # scans the fan schedule's day values for the first on-timestep with an inclusive loop bound
+  # (SystemAvailabilityManager.cc, `ts <= TimeStepsInHour`), so an all-off day reads one past
+  # the end of the array. Whatever sits there decides the fan start time; a stale positive value
+  # gives 24.24, and the zone predictor then indexes the thermostat day values at hour 26, also
+  # past the end, and hands the zone another schedule's numbers as its setpoints. The result is
+  # a DualSetPointWithDeadBand fatal with impossible setpoints on a random design day, seen on
+  # the packaged units of unoccupied warehouse storage zones in the 2026-09 Kestrel run, where
+  # the availability schedule is zero every day and the unit cycles on demand. develop fixed
+  # the bound in commit 2d3b0ca (2026-08-18); no release we run carries it.
   #
   # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
-  # @return [Boolean] returns true if successful, false if not
+  # @return [Boolean] true if every day profile has a value above zero, false otherwise
+  def air_loop_hvac_availability_schedule_turns_on?(air_loop_hvac)
+    schedule = air_loop_hvac.availabilitySchedule
+
+    if schedule.to_ScheduleRuleset.is_initialized
+      ruleset = schedule.to_ScheduleRuleset.get
+      day_schedules = [ruleset.defaultDaySchedule, ruleset.summerDesignDaySchedule, ruleset.winterDesignDaySchedule]
+      ruleset.scheduleRules.each { |rule| day_schedules << rule.daySchedule }
+      return day_schedules.all? { |day| day.values.any? { |value| value > 0.0 } }
+    end
+
+    if schedule.to_ScheduleConstant.is_initialized
+      return schedule.to_ScheduleConstant.get.value > 0.0
+    end
+
+    # other schedule types cannot be read day by day here; take the overall maximum
+    min_max = OpenstudioStandards::Schedules.schedule_get_min_max(schedule)
+    return true if min_max.nil? || min_max['max'].nil?
+
+    return min_max['max'] > 0.0
+  end
+
+  # Adds optimum start control to the airloop.
+  #
+  # Skipped, with an info message, when the loop's availability schedule never turns the fan
+  # on for some day type: there is nothing to start early, and on the EnergyPlus versions in
+  # use the manager corrupts the zone setpoints on such a loop. See
+  # air_loop_hvac_availability_schedule_turns_on?.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [Boolean] returns true if the control was added, false if not
   def air_loop_hvac_enable_optimum_start(air_loop_hvac)
+    unless air_loop_hvac_availability_schedule_turns_on?(air_loop_hvac)
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{air_loop_hvac.name}: optimum start control not enabled because the availability schedule #{air_loop_hvac.availabilitySchedule.name} never turns the fan on for at least one day type, so there is no start to optimize.")
+      return false
+    end
 
     avm_os = OpenStudio::Model::AvailabilityManagerOptimumStart.new(air_loop_hvac.model)
     avm_os.setName("#{air_loop_hvac.name.get} Optimum Start Availability Manager")
@@ -2364,15 +2411,20 @@ class Standard
 
     # Set the control for any VAV reheat terminals on this airloop.
     control_type_set = false
-    air_loop_hvac.demandComponents.each do |equip|
-      if equip.to_AirTerminalSingleDuctVAVReheat.is_initialized
+    air_loop_hvac.thermalZones.sort.each do |zone|
+      zone.equipment.each do |equip|
+        next unless equip.to_AirTerminalSingleDuctVAVReheat.is_initialized
+
         term = equip.to_AirTerminalSingleDuctVAVReheat.get
         # Dual maximum only applies to terminals with HW reheat coils
         if damper_action == 'Dual Maximum'
           if term.reheatCoil.to_CoilHeatingWater.is_initialized
             term.setDamperHeatingAction(damper_action_eplus)
             control_type_set = true
-            term.setMaximumFlowFractionDuringReheat(0.5)
+            # 50% of the cooling maximum, or more where the zone heating design flow needs it:
+            # EnergyPlus sizes the reheat coil on this flow and cannot size it below the zone's
+            # heating airflow (see the terminal method).
+            air_terminal_single_duct_vav_reheat_apply_dual_maximum_reheat_fraction(term, zone)
           end
         else
           term.setDamperHeatingAction(damper_action_eplus)

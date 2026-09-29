@@ -764,7 +764,7 @@
     "lighting_space_type_name": "food_preparation_lighting",
     "ventilation_space_type_name": "food_preparation_ventilation",
     "electric_equipment_space_type_name": "kitchen_electric_equipment",
-    "natural_gas_equipment_space_type_name": "kitchen",
+    "natural_gas_equipment_space_type_name": "kitchen - primary school",
     "schedule_set_name": "food preparation - primary school schedule set",
     "critical_operation": false,
     "annotation": "food preparation in a primary school building"
@@ -774,7 +774,7 @@
     "lighting_space_type_name": "food_preparation_lighting",
     "ventilation_space_type_name": "food_preparation_ventilation",
     "electric_equipment_space_type_name": "kitchen_electric_equipment",
-    "natural_gas_equipment_space_type_name": "kitchen",
+    "natural_gas_equipment_space_type_name": "kitchen - secondary school",
     "schedule_set_name": "food preparation - secondary school schedule set",
     "critical_operation": false,
     "annotation": "food preparation in a secondary school building"

@@ -297,6 +297,40 @@ class TestCustomBuildingSpecSchema < Minitest::Test
     end
   end
 
+  def test_equipment_object_names_in_load_overrides
+    named = typical_base_spec.merge('load_overrides' => [
+      { 'space_type' => 'office', 'gas_equipment' => { 'natural_gas_equipment_space_type_name' => 'kitchen - primary school' } },
+      { 'space_type' => 'conference/meeting/multipurpose', 'electric_equipment' => { 'electric_equipment_space_type_name' => ['kitchen_electric_equipment'] } }
+    ])
+    assert(@schemer.valid?(named), 'named equipment objects should pass schema validation')
+    runtime_errors = OpenstudioStandards::CreateTypical.validate_custom_building_spec(JSON.parse(JSON.generate(named), symbolize_names: true))
+    assert_empty(runtime_errors, "named equipment objects fail runtime validation: #{runtime_errors}")
+
+    # structurally valid, but the name must exist in the equipment data
+    unknown = typical_base_spec.merge('load_overrides' => [
+      { 'space_type' => 'office', 'gas_equipment' => { 'natural_gas_equipment_space_type_name' => 'kitchen - not a tier' } }
+    ])
+    assert(@schemer.valid?(unknown))
+    runtime_errors = OpenstudioStandards::CreateTypical.validate_custom_building_spec(JSON.parse(JSON.generate(unknown), symbolize_names: true))
+    assert(runtime_errors.any? { |e| e.include?("'kitchen - not a tier' is not defined") }, runtime_errors.inspect)
+
+    # naming objects and stating a density in the same section is refused
+    both = typical_base_spec.merge('load_overrides' => [
+      { 'space_type' => 'office', 'gas_equipment' => { 'natural_gas_equipment_space_type_name' => 'bakery', 'btu_per_hr_per_area' => 10.0 } }
+    ])
+    assert(@schemer.valid?(both))
+    runtime_errors = OpenstudioStandards::CreateTypical.validate_custom_building_spec(JSON.parse(JSON.generate(both), symbolize_names: true))
+    assert(runtime_errors.any? { |e| e.include?('use one or the other') }, runtime_errors.inspect)
+
+    # an empty array and a wrong type fail the schema
+    empty = typical_base_spec.merge('load_overrides' => [{ 'space_type' => 'office', 'gas_equipment' => { 'natural_gas_equipment_space_type_name' => [] } }])
+    refute(@schemer.valid?(empty))
+    refute_empty(OpenstudioStandards::CreateTypical.validate_custom_building_spec(JSON.parse(JSON.generate(empty), symbolize_names: true)))
+    number = typical_base_spec.merge('load_overrides' => [{ 'space_type' => 'office', 'gas_equipment' => { 'natural_gas_equipment_space_type_name' => 5 } }])
+    refute(@schemer.valid?(number))
+    refute_empty(OpenstudioStandards::CreateTypical.validate_custom_building_spec(JSON.parse(JSON.generate(number), symbolize_names: true)))
+  end
+
   def test_runtime_validator_live_data_checks
     # the schema cannot express these; the runtime validator must catch them
     bad_template = base_spec.merge('template' => 'not-a-template')

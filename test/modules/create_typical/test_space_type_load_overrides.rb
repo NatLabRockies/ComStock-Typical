@@ -274,4 +274,50 @@ class TestSpaceTypeLoadOverrides < Minitest::Test
     assert(@create.space_type_apply_load_overrides(space_type, load_overrides))
     assert_in_delta(original_lpd, space_type.lights.first.lightsDefinition.wattsperSpaceFloorArea.get, 0.0001)
   end
+
+  # a typical (all-level) space type as create_bar builds it: no standards building type, equipment
+  # objects named by additional properties, equipment created from the typical data
+  def typical_kitchen_space_type(model)
+    space_type = OpenStudio::Model::SpaceType.new(model)
+    space_type.setName('food preparation')
+    space_type.setStandardsSpaceType('food preparation')
+    space_type.additionalProperties.setFeature('standards_space_type', 'food preparation')
+    space_type.additionalProperties.setFeature('electric_equipment_space_type', 'kitchen_electric_equipment')
+    space_type.additionalProperties.setFeature('natural_gas_equipment_space_type', 'kitchen')
+    OpenstudioStandards::Equipment.create_typical_equipment(model, building_type_fallback: true)
+    space_type
+  end
+
+  def gas_btu_per_hr_ft2(instance)
+    OpenStudio.convert(instance.gasEquipmentDefinition.wattsperSpaceFloorArea.get, 'W/m^2', 'Btu/hr*ft^2').get
+  end
+
+  def test_load_overrides_name_equipment_objects
+    model = OpenStudio::Model::Model.new
+    space_type = typical_kitchen_space_type(model)
+    assert_in_delta(203.98, gas_btu_per_hr_ft2(space_type.gasEquipment[0]), 0.01, 'typical kitchen starts at the median')
+
+    # one named object replaces the default equipment and is recorded on the space type
+    assert(@create.space_type_apply_load_overrides(space_type, [{ space_type: 'food preparation', gas_equipment: { natural_gas_equipment_space_type_name: 'kitchen - primary school' } }]))
+    assert_equal(1, space_type.gasEquipment.size)
+    assert_in_delta(453.7, gas_btu_per_hr_ft2(space_type.gasEquipment[0]), 0.01)
+    assert_equal('kitchen - primary school', space_type.additionalProperties.getFeatureAsString('natural_gas_equipment_space_type').get)
+
+    # several named objects become one instance each
+    assert(@create.space_type_apply_load_overrides(space_type, [{ space_type: 'food preparation', gas_equipment: { natural_gas_equipment_space_type_name: ['kitchen - primary school', 'bakery'] } }]))
+    assert_equal(2, space_type.gasEquipment.size)
+    densities = space_type.gasEquipment.map { |g| gas_btu_per_hr_ft2(g).round(2) }.sort
+    assert_equal([8.54, 453.7], densities)
+    recorded = OpenstudioStandards::Equipment.equipment_space_type_names(space_type.additionalProperties.getFeatureAsString('natural_gas_equipment_space_type').get)
+    assert_equal(['kitchen - primary school', 'bakery'], recorded)
+
+    # electric objects work the same way, and string keys are read
+    assert(@create.space_type_apply_load_overrides(space_type, [{ 'space_type' => 'food preparation', 'electric_equipment' => { 'electric_equipment_space_type_name' => 'kitchen_electric_equipment' } }]))
+    assert_equal(1, space_type.electricEquipment.size)
+    assert_equal('kitchen_electric_equipment', space_type.additionalProperties.getFeatureAsString('electric_equipment_space_type').get)
+
+    # an unknown name creates nothing and does not raise
+    assert(@create.space_type_apply_load_overrides(space_type, [{ space_type: 'food preparation', gas_equipment: { natural_gas_equipment_space_type_name: 'not an object' } }]))
+    assert_empty(space_type.gasEquipment)
+  end
 end

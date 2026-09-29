@@ -132,6 +132,30 @@ module OpenstudioStandards
         end
       end
 
+      # load_overrides naming equipment objects: the names must exist in the equipment data, and
+      # naming objects is an alternative to stating a density, not a companion to it
+      equipment_name_keys = {
+        'electric_equipment' => ['electric_equipment_space_type_name', 'w_per_area', OpenstudioStandards::Equipment.electric_equipment_space_type_names, 'electric_equipment_space_types.json'],
+        'gas_equipment' => ['natural_gas_equipment_space_type_name', 'btu_per_hr_per_area', OpenstudioStandards::Equipment.gas_equipment_space_type_names, 'gas_equipment_space_types.json']
+      }
+      Array(string_spec['load_overrides']).each_with_index do |entry, i|
+        next unless entry.is_a?(Hash)
+
+        equipment_name_keys.each do |section, (name_key, density_key, known_names, data_file)|
+          fields = entry[section]
+          next unless fields.is_a?(Hash) && fields.key?(name_key)
+
+          if fields.key?(density_key)
+            errors << "spec.load_overrides[#{i}].#{section}: names equipment objects (#{name_key}) and also sets #{density_key}; use one or the other"
+          end
+          Array(fields[name_key]).each do |name|
+            next if known_names.include?(name)
+
+            errors << "spec.load_overrides[#{i}].#{section}.#{name_key}: '#{name}' is not defined in lib/openstudio-standards/equipment/data/#{data_file}"
+          end
+        end
+      end
+
       # primary_building_type must be a standard building type: it drives the construction
       # set and other standards lookups in create_typical_building_from_model
       primary_building_type = string_spec['primary_building_type']

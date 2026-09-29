@@ -57,6 +57,71 @@ class TestOptimumStart < Minitest::Test
     refute(@std.air_loop_hvac_optimum_start_required?(air_loop_with_flow(4_889)))
   end
 
+  # A ruleset availability schedule: `default` all day, with the design days set separately so
+  # the guard can be tested on each profile it has to read.
+  def availability_schedule(model, default:, summer_design_day: nil, winter_design_day: nil)
+    sch = OpenStudio::Model::ScheduleRuleset.new(model, default)
+    sch.setName("Fan availability #{default}")
+    unless summer_design_day.nil?
+      day = OpenStudio::Model::ScheduleDay.new(model, summer_design_day)
+      sch.setSummerDesignDaySchedule(day)
+    end
+    unless winter_design_day.nil?
+      day = OpenStudio::Model::ScheduleDay.new(model, winter_design_day)
+      sch.setWinterDesignDaySchedule(day)
+    end
+    sch
+  end
+
+  # The fan schedule off every day: the packaged unit on an unoccupied storage zone, which
+  # cycles on demand. Nothing to start early, and on EnergyPlus 25.1 the manager on such a loop
+  # reads past its fan schedule and corrupts the zone setpoints (see the enable method).
+  def test_enabling_is_skipped_when_the_fan_schedule_never_turns_on
+    air_loop = air_loop_with_flow(12_000)
+    air_loop.setAvailabilitySchedule(availability_schedule(air_loop.model, default: 0.0))
+
+    refute(@std.air_loop_hvac_availability_schedule_turns_on?(air_loop))
+    refute(@std.air_loop_hvac_enable_optimum_start(air_loop))
+    assert_empty(optimum_start_managers(air_loop))
+  end
+
+  def test_enabling_is_skipped_for_a_constant_off_schedule
+    air_loop = air_loop_with_flow(12_000)
+    off = OpenStudio::Model::ScheduleConstant.new(air_loop.model)
+    off.setValue(0.0)
+    air_loop.setAvailabilitySchedule(off)
+
+    refute(@std.air_loop_hvac_enable_optimum_start(air_loop))
+    assert_empty(optimum_start_managers(air_loop))
+  end
+
+  # Sizing runs simulate the design days, so a schedule that is on through the year but off on
+  # a design day still puts the manager on an all-off day.
+  def test_enabling_is_skipped_when_only_a_design_day_is_off
+    air_loop = air_loop_with_flow(12_000)
+    air_loop.setAvailabilitySchedule(availability_schedule(air_loop.model, default: 1.0, winter_design_day: 0.0))
+
+    refute(@std.air_loop_hvac_availability_schedule_turns_on?(air_loop))
+    refute(@std.air_loop_hvac_enable_optimum_start(air_loop))
+    assert_empty(optimum_start_managers(air_loop))
+  end
+
+  # A schedule that is off at some hours but on at others is a normal occupancy schedule and
+  # keeps the control.
+  def test_a_scheduled_loop_still_gets_the_manager
+    air_loop = air_loop_with_flow(12_000)
+    sch = availability_schedule(air_loop.model, default: 0.0, summer_design_day: 1.0, winter_design_day: 1.0)
+    sch.defaultDaySchedule.clearValues
+    sch.defaultDaySchedule.addValue(OpenStudio::Time.new(0, 7, 0, 0), 0.0)
+    sch.defaultDaySchedule.addValue(OpenStudio::Time.new(0, 18, 0, 0), 1.0)
+    sch.defaultDaySchedule.addValue(OpenStudio::Time.new(0, 24, 0, 0), 0.0)
+    air_loop.setAvailabilitySchedule(sch)
+
+    assert(@std.air_loop_hvac_availability_schedule_turns_on?(air_loop))
+    assert(@std.air_loop_hvac_enable_optimum_start(air_loop))
+    assert_equal(1, optimum_start_managers(air_loop).size)
+  end
+
   # Data centers are exempt whatever their size, because they are not on an occupancy schedule
   # there would be anything to start early for.
   def test_data_center_loops_are_exempt_at_any_size
