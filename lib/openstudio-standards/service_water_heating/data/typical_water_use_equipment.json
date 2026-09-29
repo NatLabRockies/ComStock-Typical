@@ -748,16 +748,11 @@
         }
       ],
       "all_level_space_types": [
-        "playing area",
-        "playing area - disco/dance floors",
-        "playing area - gambling casinos",
-        "playing area - game arcades",
-        "playing area - stages/studios",
         "sports arena - playing area class IV",
         "playing area - primary school",
         "playing area - secondary school"
       ],
-      "all_level_mapping_tier": "standards_space_type_map"
+      "all_level_mapping_tier": "standards_space_type_map; the plain and entertainment playing area variants are excluded: a school gym's draw on a school-day schedule is not a disco's or an arcade's, and no prototype gives those a draw of their own"
     },
     {
       "space_type": "Restroom",

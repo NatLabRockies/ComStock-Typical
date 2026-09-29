@@ -55,32 +55,76 @@ class TestHotWaterScheduleParity < Minitest::Test
     ([rs.defaultDaySchedule] + rs.scheduleRules.map(&:daySchedule)).flat_map(&:values).max
   end
 
+  # the hot water schedule a space type gets from its schedule set, with optional overrides
+  def hot_water_schedule(model, name, set_name, overrides: nil)
+    space_type = OpenStudio::Model::SpaceType.new(model)
+    space_type.setName(name)
+    space_type.setStandardsSpaceType(name)
+    space_type.additionalProperties.setFeature('schedule_set', set_name)
+    space_type.additionalProperties.setFeature('standards_space_type', name)
+    assert(@sch.space_type_apply_parametric_internal_load_schedules(space_type, schedule_overrides: overrides), "could not build schedules for #{name}")
+    hot_water = space_type.defaultScheduleSet.get.hotWaterEquipmentSchedule
+    hot_water.empty? ? nil : ruleset(hot_water.get)
+  end
+
+  def compare(name, proto_name, schedule, proto, label)
+    eflh = @sch.schedule_ruleset_get_equivalent_full_load_hours(schedule)
+    proto_eflh = @sch.schedule_ruleset_get_equivalent_full_load_hours(proto)
+    ratio = eflh / proto_eflh
+    note = format('%-8s %-45s %-42s eflh %6.0f vs %6.0f (%.2fx) peak %.2f vs %.2f', label, name, proto_name, eflh, proto_eflh, ratio, peak(schedule), peak(proto))
+    puts note
+    failures = []
+    failures << "hours: #{note}" if (ratio - 1.0).abs > EFLH_TOLERANCE
+    failures << "peak: #{note}" if peak(schedule) > peak(proto) + PEAK_TOLERANCE
+    failures
+  end
+
+  # the profile names the hot water data carries, for the traced variants
+  def profile_names
+    JSON.parse(File.read("#{DATA}/schedules/data/default_hot_water_equipment_schedules.json")).map { |r| r['name'] }.uniq
+  end
+
   def test_every_hot_water_profile_matches_the_prototype_it_replaces
     failures = []
     pairs.sort.each do |name, (set_name, proto_name)|
       model = new_model
-      space_type = OpenStudio::Model::SpaceType.new(model)
-      space_type.setName(name)
-      space_type.setStandardsSpaceType(name)
-      space_type.additionalProperties.setFeature('schedule_set', set_name)
-      space_type.additionalProperties.setFeature('standards_space_type', name)
-      assert(@sch.space_type_apply_parametric_internal_load_schedules(space_type), "could not build schedules for #{name}")
-      hot_water = space_type.defaultScheduleSet.get.hotWaterEquipmentSchedule
-      if hot_water.empty?
+      schedule = hot_water_schedule(model, name, set_name)
+      if schedule.nil?
         failures << "#{name}: schedule set '#{set_name}' produced no hot water schedule"
         next
       end
-      derived = ruleset(hot_water.get)
       proto = ruleset(@std.model_add_schedule(model, proto_name))
-
-      derived_eflh = @sch.schedule_ruleset_get_equivalent_full_load_hours(derived)
-      proto_eflh = @sch.schedule_ruleset_get_equivalent_full_load_hours(proto)
-      ratio = derived_eflh / proto_eflh
-      note = format('%-45s %-42s eflh %6.0f vs %6.0f (%.2fx) peak %.2f vs %.2f', name, proto_name, derived_eflh, proto_eflh, ratio, peak(derived), peak(proto))
-      puts note
-      failures << "hours: #{note}" if (ratio - 1.0).abs > EFLH_TOLERANCE
-      failures << "peak: #{note}" if peak(derived) > peak(proto) + PEAK_TOLERANCE
+      failures += compare(name, proto_name, schedule, proto, 'default')
     end
     assert_empty(failures, "hot water profiles out of step with their prototypes:\n  #{failures.join("\n  ")}")
+  end
+
+  # A profile whose default form is derived from occupancy also ships a control-point form traced
+  # from the prototype, under the ' - traced' suffix. It is selected through a schedule override
+  # and must match the prototype as closely as the derived one.
+  def test_traced_profiles_are_selectable_and_match_their_prototypes
+    failures = []
+    names = profile_names
+    checked = 0
+    pairs.sort.each do |name, (set_name, proto_name)|
+      set = JSON.parse(File.read("#{DATA}/schedules/data/default_parametric_schedule_set.json"))
+      set = set.values.first if set.is_a?(Hash)
+      profile = set.find { |s| s['schedule_set_name'] == set_name }['hot_water_equipment_schedule']
+      traced = "#{profile} - traced"
+      next unless names.include?(traced)
+
+      checked += 1
+      model = new_model
+      schedule = hot_water_schedule(model, name, set_name, overrides: [{ schedule_set: set_name, hot_water_equipment: { schedule: traced } }])
+      if schedule.nil?
+        failures << "#{name}: override to '#{traced}' produced no hot water schedule"
+        next
+      end
+      assert_equal(traced, schedule.name.to_s, 'the override selects the traced profile')
+      proto = ruleset(@std.model_add_schedule(model, proto_name))
+      failures += compare(name, proto_name, schedule, proto, 'traced')
+    end
+    assert_operator(checked, :>, 0, 'no traced profiles found')
+    assert_empty(failures, "traced hot water profiles out of step with their prototypes:\n  #{failures.join("\n  ")}")
   end
 end
