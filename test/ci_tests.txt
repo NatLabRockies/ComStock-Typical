@@ -82,6 +82,7 @@ modules/refrigeration/test_create_walkin.rb
 modules/refrigeration/test_information.rb
 modules/refrigeration/test_refrigeration_all_level.rb
 modules/schedules/test_custom_building_schedules.rb
+modules/schedules/test_hot_water_schedule_parity.rb
 modules/schedules/test_schedule_base_peak.rb
 modules/schedules/test_schedule_building_hours.rb
 modules/schedules/test_schedule_comparison.rb
@@ -107,6 +108,8 @@ modules/service_water_heating/test_create_water_use.rb
 modules/service_water_heating/test_swh_booster_preheat_sizing.rb
 modules/service_water_heating/test_swh_loop_temperature_limits.rb
 modules/service_water_heating/test_swh_overrides.rb
+modules/service_water_heating/test_swh_point_of_use_sizing.rb
+modules/service_water_heating/test_swh_fixture_flow_zone_multipliers.rb
 modules/service_water_heating/test_swh_sizing_zone_multipliers.rb
 modules/service_water_heating/test_swh_supply_temperature.rb
 modules/space/test_space.rb

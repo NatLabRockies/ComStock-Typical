@@ -121,138 +121,1069 @@
   },
   {
     "name": "emergency room hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.3,
+    "peak_std": 0.82,
+    "st_std": 7,
+    "et_std": 21,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.385"
+      ],
+      [
+        "st+1.5",
+        "range*0.538"
+      ],
+      [
+        "st+2.5",
+        "range*0.692"
+      ],
+      [
+        "st+3.5",
+        "range*0.923"
+      ],
+      [
+        "st+4.5",
+        "peak"
+      ],
+      [
+        "st+5.5",
+        "range*0.788"
+      ],
+      [
+        "st+6.5",
+        "peak"
+      ],
+      [
+        "et-6.5",
+        "range*0.923"
+      ],
+      [
+        "et-5.5",
+        "range*0.846"
+      ],
+      [
+        "et-4.5",
+        "range*0.635"
+      ],
+      [
+        "et-3.5",
+        "range*0.212"
+      ],
+      [
+        "et-2.5",
+        "range*0.096"
+      ],
+      [
+        "et-1.5",
+        "range*0.096"
+      ],
+      [
+        "et-0.5",
+        "range*0.096"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from Hospital BLDG_SWH_EXTD_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "emergency room hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.3,
+    "peak_std": 0.6,
+    "st_std": 8,
+    "et_std": 18,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.333"
+      ],
+      [
+        "st+1.5",
+        "range*0.667"
+      ],
+      [
+        "st+2.5",
+        "peak"
+      ],
+      [
+        "st+3.5",
+        "peak"
+      ],
+      [
+        "st+4.5",
+        "peak"
+      ],
+      [
+        "et-4.5",
+        "peak"
+      ],
+      [
+        "et-3.5",
+        "peak"
+      ],
+      [
+        "et-2.5",
+        "peak"
+      ],
+      [
+        "et-1.5",
+        "peak"
+      ],
+      [
+        "et-0.5",
+        "range*0.667"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from Hospital BLDG_SWH_EXTD_SCH weekend None to None"
+  },
+  {
+    "name": "emergency room hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "emergency room hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "exam/treatment hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
+    "base": 0.0,
+    "peak": 0.617,
     "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on exam/treatment occupancy presence against OutPatientHealthCare BLDG_SWH_SCH, the schedule the water use record names; response 1.0",
+    "wknd_base": 0.0,
+    "wknd_peak": 0.617
   },
   {
     "name": "food preparation hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
+    "base": 0.141,
+    "peak": 0.575,
+    "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on food preparation occupancy presence against RestaurantSitDown BLDG_SWH_SCH, the schedule the water use record names; response 1.0"
   },
   {
     "name": "food preparation - bakery hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
+    "base": 0.099,
+    "peak": 0.521,
+    "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on food preparation - bakery occupancy presence against SuperMarket Bldg Swh, the schedule the water use record names; response 1.0"
   },
   {
     "name": "food preparation - deli hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
+    "base": 0.099,
+    "peak": 0.521,
+    "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on food preparation - bakery occupancy presence against SuperMarket Bldg Swh, the schedule the water use record names; response 1.0"
   },
   {
     "name": "food preparation - deli/bakery hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
+    "base": 0.099,
+    "peak": 0.521,
+    "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on food preparation - bakery occupancy presence against SuperMarket Bldg Swh, the schedule the water use record names; response 1.0"
   },
   {
     "name": "food preparation - primary school hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "food preparation - primary school hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "food preparation - primary school hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "food preparation - primary school hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "food preparation - primary school hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "food preparation - secondary school hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "food preparation - secondary school hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "food preparation - secondary school hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "food preparation - secondary school hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "food preparation - secondary school hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "guest room hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "diurnal_profile": "sleep awake",
-    "base": 0.05,
-    "peak": 0.6,
-    "derivation_type": "logistic",
-    "midpoint": 0.2,
-    "steepness": 5.0,
-    "diurnal_weight": 0.9,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.15,
+    "peak_std": 0.8,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.077"
+      ],
+      [
+        "st+1.5",
+        "base"
+      ],
+      [
+        "st+2.5",
+        "base"
+      ],
+      [
+        "st+3.5",
+        "base"
+      ],
+      [
+        "st+4.5",
+        "range*0.077"
+      ],
+      [
+        "st+5.5",
+        "range*0.308"
+      ],
+      [
+        "st+6.5",
+        "range*0.692"
+      ],
+      [
+        "st+7.5",
+        "peak"
+      ],
+      [
+        "st+8.5",
+        "range*0.615"
+      ],
+      [
+        "st+9.5",
+        "range*0.385"
+      ],
+      [
+        "st+10.5",
+        "range*0.231"
+      ],
+      [
+        "st+11.5",
+        "range*0.077"
+      ],
+      [
+        "et-11.5",
+        "range*0.077"
+      ],
+      [
+        "et-10.5",
+        "range*0.077"
+      ],
+      [
+        "et-9.5",
+        "range*0.077"
+      ],
+      [
+        "et-8.5",
+        "range*0.077"
+      ],
+      [
+        "et-7.5",
+        "range*0.077"
+      ],
+      [
+        "et-6.5",
+        "range*0.231"
+      ],
+      [
+        "et-5.5",
+        "range*0.615"
+      ],
+      [
+        "et-4.5",
+        "range*0.385"
+      ],
+      [
+        "et-3.5",
+        "range*0.385"
+      ],
+      [
+        "et-2.5",
+        "range*0.692"
+      ],
+      [
+        "et-1.5",
+        "range*0.462"
+      ],
+      [
+        "et-0.5",
+        "range*0.154"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from HotelLarge GuestRoom_SWH_Sch, the schedule the water use record names"
+  },
+  {
+    "name": "guest room hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "guest room hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "imaging hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
+    "base": 0.281,
+    "peak": 0.729,
     "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on imaging occupancy presence against Hospital BLDG_SWH_EXTD_SCH, the schedule the water use record names; response 1.0"
   },
   {
     "name": "laboratory hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.82,
+    "st_std": 7,
+    "et_std": 22,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.207"
+      ],
+      [
+        "st+1.5",
+        "range*0.707"
+      ],
+      [
+        "st+2.5",
+        "range*0.805"
+      ],
+      [
+        "st+3.5",
+        "range*0.951"
+      ],
+      [
+        "st+4.5",
+        "peak"
+      ],
+      [
+        "st+5.5",
+        "range*0.866"
+      ],
+      [
+        "st+6.5",
+        "peak"
+      ],
+      [
+        "st+7.5",
+        "range*0.951"
+      ],
+      [
+        "et-6.5",
+        "range*0.902"
+      ],
+      [
+        "et-5.5",
+        "range*0.768"
+      ],
+      [
+        "et-4.5",
+        "range*0.500"
+      ],
+      [
+        "et-3.5",
+        "range*0.220"
+      ],
+      [
+        "et-2.5",
+        "range*0.220"
+      ],
+      [
+        "et-1.5",
+        "range*0.220"
+      ],
+      [
+        "et-0.5",
+        "range*0.122"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from Hospital BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "laboratory hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.3,
+    "st_std": 7,
+    "et_std": 19,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.033"
+      ],
+      [
+        "st+1.5",
+        "range*0.667"
+      ],
+      [
+        "st+2.5",
+        "range*0.933"
+      ],
+      [
+        "st+3.5",
+        "peak"
+      ],
+      [
+        "st+4.5",
+        "peak"
+      ],
+      [
+        "st+5.5",
+        "range*0.800"
+      ],
+      [
+        "et-5.5",
+        "range*0.800"
+      ],
+      [
+        "et-4.5",
+        "range*0.767"
+      ],
+      [
+        "et-3.5",
+        "range*0.767"
+      ],
+      [
+        "et-2.5",
+        "range*0.767"
+      ],
+      [
+        "et-1.5",
+        "range*0.333"
+      ],
+      [
+        "et-0.5",
+        "range*0.333"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from Hospital BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "laboratory hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "laboratory hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "laboratory - science laboratories (educational) hot water equipment",
@@ -268,27 +1199,203 @@
   },
   {
     "name": "laundry/washing hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 17,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "peak"
+      ],
+      [
+        "st+1.5",
+        "peak"
+      ],
+      [
+        "st+2.5",
+        "peak"
+      ],
+      [
+        "st+3.5",
+        "peak"
+      ],
+      [
+        "et-2.5",
+        "peak"
+      ],
+      [
+        "et-1.5",
+        "peak"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from HotelLarge LaundryRoom_SWH_Sch_Post2004, the schedule the water use record names"
+  },
+  {
+    "name": "laundry/washing hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "laundry/washing hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "laundry/washing - coin-operated laundries hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 8,
+    "et_std": 16,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "peak"
+      ],
+      [
+        "st+1.5",
+        "peak"
+      ],
+      [
+        "st+2.5",
+        "peak"
+      ],
+      [
+        "st+3.5",
+        "peak"
+      ],
+      [
+        "et-3.5",
+        "peak"
+      ],
+      [
+        "et-2.5",
+        "peak"
+      ],
+      [
+        "et-1.5",
+        "peak"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from HotelSmall LaundryRoom_SHW_Sch, the schedule the water use record names"
+  },
+  {
+    "name": "laundry/washing - coin-operated laundries hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "laundry/washing - coin-operated laundries hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "living quarters hot water equipment",
@@ -306,13 +1413,14 @@
     "name": "lounge/breakroom hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
+    "base": 0.053,
+    "peak": 0.442,
+    "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on lounge/breakroom occupancy presence against Courthouse BLDG_SWH_SCH, the schedule the water use record names; response 1.0"
   },
   {
     "name": "lounge/breakroom - health care facility hot water equipment",
@@ -400,15 +1508,169 @@
   },
   {
     "name": "multifamily - dwelling unit hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.01,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.071"
+      ],
+      [
+        "st+1.5",
+        "range*0.030"
+      ],
+      [
+        "st+2.5",
+        "base"
+      ],
+      [
+        "st+3.5",
+        "base"
+      ],
+      [
+        "st+4.5",
+        "range*0.030"
+      ],
+      [
+        "st+5.5",
+        "range*0.263"
+      ],
+      [
+        "st+6.5",
+        "range*0.939"
+      ],
+      [
+        "st+7.5",
+        "peak"
+      ],
+      [
+        "st+8.5",
+        "range*0.960"
+      ],
+      [
+        "st+9.5",
+        "range*0.838"
+      ],
+      [
+        "st+10.5",
+        "range*0.758"
+      ],
+      [
+        "st+11.5",
+        "range*0.606"
+      ],
+      [
+        "et-11.5",
+        "range*0.525"
+      ],
+      [
+        "et-10.5",
+        "range*0.465"
+      ],
+      [
+        "et-9.5",
+        "range*0.404"
+      ],
+      [
+        "et-8.5",
+        "range*0.465"
+      ],
+      [
+        "et-7.5",
+        "range*0.545"
+      ],
+      [
+        "et-6.5",
+        "range*0.727"
+      ],
+      [
+        "et-5.5",
+        "range*0.859"
+      ],
+      [
+        "et-4.5",
+        "range*0.818"
+      ],
+      [
+        "et-3.5",
+        "range*0.747"
+      ],
+      [
+        "et-2.5",
+        "range*0.606"
+      ],
+      [
+        "et-1.5",
+        "range*0.525"
+      ],
+      [
+        "et-0.5",
+        "range*0.283"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from ApartmentHighRise APT_DHW_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "multifamily - dwelling unit hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "multifamily - dwelling unit hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "office hot water equipment",
@@ -474,121 +1736,1719 @@
     "name": "operating room hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
+    "base": 0.0,
+    "peak": 0.746,
     "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on operating room occupancy presence against Hospital BLDG_SWH_SCH, the schedule the water use record names; response 1.0",
+    "wknd_base": 0.0,
+    "wknd_peak": 0.5
   },
   {
     "name": "patient room hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.3,
+    "peak_std": 0.82,
+    "st_std": 7,
+    "et_std": 21,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.385"
+      ],
+      [
+        "st+1.5",
+        "range*0.538"
+      ],
+      [
+        "st+2.5",
+        "range*0.692"
+      ],
+      [
+        "st+3.5",
+        "range*0.923"
+      ],
+      [
+        "st+4.5",
+        "peak"
+      ],
+      [
+        "st+5.5",
+        "range*0.788"
+      ],
+      [
+        "st+6.5",
+        "peak"
+      ],
+      [
+        "et-6.5",
+        "range*0.923"
+      ],
+      [
+        "et-5.5",
+        "range*0.846"
+      ],
+      [
+        "et-4.5",
+        "range*0.635"
+      ],
+      [
+        "et-3.5",
+        "range*0.212"
+      ],
+      [
+        "et-2.5",
+        "range*0.096"
+      ],
+      [
+        "et-1.5",
+        "range*0.096"
+      ],
+      [
+        "et-0.5",
+        "range*0.096"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from Hospital BLDG_SWH_EXTD_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "patient room hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.3,
+    "peak_std": 0.6,
+    "st_std": 8,
+    "et_std": 18,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.333"
+      ],
+      [
+        "st+1.5",
+        "range*0.667"
+      ],
+      [
+        "st+2.5",
+        "peak"
+      ],
+      [
+        "st+3.5",
+        "peak"
+      ],
+      [
+        "st+4.5",
+        "peak"
+      ],
+      [
+        "et-4.5",
+        "peak"
+      ],
+      [
+        "et-3.5",
+        "peak"
+      ],
+      [
+        "et-2.5",
+        "peak"
+      ],
+      [
+        "et-1.5",
+        "peak"
+      ],
+      [
+        "et-0.5",
+        "range*0.667"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from Hospital BLDG_SWH_EXTD_SCH weekend None to None"
+  },
+  {
+    "name": "patient room hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "patient room hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "physical therapy hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
-    "response": 0.4,
+    "base": 0.0,
+    "peak": 0.617,
+    "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on physical therapy occupancy presence against OutPatientHealthCare BLDG_SWH_SCH, the schedule the water use record names; response 1.0",
+    "wknd_base": 0.0,
+    "wknd_peak": 0.617
   },
   {
     "name": "playing area hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "playing area hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "playing area hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "playing area hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "playing area hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "playing area - disco/dance floors hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "playing area - disco/dance floors hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "playing area - disco/dance floors hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "playing area - disco/dance floors hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "playing area - disco/dance floors hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "playing area - gambling casinos hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "playing area - gambling casinos hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "playing area - gambling casinos hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "playing area - gambling casinos hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "playing area - gambling casinos hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "playing area - game arcades hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "playing area - game arcades hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "playing area - game arcades hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "playing area - game arcades hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "playing area - game arcades hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "playing area - primary school hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "playing area - primary school hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "playing area - primary school hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "playing area - primary school hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "playing area - primary school hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "playing area - secondary school hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "playing area - secondary school hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "playing area - secondary school hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "playing area - secondary school hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "playing area - secondary school hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "playing area - stages/studios hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "playing area - stages/studios hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "playing area - stages/studios hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "playing area - stages/studios hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "playing area - stages/studios hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "post office hot water equipment",
@@ -618,13 +3478,16 @@
     "name": "recovery hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
+    "base": 0.0,
+    "peak": 0.617,
     "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: least squares of base and peak on recovery occupancy presence against OutPatientHealthCare BLDG_SWH_SCH, the schedule the water use record names; response 1.0",
+    "wknd_base": 0.0,
+    "wknd_peak": 0.617
   },
   {
     "name": "restroom hot water equipment",
@@ -634,16 +3497,169 @@
     "category": "Equipment",
     "units": null,
     "type": "parametric",
-    "base_std": 0.05,
-    "peak_std": 1.0,
+    "base_std": 0.0,
+    "peak_std": 0.57,
     "st_std": 6,
-    "et_std": 22,
+    "et_std": 24,
     "control_points": [
-      ["st", "base"],
-      ["st+1", "peak"],
-      ["et-1", "peak"],
-      ["et", "base"]
-    ]
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.123"
+      ],
+      [
+        "st+1.5",
+        "range*0.333"
+      ],
+      [
+        "st+2.5",
+        "range*0.614"
+      ],
+      [
+        "st+3.5",
+        "range*0.667"
+      ],
+      [
+        "st+4.5",
+        "range*0.684"
+      ],
+      [
+        "st+5.5",
+        "range*0.825"
+      ],
+      [
+        "st+6.5",
+        "peak"
+      ],
+      [
+        "st+7.5",
+        "range*0.947"
+      ],
+      [
+        "st+8.5",
+        "range*0.596"
+      ],
+      [
+        "et-8.5",
+        "range*0.579"
+      ],
+      [
+        "et-7.5",
+        "range*0.772"
+      ],
+      [
+        "et-6.5",
+        "range*0.456"
+      ],
+      [
+        "et-5.5",
+        "range*0.368"
+      ],
+      [
+        "et-4.5",
+        "range*0.263"
+      ],
+      [
+        "et-3.5",
+        "range*0.298"
+      ],
+      [
+        "et-2.5",
+        "range*0.140"
+      ],
+      [
+        "et-1.5",
+        "range*0.088"
+      ],
+      [
+        "et-0.5",
+        "range*0.088"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from OfficeMedium BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "restroom hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.23,
+    "st_std": 6,
+    "et_std": 19,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.304"
+      ],
+      [
+        "st+1.5",
+        "range*0.478"
+      ],
+      [
+        "st+2.5",
+        "range*0.652"
+      ],
+      [
+        "st+3.5",
+        "range*0.913"
+      ],
+      [
+        "st+4.5",
+        "range*0.826"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "st+6.5",
+        "range*0.870"
+      ],
+      [
+        "et-5.5",
+        "range*0.826"
+      ],
+      [
+        "et-4.5",
+        "range*0.652"
+      ],
+      [
+        "et-3.5",
+        "range*0.565"
+      ],
+      [
+        "et-2.5",
+        "range*0.609"
+      ],
+      [
+        "et-1.5",
+        "range*0.304"
+      ],
+      [
+        "et-0.5",
+        "range*0.304"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from OfficeMedium BLDG_SWH_SCH weekend None to None"
   },
   {
     "name": "restroom hot water equipment",
@@ -658,8 +3674,14 @@
     "st_std": 0,
     "et_std": 24,
     "control_points": [
-      ["st", "peak"],
-      ["et", "peak"]
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
     ]
   },
   {
@@ -675,8 +3697,14 @@
     "st_std": 0,
     "et_std": 24,
     "control_points": [
-      ["st", "base"],
-      ["et", "base"]
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
     ]
   },
   {
@@ -687,39 +3715,165 @@
     "category": "Equipment",
     "units": null,
     "type": "parametric",
-    "base_std": 0.05,
-    "peak_std": 1.0,
-    "st_std": 6,
-    "et_std": 22,
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
     "control_points": [
-      ["st", "base"],
-      ["st+1", "peak"],
-      ["et-1", "peak"],
-      ["et", "base"]
-    ]
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH, the schedule the water use record names"
   },
   {
     "name": "restroom - primary school hot water equipment",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
-    "end_date": "2018-09-01T00:00:00+00:00",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
     "type": "parametric",
-    "base_std": 0.05,
-    "peak_std": 0.525,
-    "st_std": 6,
-    "et_std": 22,
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
     "control_points": [
-      ["st", "base"],
-      ["st+1", "peak"],
-      ["et-1", "peak"],
-      ["et", "base"]
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
     ],
-    "review": {
-      "status": "needs_review",
-      "rationale": "Authored summer recess profile: 0.5 of the school-year peak. The source trace for this space type does not distinguish a summer weekday, so the reduction is an assumption rather than a fit."
-    }
+    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "restroom - primary school hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH weekend None to None"
   },
   {
     "name": "restroom - primary school hot water equipment",
@@ -734,8 +3888,14 @@
     "st_std": 0,
     "et_std": 24,
     "control_points": [
-      ["st", "peak"],
-      ["et", "peak"]
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
     ]
   },
   {
@@ -751,8 +3911,14 @@
     "st_std": 0,
     "et_std": 24,
     "control_points": [
-      ["st", "base"],
-      ["et", "base"]
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
     ]
   },
   {
@@ -763,39 +3929,165 @@
     "category": "Equipment",
     "units": null,
     "type": "parametric",
-    "base_std": 0.05,
-    "peak_std": 1.0,
-    "st_std": 6,
-    "et_std": 22,
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
     "control_points": [
-      ["st", "base"],
-      ["st+1", "peak"],
-      ["et-1", "peak"],
-      ["et", "base"]
-    ]
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
   },
   {
     "name": "restroom - secondary school hot water equipment",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
-    "end_date": "2018-09-01T00:00:00+00:00",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
     "type": "parametric",
-    "base_std": 0.05,
-    "peak_std": 0.525,
-    "st_std": 6,
-    "et_std": 22,
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
     "control_points": [
-      ["st", "base"],
-      ["st+1", "peak"],
-      ["et-1", "peak"],
-      ["et", "base"]
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
     ],
-    "review": {
-      "status": "needs_review",
-      "rationale": "Authored summer recess profile: 0.5 of the school-year peak. The source trace for this space type does not distinguish a summer weekday, so the reduction is an assumption rather than a fit."
-    }
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "restroom - secondary school hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
   },
   {
     "name": "restroom - secondary school hot water equipment",
@@ -810,8 +4102,14 @@
     "st_std": 0,
     "et_std": 24,
     "control_points": [
-      ["st", "peak"],
-      ["et", "peak"]
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
     ]
   },
   {
@@ -827,21 +4125,273 @@
     "st_std": 0,
     "et_std": 24,
     "control_points": [
-      ["st", "base"],
-      ["et", "base"]
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
     ]
   },
   {
     "name": "retail hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.62,
+    "st_std": 7,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.065"
+      ],
+      [
+        "st+1.5",
+        "range*0.065"
+      ],
+      [
+        "st+2.5",
+        "range*0.242"
+      ],
+      [
+        "st+3.5",
+        "range*0.371"
+      ],
+      [
+        "st+4.5",
+        "range*0.516"
+      ],
+      [
+        "st+5.5",
+        "range*0.661"
+      ],
+      [
+        "st+6.5",
+        "peak"
+      ],
+      [
+        "st+7.5",
+        "range*0.968"
+      ],
+      [
+        "st+8.5",
+        "range*0.887"
+      ],
+      [
+        "et-7.5",
+        "range*0.726"
+      ],
+      [
+        "et-6.5",
+        "range*0.806"
+      ],
+      [
+        "et-5.5",
+        "range*0.742"
+      ],
+      [
+        "et-4.5",
+        "range*0.758"
+      ],
+      [
+        "et-3.5",
+        "range*0.548"
+      ],
+      [
+        "et-2.5",
+        "range*0.532"
+      ],
+      [
+        "et-1.5",
+        "range*0.371"
+      ],
+      [
+        "et-0.5",
+        "range*0.210"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from RetailStripmall Type1_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "retail hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.65,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.200"
+      ],
+      [
+        "st+1.5",
+        "base"
+      ],
+      [
+        "st+2.5",
+        "base"
+      ],
+      [
+        "st+3.5",
+        "base"
+      ],
+      [
+        "st+4.5",
+        "base"
+      ],
+      [
+        "st+5.5",
+        "base"
+      ],
+      [
+        "st+6.5",
+        "base"
+      ],
+      [
+        "st+7.5",
+        "base"
+      ],
+      [
+        "st+8.5",
+        "base"
+      ],
+      [
+        "st+9.5",
+        "range*0.308"
+      ],
+      [
+        "st+10.5",
+        "range*0.354"
+      ],
+      [
+        "st+11.5",
+        "range*0.492"
+      ],
+      [
+        "et-11.5",
+        "range*0.631"
+      ],
+      [
+        "et-10.5",
+        "peak"
+      ],
+      [
+        "et-9.5",
+        "range*0.923"
+      ],
+      [
+        "et-8.5",
+        "range*0.846"
+      ],
+      [
+        "et-7.5",
+        "range*0.692"
+      ],
+      [
+        "et-6.5",
+        "range*0.769"
+      ],
+      [
+        "et-5.5",
+        "range*0.708"
+      ],
+      [
+        "et-4.5",
+        "range*0.723"
+      ],
+      [
+        "et-3.5",
+        "range*0.523"
+      ],
+      [
+        "et-2.5",
+        "range*0.508"
+      ],
+      [
+        "et-1.5",
+        "range*0.354"
+      ],
+      [
+        "et-0.5",
+        "range*0.200"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from RetailStripmall Type1_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "retail hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "retail hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "retail - barber shop hot water equipment",
@@ -917,15 +4467,217 @@
   },
   {
     "name": "sports arena - playing area class IV hot water equipment",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
     "category": "Equipment",
-    "derivation_type": "linear",
-    "base": 0.05,
-    "peak": 1.0,
-    "response": 1.0,
-    "winter_design_day_base": 0.0,
-    "winter_design_day_peak": 0.0,
-    "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.83,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.410"
+      ],
+      [
+        "st+1.5",
+        "range*0.723"
+      ],
+      [
+        "st+2.5",
+        "range*0.759"
+      ],
+      [
+        "st+3.5",
+        "range*0.867"
+      ],
+      [
+        "st+4.5",
+        "range*0.952"
+      ],
+      [
+        "st+5.5",
+        "peak"
+      ],
+      [
+        "et-5.5",
+        "range*0.735"
+      ],
+      [
+        "et-4.5",
+        "range*0.783"
+      ],
+      [
+        "et-3.5",
+        "range*0.120"
+      ],
+      [
+        "et-2.5",
+        "range*0.120"
+      ],
+      [
+        "et-1.5",
+        "range*0.229"
+      ],
+      [
+        "et-0.5",
+        "range*0.301"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH, the schedule the water use record names"
+  },
+  {
+    "name": "sports arena - playing area class IV hot water equipment",
+    "day_types": "Wkdy",
+    "start_date": "2018-06-16T00:00:00+00:00",
+    "end_date": "2018-09-15T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.25,
+    "st_std": 8,
+    "et_std": 20,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "st+0.5",
+        "range*0.400"
+      ],
+      [
+        "st+1.5",
+        "range*0.400"
+      ],
+      [
+        "st+2.5",
+        "range*0.400"
+      ],
+      [
+        "st+3.5",
+        "range*0.400"
+      ],
+      [
+        "st+4.5",
+        "range*0.400"
+      ],
+      [
+        "st+5.5",
+        "range*0.400"
+      ],
+      [
+        "et-5.5",
+        "range*0.400"
+      ],
+      [
+        "et-4.5",
+        "range*0.400"
+      ],
+      [
+        "et-3.5",
+        "range*0.400"
+      ],
+      [
+        "et-2.5",
+        "range*0.400"
+      ],
+      [
+        "et-1.5",
+        "range*0.760"
+      ],
+      [
+        "et-0.5",
+        "peak"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+  },
+  {
+    "name": "sports arena - playing area class IV hot water equipment",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ],
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH weekend None to None"
+  },
+  {
+    "name": "sports arena - playing area class IV hot water equipment",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "peak"
+      ],
+      [
+        "et",
+        "peak"
+      ]
+    ]
+  },
+  {
+    "name": "sports arena - playing area class IV hot water equipment",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Equipment",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      [
+        "st",
+        "base"
+      ],
+      [
+        "et",
+        "base"
+      ]
+    ]
   },
   {
     "name": "storage hot water equipment",
