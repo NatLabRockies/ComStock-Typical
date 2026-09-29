@@ -641,7 +641,16 @@
   {
     "electric_equipment_space_type_name": "kitchen_electric_equipment",
     "standards_building_type": "SuperMarket",
-    "electric_equipment_per_area": 0.041395041,
+    "electric_equipment_per_area": 0.1,
+    "electric_equipment_per_area_units": "W/ft^2",
+    "electric_equipment_fraction_latent": 0.0,
+    "electric_equipment_fraction_radiant": 0.5,
+    "electric_equipment_fraction_lost": 0.0
+  },
+  {
+    "electric_equipment_space_type_name": "deli/bakery",
+    "standards_building_type": null,
+    "electric_equipment_per_area": 25.0,
     "electric_equipment_per_area_units": "W/ft^2",
     "electric_equipment_fraction_latent": 0.0,
     "electric_equipment_fraction_radiant": 0.5,

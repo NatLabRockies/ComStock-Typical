@@ -3,13 +3,14 @@
     "name": "food preparation gas equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
+    "base": 0.117,
+    "peak": 0.35,
     "response": 0.4,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "set 2026-09-30 from the ComStock schedule peak sensitivity (branch spacetype_refactor_schedule_test): food_preparation_gas_equipment_peak=0.35 with the authored base-to-peak ratio 0.3/0.9 carried along, as create_custom_building_from_spec's schedule_peak_overrides applies it; base 0.117, peak 0.35, response unchanged at 0.4, built schedule maximum 0.21"
   },
   {
     "name": "food preparation - bakery gas equipment",
@@ -51,25 +52,27 @@
     "name": "food preparation - primary school gas equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
+    "base": 0.117,
+    "peak": 0.35,
     "response": 0.4,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "set 2026-09-30 from the ComStock schedule peak sensitivity (branch spacetype_refactor_schedule_test): food_preparation_gas_equipment_peak=0.35 with the authored base-to-peak ratio 0.3/0.9 carried along, as create_custom_building_from_spec's schedule_peak_overrides applies it; base 0.117, peak 0.35, response unchanged at 0.4, built schedule maximum 0.21"
   },
   {
     "name": "food preparation - secondary school gas equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.3,
-    "peak": 0.9,
+    "base": 0.117,
+    "peak": 0.35,
     "response": 0.4,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
-    "summer_design_day_peak": 1.0
+    "summer_design_day_peak": 1.0,
+    "provenance": "set 2026-09-30 from the ComStock schedule peak sensitivity (branch spacetype_refactor_schedule_test): food_preparation_gas_equipment_peak=0.35 with the authored base-to-peak ratio 0.3/0.9 carried along, as create_custom_building_from_spec's schedule_peak_overrides applies it; base 0.117, peak 0.35, response unchanged at 0.4, built schedule maximum 0.21"
   },
   {
     "name": "laundry/washing gas equipment",

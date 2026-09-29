@@ -753,11 +753,11 @@
     "space_type_name": "food preparation - deli/bakery",
     "lighting_space_type_name": "food_preparation_lighting",
     "ventilation_space_type_name": "food_preparation_ventilation",
-    "electric_equipment_space_type_name": "kitchen_electric_equipment",
+    "electric_equipment_space_type_name": "deli/bakery",
     "natural_gas_equipment_space_type_name": "deli/bakery",
     "schedule_set_name": "food preparation - deli/bakery schedule set",
     "critical_operation": false,
-    "annotation": "sub-space type of 'food preparation'; specific value(s): natural_gas_equipment; other values repeated from the 'food preparation' level 1 entry; grocery service area"
+    "annotation": "sub-space type of 'food preparation'; specific value(s): electric_equipment, natural_gas_equipment; other values repeated from the 'food preparation' level 1 entry; grocery service area (deli and bakery counters with ovens, rotisseries and hot-food holding)"
   },
   {
     "space_type_name": "food preparation - primary school",

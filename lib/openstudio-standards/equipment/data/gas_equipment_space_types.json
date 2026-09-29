@@ -254,7 +254,7 @@
   {
     "natural_gas_equipment_space_type_name": "deli/bakery",
     "standards_building_type": null,
-    "gas_equipment_per_area": 6.25,
+    "gas_equipment_per_area": 100.0,
     "gas_equipment_per_area_units": "Btu/hr*ft^2",
     "gas_equipment_fraction_latent": 0.1,
     "gas_equipment_fraction_radiant": 0.2,
