@@ -11,6 +11,12 @@ class TestHotWaterScheduleParity < Minitest::Test
   DATA = File.expand_path('../../../lib/openstudio-standards', __dir__)
   EFLH_TOLERANCE = 0.15
   PEAK_TOLERANCE = 0.05
+  # Profiles set below the prototype on purpose: they keep the prototype's peak but run at base
+  # 0.0, so they carry no overnight or unoccupied draw and fall short of the prototype's hours.
+  # These are checked only against the peak and for not exceeding the prototype's hours. The
+  # fitted form the stock used to carry is restored where a building spec wants it, through a
+  # hot_water_equipment schedule override with the fitted base and peak.
+  BELOW_PROTOTYPE_BY_DESIGN = ['food preparation hot water equipment'].freeze
 
   def setup
     @sch = OpenstudioStandards::Schedules
@@ -74,7 +80,11 @@ class TestHotWaterScheduleParity < Minitest::Test
     note = format('%-8s %-45s %-42s eflh %6.0f vs %6.0f (%.2fx) peak %.2f vs %.2f', label, name, proto_name, eflh, proto_eflh, ratio, peak(schedule), peak(proto))
     puts note
     failures = []
-    failures << "hours: #{note}" if (ratio - 1.0).abs > EFLH_TOLERANCE
+    if BELOW_PROTOTYPE_BY_DESIGN.include?(schedule.name.to_s)
+      failures << "hours: #{note} (expected below the prototype)" if ratio > 1.0 + EFLH_TOLERANCE
+    else
+      failures << "hours: #{note}" if (ratio - 1.0).abs > EFLH_TOLERANCE
+    end
     failures << "peak: #{note}" if peak(schedule) > peak(proto) + PEAK_TOLERANCE
     failures
   end

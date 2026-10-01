@@ -70,11 +70,16 @@ class TestEquipmentCreate < Minitest::Test
     model = OpenStudio::Model::Model.new
     school_kitchen = typical_space_type(model, 'food preparation - primary school', electric: 'kitchen_electric_equipment', gas: 'kitchen - primary school')
     bakery = typical_space_type(model, 'food preparation - bakery', electric: 'kitchen_electric_equipment', gas: 'bakery')
+    # the grocery service area keys both loads to its own objects, so neither falls to the median
+    deli_bakery = typical_space_type(model, 'food preparation - deli/bakery', electric: 'deli/bakery', gas: 'deli/bakery')
     kitchen = typical_space_type(model, 'food preparation', electric: 'kitchen_electric_equipment', gas: 'kitchen')
 
     assert(@equip.create_typical_equipment(model, building_type_fallback: true))
     assert_in_delta(453.7, gas_btu_per_hr_ft2(school_kitchen.gasEquipment[0]), 0.01)
     assert_in_delta(8.54, gas_btu_per_hr_ft2(bakery.gasEquipment[0]), 0.01)
+    assert_in_delta(100.0, gas_btu_per_hr_ft2(deli_bakery.gasEquipment[0]), 0.01, 'grocery service area: about half a restaurant kitchen')
+    deli_bakery_w_per_ft2 = deli_bakery.electricEquipment[0].electricEquipmentDefinition.wattsperSpaceFloorArea.get / 10.7639
+    assert_in_delta(25.0, deli_bakery_w_per_ft2, 0.01, 'grocery service area electric equipment: a little above the kitchen median')
     assert_in_delta(203.98, gas_btu_per_hr_ft2(kitchen.gasEquipment[0]), 0.01)
     assert_equal('food preparation Gas Equip', kitchen.gasEquipment[0].name.to_s)
   end

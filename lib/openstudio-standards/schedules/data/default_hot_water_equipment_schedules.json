@@ -345,14 +345,14 @@
     "name": "food preparation hot water equipment",
     "category": "Equipment",
     "derivation_type": "linear",
-    "base": 0.141,
+    "base": 0.0,
     "peak": 0.575,
     "response": 1.0,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
     "summer_design_day_peak": 1.0,
-    "provenance": "fit: least squares of base and peak on food preparation occupancy presence against RestaurantSitDown BLDG_SWH_SCH, the schedule the water use record names; response 1.0"
+    "provenance": "base set to 0.0 on 2026-10-01 so kitchen hot water follows occupancy with no overnight or unoccupied draw; peak 0.575 kept from the least-squares fit on food preparation occupancy presence against RestaurantSitDown BLDG_SWH_SCH (that fit gave base 0.141). Below the prototype's hours by design, about 1,970 against 2,724 EFLH"
   },
   {
     "name": "food preparation - bakery hot water equipment",
