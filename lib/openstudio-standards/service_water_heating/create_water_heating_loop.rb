@@ -315,11 +315,21 @@ module OpenstudioStandards
       demand_outlet_pipe = OpenStudio::Model::PipeAdiabatic.new(model)
       demand_outlet_pipe.addToNode(booster_service_water_loop.demandOutletNode)
 
-      # Heat exchanger to supply the booster water heater with normal hot water from the main service water loop
+      # Heat exchanger to supply the booster water heater with normal hot water from the main
+      # service water loop. The booster loop's own water use connections return mains-temperature
+      # water for every gallon their fixtures draw, so this exchanger is where the shared heater
+      # preheats the booster feed from mains to the shared loop temperature, and the booster tank
+      # downstream of it adds only the final lift. Nothing else is needed to represent the makeup
+      # water: a PlantComponent:TemperatureSource that used to sit after the exchanger on the shared
+      # loop, resetting the branch flow to mains temperature "because the water used by the booster
+      # would be at mains temperature", counted that makeup a second time. With the exchanger
+      # uncontrolled, its autosized design flow circulated through that branch all year and was
+      # chilled to mains every timestep, so the shared heater reheated a constant stream regardless
+      # of draw: 13 to 16 kW around the clock on a 5,500 ft2 full service restaurant, 65 kBtu/ft2-yr
+      # of 139 on the gas side, and 40 percent of a primary school's water heating.
       hx = OpenStudio::Model::HeatExchangerFluidToFluid.new(model)
       hx.setName('Booster Water Heating Heat Exchanger')
       hx.setHeatExchangeModelType('Ideal')
-      hx.setControlType('UncontrolledOn')
       hx.setHeatTransferMeteringEndUseType('LoopToLoop')
 
       # Add the HX to the supply side of the booster loop
@@ -328,33 +338,45 @@ module OpenstudioStandards
       # Add the HX to the demand side of the main service water loop
       service_water_loop.addDemandBranchForComponent(hx)
 
-      # Add a plant component temperature source to the demand outlet
-      # of the HX to represent the fact that the water used by the booster
-      # would in reality be at the mains temperature.
-      mains_src = OpenStudio::Model::PlantComponentTemperatureSource.new(model)
-      mains_src.setName('Mains Water Makeup for SWH Booster')
-      mains_src.addToNode(hx.demandOutletModelObject.get.to_Node.get)
+      # The exchanger stands for the part of the shared loop's flow that becomes booster feed, so
+      # its shared-side flow should match the booster-side flow the fixtures set. EnergyPlus has no
+      # control that ties the two flows directly: uncontrolled and on/off types request the design
+      # flow whenever the exchanger runs. HeatingSetpointModulated throttles the shared-side flow
+      # until the booster-side outlet meets a setpoint, and with the Ideal model and a setpoint a
+      # small offset below the shared loop's inlet temperature the flow it solves for is the
+      # booster flow times (setpoint - mains) / (shared inlet - mains): 99 percent for 0.5 K on a
+      # 47 K rise. The setpoint follows the shared loop's inlet node rather than a fixed schedule,
+      # because the loop drifts a few degrees and a fixed value above its inlet is unreachable,
+      # which leaves the exchanger at full design flow. The energy transferred is the same either
+      # way, since the exchanger can only give the booster return what it absorbs; what this fixes
+      # is the shared loop's return temperature and mixing, which a constant chilled stream
+      # misrepresents. A smaller offset tracks more closely but makes the exchanger's flow
+      # iteration chatter between timesteps.
+      hx_setpoint_offset_k = 0.5
+      hx.setControlType('HeatingSetpointModulated')
+      hx_setpoint_manager = OpenStudio::Model::SetpointManagerFollowSystemNodeTemperature.new(model)
+      hx_setpoint_manager.setName('Booster Water Heating Heat Exchanger Setpoint Manager')
+      hx_setpoint_manager.setControlVariable('Temperature')
+      hx_setpoint_manager.setReferenceNode(hx.demandInletModelObject.get.to_Node.get)
+      hx_setpoint_manager.setReferenceTemperatureType('NodeDryBulb')
+      hx_setpoint_manager.setOffsetTemperatureDifference(-hx_setpoint_offset_k)
+      hx_setpoint_manager.setMaximumLimitSetpointTemperature(loop_temperature)
+      hx_setpoint_manager.setMinimumLimitSetpointTemperature(0.0)
+      hx_setpoint_manager.addToNode(hx.supplyOutletModelObject.get.to_Node.get)
 
-      # use the site water mains temperature schedule if available,
-      # otherwise use the annual average outdoor air temperature
-      site_water_mains = model.getSiteWaterMainsTemperature
-      if site_water_mains.temperatureSchedule.is_initialized
-        water_mains_temp_sch = site_water_mains.temperatureSchedule.get
-      elsif site_water_mains.annualAverageOutdoorAirTemperature.is_initialized
-        mains_src_temp_c = site_water_mains.annualAverageOutdoorAirTemperature.get
-        mains_src.setSourceTemperature(mains_src_temp_c)
-        water_mains_temp_sch = OpenStudio::Model::ScheduleConstant.new(model)
-        water_mains_temp_sch.setName('Booster Water Makeup Temperature')
-        water_mains_temp_sch.setValue(mains_src_temp_c)
-      else # assume 50F
-        mains_src_temp_c = OpenStudio.convert(50.0, 'F', 'C').get
-        mains_src.setSourceTemperature(mains_src_temp_c)
-        water_mains_temp_sch = OpenStudio::Model::ScheduleConstant.new(model)
-        water_mains_temp_sch.setName('Booster Water Makeup Temperature')
-        water_mains_temp_sch.setValue(mains_src_temp_c)
-      end
-      mains_src.setTemperatureSpecificationType('Scheduled')
-      mains_src.setSourceTemperatureSchedule(water_mains_temp_sch)
+      # The booster tank must be the only equipment in the loop's load-based operation scheme.
+      # Left to the forward translator, a setpoint on the exchanger outlet adds a ComponentSetpoint
+      # scheme for the exchanger but also keeps the exchanger first in the heating-load equipment
+      # list, where a setpoint-controlled exchanger counts as active capacity. Sequential load
+      # distribution then hands it the entire loop demand, it delivers only what its setpoint allows,
+      # and the tank downstream is asked for nothing and requests no flow: the 180 F fixtures
+      # received 57 C water with 5.5 kW unmet at the peak and the booster's only energy was standby.
+      # An uncontrolled exchanger is passive and skipped by the distribution, which is why the
+      # tank was served before the control type changed.
+      heating_load_scheme = OpenStudio::Model::PlantEquipmentOperationHeatingLoad.new(model)
+      heating_load_scheme.setName("#{booster_service_water_loop.name} Heating Operation Scheme")
+      heating_load_scheme.addEquipment(booster_water_heater)
+      booster_service_water_loop.setPlantEquipmentOperationHeatingLoad(heating_load_scheme)
 
       return booster_service_water_loop
     end
