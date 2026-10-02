@@ -973,6 +973,15 @@
   },
   {
     "electric_equipment_space_type_name": "office_open_electric_equipment",
+    "standards_building_type": null,
+    "electric_equipment_per_area": 1.1,
+    "electric_equipment_per_area_units": "W/ft^2",
+    "electric_equipment_fraction_latent": 0.0,
+    "electric_equipment_fraction_radiant": 0.5,
+    "electric_equipment_fraction_lost": 0.0
+  },
+  {
+    "electric_equipment_space_type_name": "office_open_electric_equipment",
     "standards_building_type": "Outpatient",
     "electric_equipment_per_area": 1.1,
     "electric_equipment_per_area_units": "W/ft^2",
@@ -1450,6 +1459,15 @@
   },
   {
     "electric_equipment_space_type_name": "datacenter_high_ite_equipment",
+    "standards_building_type": null,
+    "electric_equipment_per_area": 45.0,
+    "electric_equipment_per_area_units": "W/ft^2",
+    "electric_equipment_fraction_latent": 0.0,
+    "electric_equipment_fraction_radiant": 0.5,
+    "electric_equipment_fraction_lost": 0.0
+  },
+  {
+    "electric_equipment_space_type_name": "datacenter_high_ite_equipment",
     "standards_building_type": "SmallDataCenterHighITE",
     "electric_equipment_per_area": 100.0,
     "electric_equipment_per_area_units": "W/ft^2",
@@ -1469,6 +1487,15 @@
   {
     "electric_equipment_space_type_name": "datacenter_low_ite_equipment",
     "standards_building_type": "Office",
+    "electric_equipment_per_area": 1.56,
+    "electric_equipment_per_area_units": "W/ft^2",
+    "electric_equipment_fraction_latent": 0.0,
+    "electric_equipment_fraction_radiant": 0.5,
+    "electric_equipment_fraction_lost": 0.0
+  },
+  {
+    "electric_equipment_space_type_name": "datacenter_low_ite_equipment",
+    "standards_building_type": null,
     "electric_equipment_per_area": 1.56,
     "electric_equipment_per_area_units": "W/ft^2",
     "electric_equipment_fraction_latent": 0.0,
@@ -2009,7 +2036,7 @@
   {
     "electric_equipment_space_type_name": "warehouse_bulk_storage_electric_equipment",
     "standards_building_type": null,
-    "electric_equipment_per_area": 0.11,
+    "electric_equipment_per_area": 0.4,
     "electric_equipment_per_area_units": "W/ft^2",
     "electric_equipment_fraction_latent": 0.0,
     "electric_equipment_fraction_radiant": 0.0,
@@ -2018,7 +2045,7 @@
   {
     "electric_equipment_space_type_name": "warehouse_fine_storage_electric_equipment",
     "standards_building_type": null,
-    "electric_equipment_per_area": 0.06,
+    "electric_equipment_per_area": 0.4,
     "electric_equipment_per_area_units": "W/ft^2",
     "electric_equipment_fraction_latent": 0.0,
     "electric_equipment_fraction_radiant": 0.0,
