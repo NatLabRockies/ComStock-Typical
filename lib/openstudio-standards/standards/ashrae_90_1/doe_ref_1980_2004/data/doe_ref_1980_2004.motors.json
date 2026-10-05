@@ -7,8 +7,8 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 0.0,
       "maximum_capacity": 0.999,
-      "nominal_full_load_efficiency": 0.29,
-      "notes": "Motors below 1 HP assumed to be PSC, with average typical efficiency of 29% per PNNL"
+      "nominal_full_load_efficiency": 0.825,
+      "notes": "From 90.1-2004 Table 10.8"
     },
     {
       "template": "DOE Ref 1980-2004",
@@ -17,7 +17,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 1.0,
       "maximum_capacity": 1.499,
-      "nominal_full_load_efficiency": 0.825,
+      "nominal_full_load_efficiency": 0.84,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -37,7 +37,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 2.0,
       "maximum_capacity": 2.999,
-      "nominal_full_load_efficiency": 0.84,
+      "nominal_full_load_efficiency": 0.875,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -57,7 +57,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 5.0,
       "maximum_capacity": 7.499,
-      "nominal_full_load_efficiency": 0.875,
+      "nominal_full_load_efficiency": 0.895,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -77,7 +77,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 10.0,
       "maximum_capacity": 14.999,
-      "nominal_full_load_efficiency": 0.895,
+      "nominal_full_load_efficiency": 0.91,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -97,7 +97,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 20.0,
       "maximum_capacity": 24.999,
-      "nominal_full_load_efficiency": 0.91,
+      "nominal_full_load_efficiency": 0.924,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -117,7 +117,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 30.0,
       "maximum_capacity": 39.999,
-      "nominal_full_load_efficiency": 0.924,
+      "nominal_full_load_efficiency": 0.93,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -137,7 +137,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 50.0,
       "maximum_capacity": 59.999,
-      "nominal_full_load_efficiency": 0.93,
+      "nominal_full_load_efficiency": 0.936,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -147,7 +147,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 60.0,
       "maximum_capacity": 74.999,
-      "nominal_full_load_efficiency": 0.936,
+      "nominal_full_load_efficiency": 0.941,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -157,7 +157,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 75.0,
       "maximum_capacity": 99.999,
-      "nominal_full_load_efficiency": 0.941,
+      "nominal_full_load_efficiency": 0.945,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {
@@ -177,7 +177,7 @@
       "synchronous_speed": 1800.0,
       "minimum_capacity": 125.0,
       "maximum_capacity": 149.999,
-      "nominal_full_load_efficiency": 0.945,
+      "nominal_full_load_efficiency": 0.95,
       "notes": "From 90.1-2004 Table 10.8"
     },
     {

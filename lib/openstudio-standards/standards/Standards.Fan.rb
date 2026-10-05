@@ -231,11 +231,30 @@ module Fan
 
   # Determines the minimum fan motor efficiency and nominal size for a given motor bhp.
   # This should be the total brake horsepower with any desired safety factor already included.
-  # This method picks the next nominal motor category larger than the required brake horsepower,
-  # and the efficiency is based on that size.
-  # For example, if the bhp = 6.3, the nominal size will be 7.5HP and the efficiency
-  # for 90.1-2010 will be 91.7% from Table 10.8B.
+  #
+  # The lookup is a single step: find the row in the motors table whose
+  # [minimum_capacity, maximum_capacity] range contains the brake horsepower, and return that
+  # row's efficiency. The row's maximum_capacity is reported as the nominal motor size, rounded
+  # to a whole number at or above 2 HP.
+  # For example, for 90.1-2010 a bhp of 6.3 falls in the 5.001-7.500 row, giving an efficiency
+  # of 91.7% (4-pole, enclosed) and a reported nominal size of 8 HP (7.5 rounded).
   # This method assumes 4-pole, 1800rpm totally-enclosed fan-cooled motors.
+  #
+  # Note that 90.1 and DEER motors tables carry date-effective rows, and the lookup passes
+  # Date.today, so a single bin can resolve to different efficiencies depending on when the
+  # code runs -- the 90.1-2010 example above is 89.5% before 2010-12-19 and 91.7% after. The
+  # DOE Ref tables have no date fields and always resolve to a single row.
+  #
+  # Because the lookup is single step, each motors table row must carry the efficiency of a
+  # motor actually serving that brake-horsepower range. An earlier version of this method took
+  # a second step, re-looking-up at maximum_capacity + 0.01 to land one row higher, and the
+  # DOE Ref tables were authored around that behaviour -- their rows were offset by one bin and
+  # a 0.29 "PSC motors below 1 HP" row sat at the bottom where the second step always skipped
+  # it. When the second step was removed upstream (openstudio-standards commit fddbdc9,
+  # PR #1716), that row became reachable and every sub-1-HP DOE Ref fan silently dropped from
+  # 0.825 to 0.29 motor efficiency. The DOE Ref tables have since been corrected to match this
+  # single-step contract. Keep table and lookup consistent: do not reintroduce a second step,
+  # and do not insert a row that only makes sense if one exists.
   #
   # @param fan [OpenStudio::Model::StraightComponent] fan object, allowable types:
   #   FanConstantVolume, FanOnOff, FanVariableVolume, and FanZoneExhaust
@@ -243,10 +262,9 @@ module Fan
   # @return [Array<Double>] minimum motor efficiency (0.0 to 1.0), nominal horsepower
   def fan_standard_minimum_motor_efficiency_and_size(fan, motor_bhp)
     fan_motor_eff = 0.85
-    # Calculate the allowed fan brake horsepower
-    # per method used in PNNL prototype buildings.
-    # Assumes that the fan brake horsepower is 90%
-    # of the fan nameplate rated motor power.
+    # Fallback nominal size, returned only when the table lookup below fails.
+    # Assumes that the fan brake horsepower is 90% of the fan nameplate rated motor power,
+    # per the method used in PNNL prototype buildings.
     # Source: Thornton et al. (2011), Achieving the 30% Goal: Energy and Cost Savings Analysis of ASHRAE Standard 90.1-2010, Section 4.5.4
     nominal_hp = motor_bhp * 1.1
 
