@@ -152,6 +152,13 @@ class Standard
       air_loop_hvac_remove_motorized_oa_damper(air_loop_hvac)
     end
 
+    # Minimum outdoor air control on multizone VAV systems: a constant zone-sum volume, or a
+    # fixed damper position whose outdoor air follows the supply flow
+    air_loop_hvac_apply_minimum_outdoor_air_control(air_loop_hvac)
+
+    # Packaged unit supply fan during occupied hours: continuous, or cycling with the load
+    air_loop_hvac_apply_unitary_supply_fan_operating_mode(air_loop_hvac)
+
     # Optimum Start
     air_loop_hvac_enable_optimum_start(air_loop_hvac) if air_loop_hvac_optimum_start_required?(air_loop_hvac)
 
@@ -1628,7 +1635,9 @@ class Standard
   # terminals pass in heating agree. The terminal keeps its zone minimum air flow input method:
   # a 'Constant' fraction is raised, a 'FixedFlowRate' rate is raised, so tools that carry the
   # constant fraction across hard sizing keep it. Needs a sizing run first when the terminal's
-  # maximum flow is autosized.
+  # maximum flow is autosized. A template exempts zones through
+  # air_loop_hvac_vav_terminal_minimum_covers_zone_outdoor_air? (the DOE Ref templates keep the
+  # 30% minimum where ventilation is occupant driven).
   #
   # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
   # @return [Integer] the number of terminals whose minimum was raised
@@ -1642,6 +1651,7 @@ class Standard
                      equip.to_AirTerminalSingleDuctVAVNoReheat.get
                    end
         next if terminal.nil?
+        next unless air_loop_hvac_vav_terminal_minimum_covers_zone_outdoor_air?(air_loop_hvac, zone)
 
         zone_oa = OpenstudioStandards::ThermalZone.thermal_zone_get_outdoor_airflow_rate(zone)
         next unless zone_oa > 0.0
@@ -1652,7 +1662,7 @@ class Standard
         when 'FixedFlowRate'
           current = terminal.fixedMinimumAirFlowRate
           current = current.is_initialized ? current.get : 0.0
-          next unless zone_oa > current
+          next unless zone_oa > current + 1e-9 # tolerance: a value read back from the model can differ in its last digits
 
           terminal.setFixedMinimumAirFlowRate(zone_oa)
           OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{terminal.name}: raised the fixed minimum air flow rate from #{current.round(4)} to the zone outdoor air of #{zone_oa.round(4)} m^3/s.")
@@ -1669,7 +1679,7 @@ class Standard
           next unless current.is_initialized # autosized: EnergyPlus derives it from the zone outdoor air itself
 
           needed = [zone_oa / max_flow.get, 1.0].min
-          next unless needed > current.get
+          next unless needed > current.get + 1e-9
 
           terminal.setConstantMinimumAirFlowFraction(needed)
           OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{terminal.name}: raised the constant minimum air flow fraction from #{current.get.round(3)} to #{needed.round(3)} to cover the zone outdoor air of #{zone_oa.round(4)} m^3/s at a maximum flow of #{max_flow.get.round(4)} m^3/s.")
@@ -2368,6 +2378,107 @@ class Standard
     end
 
     return has_erv
+  end
+
+  # The minimum outdoor air control a multizone VAV system uses.
+  # 'FixedMinimum' holds the design minimum outdoor air volume at every supply flow, as an
+  # airflow station or a reset damper does; 'ProportionalMinimum' is a damper set to its design
+  # position and left there, so outdoor air falls with the supply fan.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [String] 'FixedMinimum' or 'ProportionalMinimum'
+  def air_loop_hvac_minimum_outdoor_air_limit_type(air_loop_hvac)
+    return 'FixedMinimum'
+  end
+
+  # Apply the minimum outdoor air control to a multizone VAV system.
+  # With 'ProportionalMinimum' the zone-sum mechanical ventilation controller is made unavailable,
+  # since EnergyPlus would otherwise compute and hold the zone-sum volume and override the
+  # proportional minimum; the minimum outdoor air flow (the Sizing:System design outdoor air) over
+  # the design supply flow is then the damper fraction. With 'FixedMinimum' a controller made
+  # unavailable this way is made available again, so a newer template restores what an older one
+  # removed. Other air loops are left alone.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [Boolean] returns true if successful, false if not
+  def air_loop_hvac_apply_minimum_outdoor_air_control(air_loop_hvac)
+    return true unless air_loop_hvac_multizone_vav_system?(air_loop_hvac)
+
+    oa_system = air_loop_hvac.airLoopHVACOutdoorAirSystem
+    return true unless oa_system.is_initialized
+
+    model = air_loop_hvac.model
+    controller_oa = oa_system.get.getControllerOutdoorAir
+    controller_mv = controller_oa.controllerMechanicalVentilation
+    limit_type = air_loop_hvac_minimum_outdoor_air_limit_type(air_loop_hvac)
+    controller_oa.setMinimumLimitType(limit_type)
+    if limit_type == 'ProportionalMinimum'
+      controller_mv.setAvailabilitySchedule(model.alwaysOffDiscreteSchedule)
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{air_loop_hvac.name}: minimum outdoor air is a fixed damper fraction of supply flow (ProportionalMinimum); the zone-sum ventilation controller is unavailable.")
+    elsif controller_mv.availabilitySchedule == model.alwaysOffDiscreteSchedule
+      controller_mv.setAvailabilitySchedule(model.alwaysOnDiscreteSchedule)
+    end
+    return true
+  end
+
+  # Whether a packaged unit's supply fan cycles with the heating and cooling load during occupied
+  # hours, bringing in outdoor air only while it runs, instead of running continuously.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [Boolean] true if the supply fan cycles
+  def air_loop_hvac_unitary_supply_fan_cycles?(air_loop_hvac)
+    return false
+  end
+
+  # Apply the occupied-hours supply fan operating mode to the packaged units on an air loop.
+  # A cycling fan gets an always-off operating mode schedule and records the schedule it replaced
+  # in the unit's 'continuous_fan_operating_mode_schedule' additional property; a continuous fan
+  # restores that schedule, so a newer template undoes only what an older one changed. Units on a
+  # dedicated outdoor air system, which must run to ventilate, are skipped.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [Boolean] returns true if successful, false if not
+  def air_loop_hvac_apply_unitary_supply_fan_operating_mode(air_loop_hvac)
+    return true if air_loop_hvac.sizingSystem.typeofLoadtoSizeOn == 'VentilationRequirement'
+
+    model = air_loop_hvac.model
+    cycles = air_loop_hvac_unitary_supply_fan_cycles?(air_loop_hvac)
+    property = 'continuous_fan_operating_mode_schedule'
+    air_loop_hvac.supplyComponents.each do |component|
+      unit = case component.iddObjectType.valueName.to_s
+             when 'OS_AirLoopHVAC_UnitarySystem' then component.to_AirLoopHVACUnitarySystem.get
+             when 'OS_AirLoopHVAC_UnitaryHeatPump_AirToAir' then component.to_AirLoopHVACUnitaryHeatPumpAirToAir.get
+             when 'OS_AirLoopHVAC_UnitaryHeatPump_AirToAir_MultiSpeed' then component.to_AirLoopHVACUnitaryHeatPumpAirToAirMultiSpeed.get
+             end
+      next if unit.nil?
+
+      props = unit.additionalProperties
+      current = unit.supplyAirFanOperatingModeSchedule
+      current = current.is_initialized ? current.get : nil
+      if cycles
+        next if current == model.alwaysOffDiscreteSchedule
+
+        props.setFeature(property, current.nil? ? '' : current.name.to_s)
+        unit.setSupplyAirFanOperatingModeSchedule(model.alwaysOffDiscreteSchedule)
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{unit.name}: supply fan cycles with the load during occupied hours.")
+      elsif props.hasFeature(property)
+        name = props.getFeatureAsString(property).get
+        restored = model.getScheduleByName(name)
+        unit.setSupplyAirFanOperatingModeSchedule(restored.is_initialized ? restored.get : air_loop_hvac.availabilitySchedule)
+        props.resetFeature(property)
+      end
+    end
+    return true
+  end
+
+  # Whether a VAV terminal's minimum airflow is raised to cover its zone's design outdoor air.
+  # See air_loop_hvac_apply_vav_terminal_minimum_outdoor_air.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @param zone [OpenStudio::Model::ThermalZone] the zone the terminal serves
+  # @return [Boolean] true if the minimum should cover the zone outdoor air
+  def air_loop_hvac_vav_terminal_minimum_covers_zone_outdoor_air?(air_loop_hvac, zone)
+    return true
   end
 
   # Determine if the air loop is a unitary system
