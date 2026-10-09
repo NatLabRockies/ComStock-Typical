@@ -449,6 +449,30 @@
     "summer_design_day_peak": 1.0
   },
   {
+    "name": "classroom/lecture/training - primary school lighting",
+    "category": "Lighting",
+    "derivation_type": "exponential-inverse",
+    "base": 0.1218,
+    "peak": 0.6567,
+    "response": 2.55,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
+    "name": "classroom/lecture/training - secondary school lighting",
+    "category": "Lighting",
+    "derivation_type": "exponential-inverse",
+    "base": 0.1218,
+    "peak": 0.6567,
+    "response": 2.55,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
     "name": "computer room lighting",
     "category": "Lighting",
     "derivation_type": "exponential",

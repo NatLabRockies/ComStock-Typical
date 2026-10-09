@@ -396,6 +396,30 @@
     "summer_design_day_peak": 1.0
   },
   {
+    "name": "classroom/lecture/training - primary school electric equipment",
+    "category": "Equipment",
+    "derivation_type": "exponential-inverse",
+    "base": 0.2502,
+    "peak": 0.9575,
+    "response": 3.0,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
+    "name": "classroom/lecture/training - secondary school electric equipment",
+    "category": "Equipment",
+    "derivation_type": "exponential-inverse",
+    "base": 0.2502,
+    "peak": 0.9575,
+    "response": 3.0,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
     "name": "computer room electric equipment",
     "category": "Equipment",
     "derivation_type": "linear",

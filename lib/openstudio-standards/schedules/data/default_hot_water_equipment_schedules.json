@@ -120,6 +120,30 @@
     "summer_design_day_peak": 1.0
   },
   {
+    "name": "classroom/lecture/training - primary school hot water equipment",
+    "category": "Equipment",
+    "derivation_type": "linear",
+    "base": 0.3,
+    "peak": 0.9,
+    "response": 0.4,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
+    "name": "classroom/lecture/training - secondary school hot water equipment",
+    "category": "Equipment",
+    "derivation_type": "linear",
+    "base": 0.3,
+    "peak": 0.9,
+    "response": 0.4,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
     "name": "emergency room hot water equipment",
     "category": "Equipment",
     "derivation_type": "logistic",
