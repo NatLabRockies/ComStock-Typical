@@ -67,6 +67,7 @@ modules/hvac/test_hvac_exhaust.rb
 modules/hvac/test_hvac_exhaust_all_level.rb
 modules/hvac/test_hvac_exhaust_vertical_makeup.rb
 modules/hvac/test_extreme_load_zones.rb
+modules/hvac/test_legacy_outdoor_air_controls.rb
 modules/hvac/test_vav_sizing_inputs.rb
 modules/infiltration/test_infiltration.rb
 modules/infiltration/test_nist_infiltration.rb

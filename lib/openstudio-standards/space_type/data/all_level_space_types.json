@@ -340,6 +340,26 @@
     "annotation": "sub-space type of 'classroom/lecture/training'; specific value(s): electric_equipment; other values repeated from the 'classroom/lecture/training' level 1 entry"
   },
   {
+    "space_type_name": "classroom/lecture/training - primary school",
+    "lighting_space_type_name": "classroom_lecture_training_lighting",
+    "ventilation_space_type_name": "classroom_lecture_training_ventilation",
+    "electric_equipment_space_type_name": "classroom_lecture_training_all_other_electric_equipment",
+    "natural_gas_equipment_space_type_name": null,
+    "schedule_set_name": "classroom/lecture/training - primary school schedule set",
+    "critical_operation": false,
+    "annotation": "classroom in a primary school building"
+  },
+  {
+    "space_type_name": "classroom/lecture/training - secondary school",
+    "lighting_space_type_name": "classroom_lecture_training_lighting",
+    "ventilation_space_type_name": "classroom_lecture_training_ventilation",
+    "electric_equipment_space_type_name": "classroom_lecture_training_all_other_electric_equipment",
+    "natural_gas_equipment_space_type_name": null,
+    "schedule_set_name": "classroom/lecture/training - secondary school schedule set",
+    "critical_operation": false,
+    "annotation": "classroom in a secondary school building"
+  },
+  {
     "space_type_name": "computer room",
     "lighting_space_type_name": "computer_room_lighting",
     "ventilation_space_type_name": "computer_room_ventilation",

@@ -104,7 +104,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -144,6 +143,8 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -154,7 +155,7 @@
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Theaters | Auditorium"
+      "source": "ASHRAE 62-1999 Table 2 rate (15 cfm/person) | prototype: 90.1-2004 and DOE Ref SecondarySchool Auditorium"
     }
   ],
   "baggage_carousel_ventilation": [
@@ -247,7 +248,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -265,6 +265,18 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | Educational Facilities | Classrooms (age 9 plus)"
+    },
+    {
+      "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017"
+      ],
+      "ventilation_per_person": 10.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.12,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | Office | Classroom"
     },
     {
       "templates": [
@@ -287,29 +299,19 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "ventilation_per_person": 15.0,
+      "ventilation_per_person": 16.95,
       "ventilation_per_person_units": "cfm/person",
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Education | Classroom"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "ventilation_per_person": 10.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.12,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Office | Classroom"
+      "source": "ASHRAE 62-1999 Table 2 rate in SI (8 L/s per person = 16.95 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref PrimarySchool Classroom"
     }
   ],
   "computer_room_ventilation": [
@@ -411,7 +413,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -427,39 +428,6 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | General | Conference/meeting"
-    },
-    {
-      "templates": [
-        "DEER Pre-1975",
-        "DEER 1985",
-        "DEER 1996",
-        "DEER 2003",
-        "DEER 2007",
-        "DEER 2011",
-        "DEER 2014",
-        "DEER 2015",
-        "DEER 2017"
-      ],
-      "ventilation_per_person": null,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.89,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | OfL | Conference"
-    },
-    {
-      "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 20.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.0,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Offices | Conference rooms"
     },
     {
       "templates": [
@@ -484,6 +452,41 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "spc_typ | Office | Conference"
+    },
+    {
+      "templates": [
+        "DEER Pre-1975",
+        "DEER 1985",
+        "DEER 1996",
+        "DEER 2003",
+        "DEER 2007",
+        "DEER 2011",
+        "DEER 2014",
+        "DEER 2015",
+        "DEER 2017"
+      ],
+      "ventilation_per_person": null,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.89,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | OfL | Conference"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 20.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.0,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "ASHRAE 62-1999 Table 2 rate (20 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office SmallOffice - Conference"
     }
   ],
   "confinement_cells_ventilation": [
@@ -864,20 +867,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 0.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.05,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Public Spaces | Corridors and utilities"
-    },
-    {
-      "templates": [
         "90.1-2019",
         "ComStock 90.1-2019"
       ],
@@ -902,14 +891,29 @@
     },
     {
       "templates": [
-        "90.1-2004"
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
-      "ventilation_per_person": null,
+      "ventilation_per_person": 0.0,
       "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.06,
+      "ventilation_per_area": 0.1,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1 | General | Corridors"
+      "source": "prototype rate (0.1 cfm/ft2) (most common of several prototype values) | prototype: 90.1-2004 SecondarySchool Corridor"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 0.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.05,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "ASHRAE 62-1999 Table 2 rate (0.05 cfm/ft2) (most common of several prototype values) | prototype: DOE Ref Office SmallOffice - Corridor"
     }
   ],
   "courtroom_ventilation": [
@@ -1113,7 +1117,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -1131,6 +1134,18 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | Food and Beverage Service | Restaurant dining rooms"
+    },
+    {
+      "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017"
+      ],
+      "ventilation_per_person": 7.5,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.18,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | FullServiceRestaurant | Dining"
     },
     {
       "templates": [
@@ -1153,6 +1168,8 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -1163,19 +1180,7 @@
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Foor and Beverage Service | Dining rooms"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "ventilation_per_person": 7.5,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.18,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | FullServiceRestaurant | Dining"
+      "source": "ASHRAE 62-1999 Table 2 rate (20 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref FullServiceRestaurant Dining"
     }
   ],
   "dressing_room_ventilation": [
@@ -2476,7 +2481,6 @@
   "exercise_area_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -2497,6 +2501,30 @@
     },
     {
       "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017"
+      ],
+      "ventilation_per_person": 20.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.06,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | SmallHotel | Exercise"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "ventilation_per_person": 15.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.0,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (15 cfm/person) | prototype: 90.1-2004 SmallHotel Exercise"
+    },
+    {
+      "templates": [
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -2507,19 +2535,7 @@
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "spc_typ | SmallHotel | Exercise"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "ventilation_per_person": 20.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.06,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | SmallHotel | Exercise"
+      "source": "prototype rate (20 cfm/person) | prototype: DOE Ref SmallHotel Exercise"
     }
   ],
   "exhibit_ventilation": [
@@ -2763,7 +2779,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -2778,6 +2793,20 @@
     },
     {
       "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017"
+      ],
+      "ventilation_per_person": 7.5,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.18,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | FullServiceRestaurant | Dining"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -2788,19 +2817,7 @@
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Foor and Beverage Service | Cafeteria, fast food"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "ventilation_per_person": 7.5,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.18,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | FullServiceRestaurant | Dining"
+      "source": "ASHRAE 62-1999 Table 2 rate (20 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref PrimarySchool Cafeteria"
     }
   ],
   "food_preparation_ventilation": [
@@ -2877,22 +2894,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 15.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.0,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Foor and Beverage Service | Kitchen (cooking)",
-      "annotation": "commercial kitchens also require exhaust and makeup air beyond this rate"
-    },
-    {
-      "templates": [
         "90.1-2007",
         "ComStock 90.1-2007"
       ],
@@ -2916,6 +2917,22 @@
       "ventilation_air_changes": null,
       "source": "spc_typ | FullServiceRestaurant | Kitchen",
       "annotation": "commercial kitchens also require exhaust and makeup air beyond this rate"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 0.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.47,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (0.47 cfm/ft2) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref FullServiceRestaurant Kitchen"
     }
   ],
   "guest_room_ventilation": [
@@ -2952,7 +2969,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -2968,39 +2984,6 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | Hotels, Motels, Resorts, Dormitories | Bedroom/living Room"
-    },
-    {
-      "templates": [
-        "DEER Pre-1975",
-        "DEER 1985",
-        "DEER 1996",
-        "DEER 2003",
-        "DEER 2007",
-        "DEER 2011",
-        "DEER 2014",
-        "DEER 2015",
-        "DEER 2017"
-      ],
-      "ventilation_per_person": null,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.1,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Htl | GuestRmOcc"
-    },
-    {
-      "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 0.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.085,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | SmallHotel | GuestRoom"
     },
     {
       "templates": [
@@ -3025,6 +3008,41 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "spc_typ | LargeHotel | GuestRoom"
+    },
+    {
+      "templates": [
+        "DEER Pre-1975",
+        "DEER 1985",
+        "DEER 1996",
+        "DEER 2003",
+        "DEER 2007",
+        "DEER 2011",
+        "DEER 2014",
+        "DEER 2015",
+        "DEER 2017"
+      ],
+      "ventilation_per_person": null,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.1,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | Htl | GuestRmOcc"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 15.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.0,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (15 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref LargeHotel GuestRoom"
     }
   ],
   "hotels_motels_resorts_dormitories_lobbies_prefunction_ventilation": [
@@ -3328,7 +3346,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -3370,18 +3387,29 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "ventilation_per_person": 20.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.0,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (20 cfm/person) | prototype: 90.1-2004 Hospital Lab"
+    },
+    {
+      "templates": [
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "ventilation_per_person": null,
+      "ventilation_per_person": 0.0,
       "ventilation_per_person_units": "cfm/person",
       "ventilation_per_area": 1.4,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "spc_typ | Hospital | Lab",
-      "annotation": "hazardous-exhaust laboratories are governed by lab ventilation standards, not this rate"
+      "source": "prototype rate (1.4 cfm/ft2) | prototype: DOE Ref Hospital Lab"
     }
   ],
   "laundry_washing_ventilation": [
@@ -3457,20 +3485,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 15.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.0,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Dry Cleaners, Laundries | Coin-operated laundries"
-    },
-    {
-      "templates": [
         "ZE AEDG Multifamily",
         "NREL ZNE Ready 2017"
       ],
@@ -3483,14 +3497,19 @@
     },
     {
       "templates": [
-        "90.1-2004"
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
       ],
-      "ventilation_per_person": 5.0,
+      "ventilation_per_person": 25.0,
       "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.12,
+      "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-2007 | Hotels, Motels, Resorts, Dormitories | Laundry rooms, central"
+      "source": "prototype rate (25 cfm/person) | prototype: 90.1-2004 and DOE Ref LargeHotel Laundry"
     }
   ],
   "library_ventilation": [
@@ -3527,7 +3546,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -3543,6 +3561,18 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | Public Assembly Spaces | Libraries"
+    },
+    {
+      "templates": [
+        "90.1-2019",
+        "ComStock 90.1-2019"
+      ],
+      "ventilation_per_person": 5.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.12,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "ASHRAE 62.1 | Public Assembly Spaces | Libraries (public assembly)"
     },
     {
       "templates": [
@@ -3565,29 +3595,19 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "ventilation_per_person": 15.0,
+      "ventilation_per_person": 16.95,
       "ventilation_per_person_units": "cfm/person",
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Education | Libraries"
-    },
-    {
-      "templates": [
-        "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "ventilation_per_person": 5.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.12,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1 | Public Assembly Spaces | Libraries (public assembly)"
+      "source": "ASHRAE 62-1999 Table 2 rate in SI (8 L/s per person = 16.95 cfm/person) | prototype: 90.1-2004 PrimarySchool Library; DOE Ref SecondarySchool Library"
     }
   ],
   "living_quarters_ventilation": [
@@ -3780,7 +3800,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -3798,6 +3817,18 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | Office Buildings | Main entry lobbies"
+    },
+    {
+      "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017"
+      ],
+      "ventilation_per_person": 5.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.06,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | Office | Lobby"
     },
     {
       "templates": [
@@ -3820,6 +3851,8 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -3830,19 +3863,7 @@
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "spc_typ | Office | Lobby"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "ventilation_per_person": 5.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.06,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Office | Lobby"
+      "source": "prototype rate (15 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office SmallOffice - Lobby"
     }
   ],
   "locker_room_ventilation": [
@@ -4321,20 +4342,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 0.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.05,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Retail Stores, Sales Floors, and Show Room Floors | Warehouses"
-    },
-    {
-      "templates": [
         "90.1-2007",
         "ComStock 90.1-2007"
       ],
@@ -4359,14 +4366,29 @@
     },
     {
       "templates": [
-        "90.1-2004"
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004"
       ],
-      "ventilation_per_person": null,
+      "ventilation_per_person": 0.0,
       "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.06,
+      "ventilation_per_area": 0.05,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1 | Miscellaneous Spaces | Warehouses"
+      "source": "ASHRAE 62-1999 Table 2 rate (0.05 cfm/ft2) | prototype: 90.1-2004 and DOE Ref Warehouse Bulk"
+    },
+    {
+      "templates": [
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 1.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.05,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (1 cfm/person + 0.05 cfm/ft2) (most common of several prototype values) | prototype: DOE Ref Warehouse Bulk"
     }
   ],
   "multifamily_ventilation": [
@@ -4495,7 +4517,6 @@
   "nurses_station_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -4517,6 +4538,18 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "ventilation_per_person": 15.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.0,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (15 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 Hospital NurseStn"
+    },
+    {
+      "templates": [
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -4527,8 +4560,7 @@
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "spc_typ | Outpatient | NurseStation",
-      "annotation": "not in Table 6-1; using office space rates"
+      "source": "prototype rate (20 cfm/person) (most common of several prototype values) | prototype: DOE Ref Hospital NurseStn"
     }
   ],
   "office_enclosed_ventilation": [
@@ -4664,7 +4696,22 @@
     },
     {
       "templates": [
-        "90.1-2004",
+        "CBES Pre-1978",
+        "CBES T24 1978",
+        "CBES T24 1992",
+        "CBES T24 2001",
+        "CBES T24 2005",
+        "CBES T24 2008"
+      ],
+      "ventilation_per_person": 15.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.15,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | Office | WholeBuilding - Md Office"
+    },
+    {
+      "templates": [
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -4682,6 +4729,18 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | Office Buildings | Office space"
+    },
+    {
+      "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017"
+      ],
+      "ventilation_per_person": 5.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.06,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | Office | OpenOffice"
     },
     {
       "templates": [
@@ -4704,22 +4763,8 @@
     },
     {
       "templates": [
-        "CBES Pre-1978",
-        "CBES T24 1978",
-        "CBES T24 1992",
-        "CBES T24 2001",
-        "CBES T24 2005",
-        "CBES T24 2008"
-      ],
-      "ventilation_per_person": 15.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.15,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Office | WholeBuilding - Md Office"
-    },
-    {
-      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -4730,19 +4775,7 @@
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Offices | Office space"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "ventilation_per_person": 5.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.06,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Office | OpenOffice"
+      "source": "ASHRAE 62-1999 Table 2 rate (20 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office OpenOffice"
     }
   ],
   "operating_room_ventilation": [
@@ -5046,6 +5079,8 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -5056,18 +5091,7 @@
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Sports and Amusement | Playing floors (gymnasium)"
-    },
-    {
-      "templates": [
-        "90.1-2004"
-      ],
-      "ventilation_per_person": null,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.3,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1 | Sports and Entertainment | Sports arena (play area)"
+      "source": "ASHRAE 62-1999 Table 2 rate (20 cfm/person) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref SecondarySchool Gym"
     }
   ],
   "plenum_ventilation": [
@@ -5837,21 +5861,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 25.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.0,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | SmallHotel | Laundry"
-    },
-    {
-      "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007"
       ],
@@ -5873,6 +5882,22 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "spc_typ | SmallHotel | Laundry"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 25.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.0,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (25 cfm/person) | prototype: 90.1-2004 and DOE Ref SmallHotel Laundry"
     }
   ],
   "retail_pet_shops_animal_areas_ventilation": [
@@ -6024,7 +6049,22 @@
     },
     {
       "templates": [
-        "90.1-2004",
+        "CBES Pre-1978",
+        "CBES T24 1978",
+        "CBES T24 1992",
+        "CBES T24 2001",
+        "CBES T24 2005",
+        "CBES T24 2008"
+      ],
+      "ventilation_per_person": 15.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.2,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | Retail | Retail"
+    },
+    {
+      "templates": [
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -6042,6 +6082,18 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | Retail | Sales (except as below)"
+    },
+    {
+      "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017"
+      ],
+      "ventilation_per_person": 7.5,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.12,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | Retail | Retail"
     },
     {
       "templates": [
@@ -6064,22 +6116,8 @@
     },
     {
       "templates": [
-        "CBES Pre-1978",
-        "CBES T24 1978",
-        "CBES T24 1992",
-        "CBES T24 2001",
-        "CBES T24 2005",
-        "CBES T24 2008"
-      ],
-      "ventilation_per_person": 15.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.2,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Retail | Retail"
-    },
-    {
-      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -6090,19 +6128,7 @@
       "ventilation_per_area": 0.3,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Retail Stores, Sales Floors, and Show Room Floors | Basement and street"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "ventilation_per_person": 7.5,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.12,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Retail | Retail"
+      "source": "ASHRAE 62-1999 Table 2 rate (0.3 cfm/ft2) (most common of several prototype values) | prototype: 90.1-2004 StripMall Strip mall - type 3; DOE Ref Retail Retail"
     }
   ],
   "retail_supermarket_ventilation": [
@@ -6139,7 +6165,22 @@
     },
     {
       "templates": [
-        "90.1-2004",
+        "CBES Pre-1978",
+        "CBES T24 1978",
+        "CBES T24 1992",
+        "CBES T24 2001",
+        "CBES T24 2005",
+        "CBES T24 2008"
+      ],
+      "ventilation_per_person": 15.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.2,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "spc_typ | Retail | Retail"
+    },
+    {
+      "templates": [
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -6179,36 +6220,6 @@
     },
     {
       "templates": [
-        "CBES Pre-1978",
-        "CBES T24 1978",
-        "CBES T24 1992",
-        "CBES T24 2001",
-        "CBES T24 2005",
-        "CBES T24 2008"
-      ],
-      "ventilation_per_person": 15.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.2,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Retail | Retail"
-    },
-    {
-      "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 15.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.0,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Specialty Shops | Supermarkets"
-    },
-    {
-      "templates": [
         "ZE AEDG Multifamily",
         "NREL ZNE Ready 2017"
       ],
@@ -6218,12 +6229,27 @@
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
       "source": "spc_typ | LargeHotel | Retail"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 0.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.3,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (0.3 cfm/ft2) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref SuperMarket Sales"
     }
   ],
   "shaft_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -6242,6 +6268,32 @@
       "ventilation_air_changes": null,
       "source": "ASHRAE 62.1 | None | None",
       "annotation": "unoccupied space, no mechanical outdoor air"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "ventilation_per_person": 0.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.05,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (0.05 cfm/ft2) | prototype: 90.1-2004 SmallHotel ElevatorCore"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 0.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.0,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "no outdoor air | prototype: DOE Ref SmallHotel ElevatorCore"
     }
   ],
   "sleeping_quarters_ventilation": [
@@ -6748,7 +6800,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -6793,12 +6844,12 @@
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "ventilation_per_person": 15.0,
+      "ventilation_per_person": 20.0,
       "ventilation_per_person_units": "cfm/person",
       "ventilation_per_area": 0.0,
       "ventilation_per_area_units": "cfm/ft^2",
       "ventilation_air_changes": null,
-      "source": "ASHRAE 62.1-1999 | Sports and Amusement | Spectator areas"
+      "source": "prototype rate (20 cfm/person) | prototype: DOE Ref SecondarySchool Gym - audience"
     }
   ],
   "sports_and_entertainment_stages_studios_ventilation": [
@@ -7057,7 +7108,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -7099,21 +7149,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "ventilation_per_person": 0.0,
-      "ventilation_per_person_units": "cfm/person",
-      "ventilation_per_area": 0.05,
-      "ventilation_per_area_units": "cfm/ft^2",
-      "ventilation_air_changes": null,
-      "source": "spc_typ | Office | Stair",
-      "annotation": "not in Table 6-1; no mechanical outdoor air required"
-    },
-    {
-      "templates": [
         "ZE AEDG Multifamily",
         "NREL ZNE Ready 2017"
       ],
@@ -7124,6 +7159,22 @@
       "ventilation_air_changes": null,
       "source": "spc_typ | Office | Stair",
       "annotation": "not in Table 6-1; no mechanical outdoor air required"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "ventilation_per_person": 0.0,
+      "ventilation_per_person_units": "cfm/person",
+      "ventilation_per_area": 0.05,
+      "ventilation_per_area_units": "cfm/ft^2",
+      "ventilation_air_changes": null,
+      "source": "prototype rate (0.05 cfm/ft2) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office MediumOffice - Stair"
     }
   ],
   "storage_ventilation": [

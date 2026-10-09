@@ -2884,6 +2884,192 @@
     ]
   },
   {
+    "name": "classroom/lecture/training - primary school occupancy",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.95,
+    "st_std": 8,
+    "et_std": 16,
+    "control_points": [
+      ["st-8", "base"],
+      ["st-1", "base"],
+      ["st", "peak"],
+      ["et-1", "peak"],
+      ["et", "range*0.158"],
+      ["et+4", "range*0.158"],
+      ["et+5", "base"],
+      ["et+8", "base"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - primary school occupancy",
+    "day_types": "Wkdy",
+    "start_date": "2018-07-01T00:00:00+00:00",
+    "end_date": "2018-09-01T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.1,
+    "st_std": 9,
+    "et_std": 15,
+    "control_points": [
+      ["st", "base"],
+      ["st+1", "peak"],
+      ["et", "peak"],
+      ["et+1", "base"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - primary school occupancy",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      ["st", "base"],
+      ["et", "base"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - primary school occupancy",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      ["st", "peak"],
+      ["et", "peak"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - primary school occupancy",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      ["st", "base"],
+      ["et", "base"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - secondary school occupancy",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.95,
+    "st_std": 8,
+    "et_std": 16,
+    "control_points": [
+      ["st-8", "base"],
+      ["st-1", "base"],
+      ["st", "peak"],
+      ["et-1", "peak"],
+      ["et", "range*0.158"],
+      ["et+4", "range*0.158"],
+      ["et+5", "base"],
+      ["et+8", "base"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - secondary school occupancy",
+    "day_types": "Wkdy",
+    "start_date": "2018-07-01T00:00:00+00:00",
+    "end_date": "2018-09-01T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.1,
+    "st_std": 9,
+    "et_std": 15,
+    "control_points": [
+      ["st", "base"],
+      ["st+1", "peak"],
+      ["et", "peak"],
+      ["et+1", "base"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - secondary school occupancy",
+    "day_types": "Wknd|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 0.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      ["st", "base"],
+      ["et", "base"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - secondary school occupancy",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      ["st", "peak"],
+      ["et", "peak"]
+    ]
+  },
+  {
+    "name": "classroom/lecture/training - secondary school occupancy",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      ["st", "base"],
+      ["et", "base"]
+    ]
+  },
+  {
     "name": "computer room occupancy",
     "day_types": "Default",
     "start_date": "2018-01-01T00:00:00+00:00",

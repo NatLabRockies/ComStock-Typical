@@ -484,6 +484,36 @@
         ]
     },
     {
+        "schedule_set_name":  "classroom/lecture/training - primary school schedule set",
+        "occupancy_schedule":  "classroom/lecture/training - primary school occupancy",
+        "occupancy_provenance":  "comstock_2019: SchoolPrimary BLDG_OCC_SCH | fit: control_point_fit | summer recess 2026-10-08: dated Wkdy row 07-01..09-01 at 0.1 occupancy, the window the other primary school space types carry; the generic classroom fit had dropped the source schedule's summer rule",
+        "interior_lighting_schedule":  "classroom/lecture/training - primary school lighting",
+        "lighting_provenance":  "legacy: fit: grid_search | refit 2026-09-07: the Default|Wkdy profile of classroom/lecture/training against its Wkdy occupancy trace, exponential-inverse response 2.55, MAE 0.049 (was 0.225 at the 0.05 floor)",
+        "electric_equipment_schedule":  "classroom/lecture/training - primary school electric equipment",
+        "electric_equipment_provenance":  "legacy: fit: grid_search",
+        "gas_equipment_schedule":  null,
+        "hot_water_equipment_schedule":  "classroom/lecture/training - primary school hot water equipment",
+        "hot_water_equipment_provenance":  "legacy",
+        "applies_to":  [
+            "classroom/lecture/training - primary school"
+        ]
+    },
+    {
+        "schedule_set_name":  "classroom/lecture/training - secondary school schedule set",
+        "occupancy_schedule":  "classroom/lecture/training - secondary school occupancy",
+        "occupancy_provenance":  "comstock_2019: SchoolSecondary BLDG_OCC_SCH | fit: control_point_fit | summer recess 2026-10-08: dated Wkdy row 07-01..09-01 at 0.1 occupancy, the window the other secondary school space types carry; the generic classroom fit had dropped the source schedule's summer rule",
+        "interior_lighting_schedule":  "classroom/lecture/training - secondary school lighting",
+        "lighting_provenance":  "legacy: fit: grid_search | refit 2026-09-07: the Default|Wkdy profile of classroom/lecture/training against its Wkdy occupancy trace, exponential-inverse response 2.55, MAE 0.049 (was 0.225 at the 0.05 floor)",
+        "electric_equipment_schedule":  "classroom/lecture/training - secondary school electric equipment",
+        "electric_equipment_provenance":  "legacy: fit: grid_search",
+        "gas_equipment_schedule":  null,
+        "hot_water_equipment_schedule":  "classroom/lecture/training - secondary school hot water equipment",
+        "hot_water_equipment_provenance":  "legacy",
+        "applies_to":  [
+            "classroom/lecture/training - secondary school"
+        ]
+    },
+    {
         "schedule_set_name":  "computer room schedule set",
         "occupancy_schedule":  "computer room occupancy",
         "occupancy_provenance":  "legacy",
