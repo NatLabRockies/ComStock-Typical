@@ -201,4 +201,32 @@ class TestSchedulesCreate < Minitest::Test
     orphans = model.getScheduleDays.reject { |day| day.parent.is_initialized }
     assert_empty(orphans.map { |day| day.name.to_s }, 'day schedules were left with no parent')
   end
+
+  # An HVAC schedule derived from occupancy carries a summer-only weekday rule when a school's
+  # space types recess. The inversion (the NIST infiltration HVAC-off schedule) must keep that
+  # rule to its dates and keep rule priority; it used to apply the rule all year, so the HVAC-off
+  # infiltration ran in every occupied weekday hour as well.
+  def test_create_inverted_schedule_ruleset_keeps_rule_dates_and_priority
+    model = new_model
+    rules = []
+    rules << ['Summer weekdays off', '7/1-9/1', 'Mon/Tue/Wed/Thu/Fri', [24, 0]]
+    rules << ['Weekdays on', '1/1-12/31', 'Mon/Tue/Wed/Thu/Fri', [8, 0], [16, 1], [24, 0]]
+    schedule = @sch.create_complex_schedule(model, 'name' => 'Test Dated Rule', 'winter_design_day' => [[24, 0]],
+                                                   'summer_design_day' => [[24, 1]],
+                                                   'default_day' => ['Test Dated Rule Default', [24, 0]], 'rules' => rules)
+    inverted = @sch.create_inverted_schedule_ruleset(schedule)
+
+    assert_equal(schedule.scheduleRules.map { |r| r.daySchedule.values.map { |v| 1.0 - v } },
+                 inverted.scheduleRules.map { |r| r.daySchedule.values }, 'rule priority not kept')
+    schedule.scheduleRules.zip(inverted.scheduleRules).each do |src, inv|
+      assert_equal(src.startDate.get, inv.startDate.get)
+      assert_equal(src.endDate.get, inv.endDate.get)
+    end
+
+    # hour by hour, the inversion is the complement of its source
+    source = @sch.schedule_get_hourly_values(schedule)
+    inverse = @sch.schedule_get_hourly_values(inverted)
+    mismatches = source.zip(inverse).count { |s, i| (s + i - 1.0).abs > 1e-9 }
+    assert_equal(0, mismatches, 'inverted schedule is not the hourly complement of its source')
+  end
 end
