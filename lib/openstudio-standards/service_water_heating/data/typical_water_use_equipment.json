@@ -846,7 +846,8 @@
         }
       ],
       "all_level_space_types": [
-        "retail"
+        "retail",
+        "retail - mass merchandising"
       ],
       "all_level_mapping_tier": "name_table"
     },

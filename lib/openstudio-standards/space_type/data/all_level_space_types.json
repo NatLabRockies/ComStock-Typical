@@ -1510,6 +1510,16 @@
     "annotation": "sub-space type of 'retail'; specific value(s): lighting; other values repeated from the 'retail' level 1 entry"
   },
   {
+    "space_type_name": "retail - mass merchandising",
+    "lighting_space_type_name": "retail_mass_merchandising_lighting",
+    "ventilation_space_type_name": "retail_sales_ventilation",
+    "electric_equipment_space_type_name": "sales_electric_equipment",
+    "natural_gas_equipment_space_type_name": null,
+    "schedule_set_name": "retail - mass merchandising schedule set",
+    "critical_operation": false,
+    "annotation": "sub-space type of 'retail'; specific value(s): lighting (mass merchandising sales area: a big-box store's open, uniformly lit sales floor); other values repeated from the 'retail' level 1 entry"
+  },
+  {
     "space_type_name": "retail - pet shops (animal areas)",
     "lighting_space_type_name": "retail_sales_lighting",
     "ventilation_space_type_name": "retail_pet_shops_animal_areas_ventilation",
