@@ -1,73 +1,6 @@
 class Standard
   # @!group Sizing System
 
-  # Prototype SizingSystem object
-  #
-  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
-  # @param dsgn_temps [Hash] a hash of design temperature lookups from standard_design_sizing_temperatures
-  # @param type_of_load_sizing [String] Sizing:System type of load to size on
-  # @param min_sys_airflow_ratio [Double, Symbol] the central heating maximum system air flow ratio: the
-  #   fraction of the cooling design flow the central heating coil is sized to heat. A number pins it;
-  #   :autosize lets EnergyPlus derive it from the sum of the zones' heating design flows over the
-  #   cooling design flow, which is the airflow VAV terminals actually pass in heating once their
-  #   minimum outdoor air and reverse action are counted. A pinned 0.3 under-sized a hospital's
-  #   central coil by a third in a validation run, since its laboratory and patient zones
-  #   carry minimum outdoor air well above 30% of their peaks.
-  # @param sizing_option [String] Coincident or NonCoincident
-  # @return [OpenStudio::Model::SizingSystem] sizing system object
-  def adjust_sizing_system(air_loop_hvac,
-                           dsgn_temps,
-                           type_of_load_sizing: 'Sensible',
-                           min_sys_airflow_ratio: 0.3,
-                           sizing_option: 'Coincident')
-
-    # adjust sizing system defaults
-    sizing_system = air_loop_hvac.sizingSystem
-    sizing_system.setTypeofLoadtoSizeOn(type_of_load_sizing)
-    sizing_system.autosizeDesignOutdoorAirFlowRate
-    sizing_system.setPreheatDesignTemperature(dsgn_temps['prehtg_dsgn_sup_air_temp_c'])
-    sizing_system.setPrecoolDesignTemperature(dsgn_temps['preclg_dsgn_sup_air_temp_c'])
-    sizing_system.setCentralCoolingDesignSupplyAirTemperature(dsgn_temps['clg_dsgn_sup_air_temp_c'])
-    sizing_system.setCentralHeatingDesignSupplyAirTemperature(dsgn_temps['htg_dsgn_sup_air_temp_c'])
-    sizing_system.setPreheatDesignHumidityRatio(0.008)
-    sizing_system.setPrecoolDesignHumidityRatio(0.008)
-    sizing_system.setCentralCoolingDesignSupplyAirHumidityRatio(0.0085)
-    sizing_system.setCentralHeatingDesignSupplyAirHumidityRatio(0.0080)
-    adjust_sizing_system_heating_airflow_ratio(sizing_system, min_sys_airflow_ratio)
-    sizing_system.setSizingOption(sizing_option)
-    sizing_system.setAllOutdoorAirinCooling(false)
-    sizing_system.setAllOutdoorAirinHeating(false)
-    sizing_system.setSystemOutdoorAirMethod('ZoneSum')
-    sizing_system.setCoolingDesignAirFlowMethod('DesignDay')
-    sizing_system.setHeatingDesignAirFlowMethod('DesignDay')
-
-    return sizing_system
-  end
-
-  # Set or autosize the central heating maximum system air flow ratio on a Sizing:System.
-  #
-  # @param sizing_system [OpenStudio::Model::SizingSystem] sizing system object
-  # @param min_sys_airflow_ratio [Double, Symbol, nil] a number pins the ratio; :autosize or nil
-  #   lets EnergyPlus derive it from the zones' heating design flows
-  # @return [Boolean] returns true if successful, false if not
-  def adjust_sizing_system_heating_airflow_ratio(sizing_system, min_sys_airflow_ratio)
-    autosize = min_sys_airflow_ratio.nil? || min_sys_airflow_ratio == :autosize
-    if sizing_system.model.version < OpenStudio::VersionString.new('2.7.0')
-      if autosize
-        OpenStudio.logFree(OpenStudio::Warn, 'openstudio.prototype.SizingSystem', "The minimum system air flow ratio cannot be autosized before OpenStudio 2.7.0; #{sizing_system.name} keeps 0.3.")
-        sizing_system.setMinimumSystemAirFlowRatio(0.3)
-      else
-        sizing_system.setMinimumSystemAirFlowRatio(min_sys_airflow_ratio)
-      end
-    elsif autosize
-      sizing_system.autosizeCentralHeatingMaximumSystemAirFlowRatio
-    else
-      sizing_system.setCentralHeatingMaximumSystemAirFlowRatio(min_sys_airflow_ratio)
-    end
-
-    return true
-  end
-
   # adjust the outdoor air sizing to the use the ventilation rate procedure
   # @todo this needs to be changed in both the sizing system and controller mechanical ventilation objects
   #
@@ -104,27 +37,5 @@ class Standard
     end
 
     return true
-  end
-
-  # Size a zone's design air flow with a floor, for a zone served by a unit of its own.
-  #
-  # Sizing:Zone's DesignDay method takes the air flow from the design load alone, so a zone
-  # with no design heating or cooling load gets none, and a per-zone unit (a residential
-  # furnace and central AC, a central air source heat pump) then has no air flow to size its
-  # fan: EnergyPlus stops with "Unable to determine fan air flow rate". A 2026-09 small hotel
-  # did this with an interior, ground-contact restroom whose lighting gain went to the slab
-  # and its neighbours. The cooling method DesignDayWithLimit takes the larger of the
-  # design-load flow and the zone's cooling minimum air flow per floor area (the Sizing:Zone
-  # default, 0.000762 m3/s-m2, that is 0.15 cfm/ft2, unless set), so the flow is never zero;
-  # the unit's single supply flow follows it. Only the method changes; the minimum stays
-  # whatever the zone carries. The heating method is left at DesignDay, as in the VAV
-  # builders: its "maximum" fields cap the heating flow rather than floor it.
-  #
-  # @param thermal_zone [OpenStudio::Model::ThermalZone] OpenStudio ThermalZone object
-  # @return [OpenStudio::Model::SizingZone] the zone's sizing object
-  def thermal_zone_apply_residential_air_flow_floor(thermal_zone)
-    sizing_zone = thermal_zone.sizingZone
-    sizing_zone.setCoolingDesignAirFlowMethod('DesignDayWithLimit')
-    sizing_zone
   end
 end

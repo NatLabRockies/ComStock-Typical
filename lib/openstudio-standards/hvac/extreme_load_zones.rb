@@ -109,9 +109,9 @@ module OpenstudioStandards
       source = cbecs_hvac_cooling_source(hvac_system_type)
       names = thermal_zones.map { |zone| zone.name.to_s }.join(', ')
       if source[:chilled_water]
-        chilled_water_loop = standard.model_get_or_add_chilled_water_loop(model, source[:cool_fuel],
+        chilled_water_loop = OpenstudioStandards::HVAC.model_get_or_add_chilled_water_loop(model, source[:cool_fuel],
                                                                           chilled_water_loop_cooling_type: source[:chilled_water_loop_cooling_type])
-        result = standard.model_add_crah(model, thermal_zones, chilled_water_loop: chilled_water_loop)
+        result = OpenstudioStandards::HVAC.model_add_crah(model, thermal_zones, chilled_water_loop: chilled_water_loop)
         OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.HVAC', "Data center zones #{names} are served by a CRAH on #{chilled_water_loop.name}, the chilled water plant of the #{hvac_system_type} system, rather than by that system.")
       else
         climate_zone = OpenstudioStandards::Weather.model_get_climate_zone(model)
@@ -119,7 +119,7 @@ module OpenstudioStandards
           climate_zone = 'ASHRAE 169-2013-4A'
           OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.HVAC', "The model has no climate zone; the CRAC economizer decision for #{names} assumes #{climate_zone}.")
         end
-        result = standard.model_add_crac(model, thermal_zones, climate_zone)
+        result = OpenstudioStandards::HVAC.model_add_crac(model, thermal_zones, climate_zone)
         OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.HVAC', "Data center zones #{names} are served by DX CRAC units rather than by the #{hvac_system_type} system.")
       end
       return false if result.is_a?(FalseClass) # the builders return model objects on success
@@ -146,7 +146,7 @@ module OpenstudioStandards
     # @param thermal_zones [Array<OpenStudio::Model::ThermalZone>] data center zones
     # @return [Double] the heating design supply air temperature applied, in C
     def self.set_data_center_zone_heating_sizing_temperature(standard, thermal_zones)
-      htg_c = standard.standard_design_sizing_temperatures['zn_htg_dsgn_sup_air_temp_c']
+      htg_c = OpenstudioStandards::HVAC.standard_air_loop_design_sizing_temperatures['zn_htg_dsgn_sup_air_temp_c']
       thermal_zones.each do |zone|
         sizing_zone = zone.sizingZone
         sizing_zone.setZoneHeatingDesignSupplyAirTemperatureInputMethod('SupplyAirTemperature')
@@ -168,7 +168,7 @@ module OpenstudioStandards
 
       source = cbecs_hvac_cooling_source(hvac_system_type)
       names = thermal_zones.map { |zone| zone.name.to_s }.join(', ')
-      result = standard.model_add_hvac_system(model, 'PSZ-AC', nil, 'Electricity', source[:cool_fuel], thermal_zones,
+      result = OpenstudioStandards::HVAC.model_add_hvac_system(model, 'PSZ-AC', nil, 'Electricity', source[:cool_fuel], thermal_zones,
                                               chilled_water_loop_cooling_type: source[:chilled_water_loop_cooling_type])
       OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.HVAC', "Extreme load zones #{names} are served by their own packaged single-zone units on #{source[:cool_fuel]} cooling rather than by the #{hvac_system_type} system.")
       return !result.is_a?(FalseClass) # the builders return model objects on success

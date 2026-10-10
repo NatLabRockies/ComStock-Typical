@@ -49,7 +49,7 @@ class TestLegacyOutdoorAirControls < Minitest::Test
 
   def test_doe_ref_vav_outdoor_air_is_a_fixed_damper_fraction_and_a_newer_template_restores_it
     model = OpenStudio::Model::Model.new
-    loop = @std.model_add_pvav(model, build_zones(model, 3), electric_reheat: true)
+    loop = OpenstudioStandards::HVAC.model_add_pvav(model, build_zones(model, 3), electric_reheat: true)
     assert_equal('FixedMinimum', controller_oa(loop).getMinimumLimitType)
 
     @doe_ref.air_loop_hvac_apply_minimum_outdoor_air_control(loop)
@@ -63,7 +63,7 @@ class TestLegacyOutdoorAirControls < Minitest::Test
 
   def test_single_zone_systems_keep_their_outdoor_air_control
     model = OpenStudio::Model::Model.new
-    loop = @std.model_add_psz_ac(model, build_zones(model, 1)).first
+    loop = OpenstudioStandards::HVAC.model_add_psz_ac(model, build_zones(model, 1)).first
     @doe_ref_pre_1980.air_loop_hvac_apply_minimum_outdoor_air_control(loop)
     assert_equal('FixedMinimum', controller_oa(loop).getMinimumLimitType)
     assert_equal(model.alwaysOnDiscreteSchedule, controller_oa(loop).controllerMechanicalVentilation.availabilitySchedule)
@@ -71,7 +71,7 @@ class TestLegacyOutdoorAirControls < Minitest::Test
 
   def test_doe_ref_packaged_fans_stay_continuous
     model = OpenStudio::Model::Model.new
-    loop = @std.model_add_psz_ac(model, build_zones(model, 1)).first
+    loop = OpenstudioStandards::HVAC.model_add_psz_ac(model, build_zones(model, 1)).first
     unitary = unitary_of(loop)
     continuous = unitary.supplyAirFanOperatingModeSchedule.get
     refute_equal(model.alwaysOffDiscreteSchedule, continuous)
@@ -86,7 +86,7 @@ class TestLegacyOutdoorAirControls < Minitest::Test
 
   def test_a_cycling_template_records_the_continuous_schedule_and_a_newer_template_restores_it
     model = OpenStudio::Model::Model.new
-    loop = @std.model_add_psz_ac(model, build_zones(model, 1)).first
+    loop = OpenstudioStandards::HVAC.model_add_psz_ac(model, build_zones(model, 1)).first
     unitary = unitary_of(loop)
     continuous = unitary.supplyAirFanOperatingModeSchedule.get
     cycling = Standard.build('ComStock DOE Ref 1980-2004')
@@ -107,7 +107,7 @@ class TestLegacyOutdoorAirControls < Minitest::Test
 
   def test_a_newer_template_leaves_untagged_cycling_fans_alone
     model = OpenStudio::Model::Model.new
-    loop = @std.model_add_psz_ac(model, build_zones(model, 1), fan_type: 'Cycling').first
+    loop = OpenstudioStandards::HVAC.model_add_psz_ac(model, build_zones(model, 1), fan_type: 'Cycling').first
     @std.air_loop_hvac_apply_unitary_supply_fan_operating_mode(loop)
     assert_equal(model.alwaysOffDiscreteSchedule, unitary_of(loop).supplyAirFanOperatingModeSchedule.get)
   end
@@ -119,7 +119,7 @@ class TestLegacyOutdoorAirControls < Minitest::Test
     set_outdoor_air(zones[1], ach: 6.0)            # health care room: air changes
     set_outdoor_air(zones[2], per_area: 0.0071)    # laboratory: floor area only (1.4 cfm/ft2)
     zones[0].spaces.first.setPeoplePerFloorArea(0.538) # 50 ppl/1000 ft2: 0.38 m3/s of outdoor air
-    loop = @doe_ref.model_add_pvav(model, zones, electric_reheat: true)
+    loop = OpenstudioStandards::HVAC.model_add_pvav(model, zones, electric_reheat: true)
     zones.each { |zone| terminal_of(zone).setMaximumAirFlowRate(1.0) }
     before = terminal_of(zones[0]).constantMinimumAirFlowFraction.get
 

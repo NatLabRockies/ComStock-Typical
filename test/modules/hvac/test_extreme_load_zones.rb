@@ -100,7 +100,7 @@ class TestExtremeLoadZones < Minitest::Test
   def test_data_center_on_a_pvav_building_gets_a_crac
     model = OpenStudio::Model::Model.new
     office, data_center = office_with_data_center(model)
-    assert(@hvac.add_cbecs_hvac_system(model, @std, 'PVAV with PFP boxes', [office, data_center]))
+    assert(@hvac.create_cbecs_hvac_system(model, @std, 'PVAV with PFP boxes', [office, data_center]))
 
     refute_nil(loop_of(office), 'the office lost its system')
     refute_nil(loop_of(data_center), 'the data center got no system')
@@ -114,7 +114,7 @@ class TestExtremeLoadZones < Minitest::Test
   def test_data_center_on_a_chiller_building_gets_a_crah_on_the_same_plant
     model = OpenStudio::Model::Model.new
     office, data_center = office_with_data_center(model)
-    assert(@hvac.add_cbecs_hvac_system(model, @std, 'VAV chiller with PFP boxes', [office, data_center]))
+    assert(@hvac.create_cbecs_hvac_system(model, @std, 'VAV chiller with PFP boxes', [office, data_center]))
 
     refute_equal(loop_of(office), loop_of(data_center))
     assert_match(/CRAH/, loop_of(data_center).name.to_s)
@@ -128,7 +128,7 @@ class TestExtremeLoadZones < Minitest::Test
   def test_data_center_on_a_district_chilled_water_building_gets_a_crah
     model = OpenStudio::Model::Model.new
     office, data_center = office_with_data_center(model)
-    assert(@hvac.add_cbecs_hvac_system(model, @std, 'VAV district chilled water with district hot water reheat', [office, data_center]))
+    assert(@hvac.create_cbecs_hvac_system(model, @std, 'VAV district chilled water with district hot water reheat', [office, data_center]))
     assert_match(/CRAH/, loop_of(data_center).name.to_s)
     assert_equal(1, model.getPlantLoops.count { |l| l.name.to_s == 'Chilled Water Loop' })
   end
@@ -136,7 +136,7 @@ class TestExtremeLoadZones < Minitest::Test
   def test_data_center_on_a_psz_building_gets_a_crac
     model = OpenStudio::Model::Model.new
     office, data_center = office_with_data_center(model)
-    assert(@hvac.add_cbecs_hvac_system(model, @std, 'PSZ-AC with gas coil', [office, data_center]))
+    assert(@hvac.create_cbecs_hvac_system(model, @std, 'PSZ-AC with gas coil', [office, data_center]))
     assert_match(/PSZ-AC/, loop_of(office).name.to_s)
     assert_match(/CRAC/, loop_of(data_center).name.to_s)
   end
@@ -149,12 +149,12 @@ class TestExtremeLoadZones < Minitest::Test
     ['PVAV with PFP boxes', 'VAV chiller with PFP boxes'].each do |system|
       model = OpenStudio::Model::Model.new
       office, data_center = office_with_data_center(model)
-      assert(@hvac.add_cbecs_hvac_system(model, @std, system, [office, data_center]))
+      assert(@hvac.create_cbecs_hvac_system(model, @std, system, [office, data_center]))
       sizing = data_center.sizingZone
       assert_equal('SupplyAirTemperature', sizing.zoneHeatingDesignSupplyAirTemperatureInputMethod)
       htg_setpoint_c = 21.0 # the test thermostat; ComStock's data centers use 18 C
       assert_operator(sizing.zoneHeatingDesignSupplyAirTemperature, :>, htg_setpoint_c + 2.0, "#{system}: heating supply must clear the setpoint by the 2 C EnergyPlus check")
-      expected = @std.standard_design_sizing_temperatures['zn_htg_dsgn_sup_air_temp_c']
+      expected = OpenstudioStandards::HVAC.standard_air_loop_design_sizing_temperatures['zn_htg_dsgn_sup_air_temp_c']
       assert_in_delta(expected, sizing.zoneHeatingDesignSupplyAirTemperature, 1e-6, system)
       # cooling side is untouched: the unit's 55 F supply
       assert_in_delta(OpenStudio.convert(55.0, 'F', 'C').get, sizing.zoneCoolingDesignSupplyAirTemperature, 1e-6, system)
@@ -166,7 +166,7 @@ class TestExtremeLoadZones < Minitest::Test
     model = OpenStudio::Model::Model.new
     office, data_center = office_with_data_center(model)
     hot = add_zone(model, 'Process', 'workshop', 60.0, 40.0)
-    assert(@hvac.add_cbecs_hvac_system(model, @std, 'PVAV with PFP boxes', [office, data_center, hot]))
+    assert(@hvac.create_cbecs_hvac_system(model, @std, 'PVAV with PFP boxes', [office, data_center, hot]))
     refute_equal(loop_of(office), loop_of(hot))
     refute_match(/CRAC/, loop_of(hot).name.to_s)
     assert_match(/PSZ-AC/, loop_of(hot).name.to_s)
@@ -178,7 +178,7 @@ class TestExtremeLoadZones < Minitest::Test
     model = OpenStudio::Model::Model.new
     model.getClimateZones.setClimateZone('ASHRAE', '5A')
     data_center = add_zone(model, 'Data Center', 'datacenter/high ite', 100.0, 0.0)
-    assert(@hvac.add_cbecs_hvac_system(model, @std, 'PVAV with PFP boxes', [data_center]))
+    assert(@hvac.create_cbecs_hvac_system(model, @std, 'PVAV with PFP boxes', [data_center]))
     assert_match(/CRAC/, loop_of(data_center).name.to_s)
     assert_empty(model.getAirLoopHVACs.reject { |l| l.name.to_s.include?('CRAC') }, 'no empty main system should be built')
   end
@@ -189,7 +189,7 @@ class TestExtremeLoadZones < Minitest::Test
     model.getClimateZones.setClimateZone('ASHRAE', '5A')
     a = add_zone(model, 'Office A', 'office', 1.0, 0.0)
     b = add_zone(model, 'Office B', 'office', 1.0, 20.0)
-    assert(@hvac.add_cbecs_hvac_system(model, @std, 'PVAV with PFP boxes', [a, b]))
+    assert(@hvac.create_cbecs_hvac_system(model, @std, 'PVAV with PFP boxes', [a, b]))
     assert_equal(1, model.getAirLoopHVACs.size)
     assert_equal(loop_of(a), loop_of(b))
   end

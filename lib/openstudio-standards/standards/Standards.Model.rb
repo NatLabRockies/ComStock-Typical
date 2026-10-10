@@ -587,10 +587,10 @@ class Standard
     ##### Apply equipment efficiencies
 
     # Fans
-    model.getFanVariableVolumes.sort.each { |obj| fan_apply_standard_minimum_motor_efficiency(obj, fan_brake_horsepower(obj)) }
-    model.getFanConstantVolumes.sort.each { |obj| fan_apply_standard_minimum_motor_efficiency(obj, fan_brake_horsepower(obj)) }
-    model.getFanOnOffs.sort.each { |obj| fan_apply_standard_minimum_motor_efficiency(obj, fan_brake_horsepower(obj)) }
-    model.getFanZoneExhausts.sort.each { |obj| fan_apply_standard_minimum_motor_efficiency(obj, fan_brake_horsepower(obj)) }
+    model.getFanVariableVolumes.sort.each { |obj| fan_apply_standard_minimum_motor_efficiency(obj, OpenstudioStandards::HVAC.fan_brake_horsepower(obj)) }
+    model.getFanConstantVolumes.sort.each { |obj| fan_apply_standard_minimum_motor_efficiency(obj, OpenstudioStandards::HVAC.fan_brake_horsepower(obj)) }
+    model.getFanOnOffs.sort.each { |obj| fan_apply_standard_minimum_motor_efficiency(obj, OpenstudioStandards::HVAC.fan_brake_horsepower(obj)) }
+    model.getFanZoneExhausts.sort.each { |obj| fan_apply_standard_minimum_motor_efficiency(obj, OpenstudioStandards::HVAC.fan_brake_horsepower(obj)) }
 
     # Pumps
     model.getPumpConstantSpeeds.sort.each { |obj| pump_apply_standard_minimum_motor_efficiency(obj) }
@@ -2391,7 +2391,7 @@ class Standard
     # Plant loops
     model.getPlantLoops.sort.each do |loop|
       # Don't remove service water heating loops
-      next if plant_loop_swh_loop?(loop)
+      next if OpenstudioStandards::HVAC.plant_loop_swh_loop?(loop)
 
       loop.remove
     end
@@ -3258,17 +3258,6 @@ class Standard
     return true
   end
 
-  # Template method for adding a setpoint manager for a coil control logic to a heating coil.
-  # ASHRAE 90.1-2019 Appendix G.
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio model
-  # @param thermal_zones [Array<OpenStudio::Model::ThermalZone>] thermal zone array
-  # @param coil [OpenStudio::Model::StraightComponent] heating coil
-  # @return [Boolean] returns true if successful, false if not
-  def model_set_central_preheat_coil_spm(model, thermal_zones, coil)
-    return true
-  end
-
   # Template method for evaluate DCV requirements in the user model
   #
   # @param model [OpenStudio::Model::Model] OpenStudio model
@@ -3337,7 +3326,7 @@ class Standard
         # Check heating air loop first
         if !heating_equipment.nil? && heating_equipment.to_StraightComponent.is_initialized
           air_loop = heating_equipment.to_StraightComponent.get.airLoopHVAC.get
-          return_plenum = air_loop_hvac_return_air_plenum(air_loop)
+          return_plenum = OpenstudioStandards::HVAC.air_loop_hvac_return_air_plenum(air_loop)
           return_air_type = return_plenum.nil? ? 'ducted_return_or_direct_to_unit' : 'return_plenum'
           return_plenum = return_plenum.nil? ? nil : return_plenum.name.to_s
         end
@@ -3347,7 +3336,7 @@ class Standard
            (return_air_type != 'return_plenum') &&
            cooling_equipment.to_StraightComponent.is_initialized
           air_loop = cooling_equipment.to_StraightComponent.get.airLoopHVAC.get
-          return_plenum = air_loop_hvac_return_air_plenum(air_loop)
+          return_plenum = OpenstudioStandards::HVAC.air_loop_hvac_return_air_plenum(air_loop)
           return_air_type = return_plenum.nil? ? 'ducted_return_or_direct_to_unit' : 'return_plenum'
           return_plenum = return_plenum.nil? ? nil : return_plenum.name.to_s
         end

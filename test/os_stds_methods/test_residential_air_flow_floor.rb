@@ -33,7 +33,7 @@ class TestResidentialAirFlowFloor < Minitest::Test
     sizing = zone.sizingZone
     sizing.setCoolingMinimumAirFlowperZoneFloorArea(0.001)
     assert_equal('DesignDay', sizing.coolingDesignAirFlowMethod)
-    @std.thermal_zone_apply_residential_air_flow_floor(zone)
+    OpenstudioStandards::HVAC.thermal_zone_apply_residential_air_flow_floor(zone)
     assert_equal('DesignDayWithLimit', sizing.coolingDesignAirFlowMethod)
     assert_equal('DesignDay', sizing.heatingDesignAirFlowMethod, 'the heating method is a cap, not a floor, and is left alone')
     assert_in_delta(0.001, sizing.coolingMinimumAirFlowperZoneFloorArea, 1e-9, 'the minimum the zone carries is kept')
@@ -44,9 +44,9 @@ class TestResidentialAirFlowFloor < Minitest::Test
       model = OpenStudio::Model::Model.new
       zones = [zone_with_space(model, 0.0), zone_with_space(model, 10.0)]
       ok = if system.include?('furnace')
-             @std.model_add_furnace_central_ac(model, zones, heating: true, cooling: true, ventilation: false)
+             OpenstudioStandards::HVAC.model_add_furnace_central_ac(model, zones, heating: true, cooling: true, ventilation: false)
            else
-             @std.model_add_central_air_source_heat_pump(model, zones, heating: true, cooling: true, ventilation: false)
+             OpenstudioStandards::HVAC.model_add_central_air_source_heat_pump(model, zones, heating: true, cooling: true, ventilation: false)
            end
       refute(ok.is_a?(FalseClass), "#{system} was not added")
       assert_equal(2, model.getAirLoopHVACs.size, "#{system}: one loop per zone")
@@ -61,7 +61,7 @@ class TestResidentialAirFlowFloor < Minitest::Test
   def test_a_packaged_single_zone_unit_is_not_changed
     model = OpenStudio::Model::Model.new
     zones = [zone_with_space(model, 0.0)]
-    @std.model_add_psz_ac(model, zones, cooling_type: 'Single Speed DX AC', heating_type: 'Gas', fan_location: 'DrawThrough', fan_type: 'ConstantVolume')
+    OpenstudioStandards::HVAC.model_add_psz_ac(model, zones, cooling_type: 'Single Speed DX AC', heating_type: 'Gas', fan_location: 'DrawThrough', fan_type: 'ConstantVolume')
     assert_equal('DesignDay', zones.first.sizingZone.coolingDesignAirFlowMethod)
   end
 end

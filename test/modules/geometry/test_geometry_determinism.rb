@@ -138,7 +138,7 @@ class TestGeometryDeterminism < Minitest::Test
     # spaces are tied, so the object it lands on is the pick under test.
     winners = Array.new(BUILDS) do
       zone = zone_with_two_equal_spaces
-      std.model_add_ideal_air_loads(zone.model, [zone], include_outdoor_air: true)
+      OpenstudioStandards::HVAC.model_add_ideal_air_loads(zone.model, [zone], include_outdoor_air: true)
       ideal = zone.model.getZoneHVACIdealLoadsAirSystems.first
       oa = ideal.designSpecificationOutdoorAirObject
       oa.is_initialized ? oa.get.name.to_s : 'none'

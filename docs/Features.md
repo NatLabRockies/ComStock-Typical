@@ -55,7 +55,7 @@ converge almost immediately:
 		OpenstudioStandards::Ventilation.create_typical_ventilation
 		OpenstudioStandards::ServiceWaterHeating.create_typical_service_water_heating
 		OpenstudioStandards::Refrigeration.create_typical_refrigeration
-		OpenstudioStandards::HVAC.add_cbecs_hvac_system
+		OpenstudioStandards::HVAC.create_cbecs_hvac_system
 		Standard#model_apply_prototype_hvac_assumptions
 		Standard#model_apply_hvac_efficiency_standard
 
