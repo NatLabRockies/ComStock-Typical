@@ -423,12 +423,12 @@
     "derivation_type": "exponential",
     "base": 0.0,
     "peak": 0.83,
-    "response": 3.0,
+    "response": 0.8,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
     "summer_design_day_peak": 1.0,
-    "provenance": "fit: exponential derivation from food preparation - primary school occupancy, parameters searched so the expanded schedule matches SchoolPrimary BLDG_SWH_SCH (1222 EFLH, peak 0.83): 1277 EFLH, peak 0.83; the traced control-point form is 'food preparation - primary school hot water equipment - traced'"
+    "provenance": "fit: exponential derivation from food preparation - primary school occupancy, parameters searched so the expanded schedule matches SchoolPrimary BLDG_SWH_SCH (1222 EFLH, peak 0.83): 1277 EFLH, peak 0.83; refit 2026-10-09 after the school-day weekday and closed weekend kitchen occupancy (response 3.0 to 0.8, base 0): 1234 EFLH, peak 0.83, all on weekdays as the prototype's are (its weekend rules are zero; the response 3.0 fit had matched the total only by drawing on weekends under the restaurant weekend row); the traced control-point form is 'food preparation - primary school hot water equipment - traced'"
   },
   {
     "name": "food preparation - primary school hot water equipment - traced",
@@ -505,8 +505,8 @@
   {
     "name": "food preparation - primary school hot water equipment - traced",
     "day_types": "Wkdy",
-    "start_date": "2018-06-16T00:00:00+00:00",
-    "end_date": "2018-09-15T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
+    "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
     "type": "parametric",
@@ -572,7 +572,7 @@
         "base"
       ]
     ],
-    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH 06-16 to 09-15; selectable through a schedule override on hot_water_equipment.schedule"
+    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH 06-16 to 09-15; selectable through a schedule override on hot_water_equipment.schedule; summer window moved to 06-01..09-01 2026-10-10, the one window every school schedule carries"
   },
   {
     "name": "food preparation - primary school hot water equipment - traced",
@@ -652,12 +652,12 @@
     "derivation_type": "exponential",
     "base": 0.0,
     "peak": 0.83,
-    "response": 3.0,
+    "response": 0.8,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
     "summer_design_day_peak": 1.0,
-    "provenance": "fit: exponential derivation from food preparation - secondary school occupancy, parameters searched so the expanded schedule matches SchoolSecondary BLDG_SWH_SCH (1222 EFLH, peak 0.83): 1277 EFLH, peak 0.83; the traced control-point form is 'food preparation - secondary school hot water equipment - traced'"
+    "provenance": "fit: exponential derivation from food preparation - secondary school occupancy, parameters searched so the expanded schedule matches SchoolSecondary BLDG_SWH_SCH (1222 EFLH, peak 0.83): 1277 EFLH, peak 0.83; refit 2026-10-09 after the school-day weekday and closed weekend kitchen occupancy (response 3.0 to 0.8, base 0): 1234 EFLH, peak 0.83, all on weekdays as the prototype's are (its weekend rules are zero; the response 3.0 fit had matched the total only by drawing on weekends under the restaurant weekend row); the traced control-point form is 'food preparation - secondary school hot water equipment - traced'"
   },
   {
     "name": "food preparation - secondary school hot water equipment - traced",
@@ -734,8 +734,8 @@
   {
     "name": "food preparation - secondary school hot water equipment - traced",
     "day_types": "Wkdy",
-    "start_date": "2018-06-16T00:00:00+00:00",
-    "end_date": "2018-09-15T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
+    "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
     "type": "parametric",
@@ -801,7 +801,7 @@
         "base"
       ]
     ],
-    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15; selectable through a schedule override on hot_water_equipment.schedule"
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15; selectable through a schedule override on hot_water_equipment.schedule; summer window moved to 06-01..09-01 2026-10-10, the one window every school schedule carries"
   },
   {
     "name": "food preparation - secondary school hot water equipment - traced",
@@ -3121,8 +3121,8 @@
   {
     "name": "playing area - primary school hot water equipment - traced",
     "day_types": "Wkdy",
-    "start_date": "2018-06-16T00:00:00+00:00",
-    "end_date": "2018-09-15T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
+    "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
     "type": "parametric",
@@ -3188,7 +3188,7 @@
         "base"
       ]
     ],
-    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15; selectable through a schedule override on hot_water_equipment.schedule"
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15; selectable through a schedule override on hot_water_equipment.schedule; summer window moved to 06-01..09-01 2026-10-10, the one window every school schedule carries"
   },
   {
     "name": "playing area - primary school hot water equipment - traced",
@@ -3350,8 +3350,8 @@
   {
     "name": "playing area - secondary school hot water equipment - traced",
     "day_types": "Wkdy",
-    "start_date": "2018-06-16T00:00:00+00:00",
-    "end_date": "2018-09-15T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
+    "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
     "type": "parametric",
@@ -3417,7 +3417,7 @@
         "base"
       ]
     ],
-    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15; selectable through a schedule override on hot_water_equipment.schedule"
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15; selectable through a schedule override on hot_water_equipment.schedule; summer window moved to 06-01..09-01 2026-10-10, the one window every school schedule carries"
   },
   {
     "name": "playing area - secondary school hot water equipment - traced",
@@ -4052,8 +4052,8 @@
   {
     "name": "restroom - primary school hot water equipment",
     "day_types": "Wkdy",
-    "start_date": "2018-06-16T00:00:00+00:00",
-    "end_date": "2018-09-15T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
+    "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
     "type": "parametric",
@@ -4119,7 +4119,7 @@
         "base"
       ]
     ],
-    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH 06-16 to 09-15"
+    "provenance": "traced from SchoolPrimary BLDG_SWH_SCH 06-16 to 09-15; summer window moved to 06-01..09-01 2026-10-10, the one window every school schedule carries"
   },
   {
     "name": "restroom - primary school hot water equipment",
@@ -4266,8 +4266,8 @@
   {
     "name": "restroom - secondary school hot water equipment",
     "day_types": "Wkdy",
-    "start_date": "2018-06-16T00:00:00+00:00",
-    "end_date": "2018-09-15T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
+    "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
     "type": "parametric",
@@ -4333,7 +4333,7 @@
         "base"
       ]
     ],
-    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15"
+    "provenance": "traced from SchoolSecondary BLDG_SWH_SCH 06-16 to 09-15; summer window moved to 06-01..09-01 2026-10-10, the one window every school schedule carries"
   },
   {
     "name": "restroom - secondary school hot water equipment",
@@ -4715,6 +4715,21 @@
     "winter_design_day_peak": 0.0,
     "summer_design_day_base": 1.0,
     "summer_design_day_peak": 1.0
+  },
+  {
+    "name": "retail - mass merchandising hot water equipment",
+    "category": "Equipment",
+    "derivation_type": "logistic",
+    "base": 0.1,
+    "peak": 0.65,
+    "response": 1.0,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0,
+    "provenance": "fit: logistic derivation from retail occupancy, parameters searched so the expanded schedule matches RetailStripmall Type1_SWH_SCH (2063 EFLH, peak 0.65): 2065 EFLH, peak 0.65; the traced control-point form is 'retail hot water equipment - traced'",
+    "midpoint": 0.65,
+    "steepness": 8.0
   },
   {
     "name": "retail - pet shops (animal areas) hot water equipment",

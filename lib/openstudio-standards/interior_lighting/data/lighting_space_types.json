@@ -1246,6 +1246,21 @@
       "notes": null
     },
     {
+      "lighting_space_type_name": "retail_mass_merchandising_lighting",
+      "lighting_space_type_target_illuminance_setpoint": 485.0,
+      "lighting_space_type_target_illuminance_units": "Lux",
+      "general_lighting_fraction": 0.9,
+      "general_lighting_coefficient_of_utilization": 0.81,
+      "task_lighting_fraction": 0.1,
+      "task_lighting_coefficient_of_utilization": 0.81,
+      "supplemental_lighting_fraction": 0.0,
+      "supplemental_lighting_coefficient_of_utilization": 0.0,
+      "wall_wash_lighting_fraction": 0.0,
+      "wall_wash_lighting_coefficient_of_utilization": 0.0,
+      "source": "total illuminance from pnnl_90_1_lighting_subcommittee_model (45.1 lm/ft2), fractions from pnnl_90_1_lighting_subcommittee_model",
+      "notes": "mass merchandising sales area, changed general fraction to 0.9, task fraction to 0.1; the values of ComStock prototype_lighting_space_type retail_mass_merchandising_sales_area"
+    },
+    {
       "lighting_space_type_name": "retail_sales_lighting",
       "lighting_space_type_target_illuminance_setpoint": 474.0,
       "lighting_space_type_target_illuminance_units": "Lux",

@@ -486,7 +486,7 @@
     {
         "schedule_set_name":  "classroom/lecture/training - primary school schedule set",
         "occupancy_schedule":  "classroom/lecture/training - primary school occupancy",
-        "occupancy_provenance":  "comstock_2019: SchoolPrimary BLDG_OCC_SCH | fit: control_point_fit | summer recess 2026-10-08: dated Wkdy row 07-01..09-01 at 0.1 occupancy, the window the other primary school space types carry; the generic classroom fit had dropped the source schedule's summer rule",
+        "occupancy_provenance":  "comstock_2019: SchoolPrimary BLDG_OCC_SCH | fit: control_point_fit | summer recess 2026-10-08: dated Wkdy row 06-01..09-01 (07-01..09-01 until 2026-10-10) at 0.1 occupancy, the window the other primary school space types carry; the generic classroom fit had dropped the source schedule's summer rule",
         "interior_lighting_schedule":  "classroom/lecture/training - primary school lighting",
         "lighting_provenance":  "legacy: fit: grid_search | refit 2026-09-07: the Default|Wkdy profile of classroom/lecture/training against its Wkdy occupancy trace, exponential-inverse response 2.55, MAE 0.049 (was 0.225 at the 0.05 floor)",
         "electric_equipment_schedule":  "classroom/lecture/training - primary school electric equipment",
@@ -501,7 +501,7 @@
     {
         "schedule_set_name":  "classroom/lecture/training - secondary school schedule set",
         "occupancy_schedule":  "classroom/lecture/training - secondary school occupancy",
-        "occupancy_provenance":  "comstock_2019: SchoolSecondary BLDG_OCC_SCH | fit: control_point_fit | summer recess 2026-10-08: dated Wkdy row 07-01..09-01 at 0.1 occupancy, the window the other secondary school space types carry; the generic classroom fit had dropped the source schedule's summer rule",
+        "occupancy_provenance":  "comstock_2019: SchoolSecondary BLDG_OCC_SCH | fit: control_point_fit | summer recess 2026-10-08: dated Wkdy row 06-01..09-01 (07-01..09-01 until 2026-10-10) at 0.1 occupancy, the window the other secondary school space types carry; the generic classroom fit had dropped the source schedule's summer rule",
         "interior_lighting_schedule":  "classroom/lecture/training - secondary school lighting",
         "lighting_provenance":  "legacy: fit: grid_search | refit 2026-09-07: the Default|Wkdy profile of classroom/lecture/training against its Wkdy occupancy trace, exponential-inverse response 2.55, MAE 0.049 (was 0.225 at the 0.05 floor)",
         "electric_equipment_schedule":  "classroom/lecture/training - secondary school electric equipment",
@@ -817,7 +817,7 @@
     {
         "schedule_set_name":  "dining - primary school schedule set",
         "occupancy_schedule":  "dining - primary school occupancy",
-        "occupancy_provenance":  "legacy: fit: control_point_fit",
+        "occupancy_provenance":  "legacy: fit: control_point_fit | school weekend 2026-10-09: Wknd|Hol row zeroed, as the school's classroom, library and playing area rows have it; the generic (restaurant) dining weekend row, 0.7 from 7 to 22, had been repeated | school weekday 2026-10-09: Default row replaced with a school-day profile on the classrooms' 8 to 16 hours (breakfast hump 0.3 of range at 7-8, lunch peak 11-13, base at 16); the generic restaurant weekday row, 7 to 22 with a dinner peak, had been repeated",
         "interior_lighting_schedule":  "dining - primary school lighting",
         "lighting_provenance":  "legacy: fit: grid_search",
         "electric_equipment_schedule":  "dining - primary school electric equipment",
@@ -831,7 +831,7 @@
     {
         "schedule_set_name":  "dining - secondary school schedule set",
         "occupancy_schedule":  "dining - secondary school occupancy",
-        "occupancy_provenance":  "legacy: fit: control_point_fit",
+        "occupancy_provenance":  "legacy: fit: control_point_fit | school weekend 2026-10-09: Wknd|Hol row zeroed, as the school's classroom, library and playing area rows have it; the generic (restaurant) dining weekend row, 0.7 from 7 to 22, had been repeated | school weekday 2026-10-09: Default row replaced with a school-day profile on the classrooms' 8 to 16 hours (breakfast hump 0.3 of range at 7-8, lunch peak 11-13, base at 16); the generic restaurant weekday row, 7 to 22 with a dinner peak, had been repeated",
         "interior_lighting_schedule":  "dining - secondary school lighting",
         "lighting_provenance":  "legacy: fit: grid_search",
         "electric_equipment_schedule":  "dining - secondary school electric equipment",
@@ -1113,7 +1113,7 @@
     {
         "schedule_set_name":  "food preparation - primary school schedule set",
         "occupancy_schedule":  "food preparation - primary school occupancy",
-        "occupancy_provenance":  "legacy: fit: control_point_fit",
+        "occupancy_provenance":  "legacy: fit: control_point_fit | school weekday 2026-10-09: Default row replaced with a school-day kitchen profile on the classrooms' 8 to 16 hours (staff from 6, breakfast 0.4 of range, lunch preparation into a 11-13 peak, cleanup to base at 16); the generic restaurant weekday row, 7 to 22 with a dinner peak, had been repeated | school weekend 2026-10-09: Wknd|Hol row zeroed, as the school's classroom, library, playing area and dining rows have it; the generic (restaurant) kitchen weekend row, 0.7 from 7 to 22, had been repeated",
         "interior_lighting_schedule":  "food preparation - primary school lighting",
         "lighting_provenance":  "legacy",
         "electric_equipment_schedule":  "food preparation - primary school electric equipment",
@@ -1129,7 +1129,7 @@
     {
         "schedule_set_name":  "food preparation - secondary school schedule set",
         "occupancy_schedule":  "food preparation - secondary school occupancy",
-        "occupancy_provenance":  "legacy: fit: control_point_fit",
+        "occupancy_provenance":  "legacy: fit: control_point_fit | school weekday 2026-10-09: Default row replaced with a school-day kitchen profile on the classrooms' 8 to 16 hours (staff from 6, breakfast 0.4 of range, lunch preparation into a 11-13 peak, cleanup to base at 16); the generic restaurant weekday row, 7 to 22 with a dinner peak, had been repeated | school weekend 2026-10-09: Wknd|Hol row zeroed, as the school's classroom, library, playing area and dining rows have it; the generic (restaurant) kitchen weekend row, 0.7 from 7 to 22, had been repeated",
         "interior_lighting_schedule":  "food preparation - secondary school lighting",
         "lighting_provenance":  "legacy",
         "electric_equipment_schedule":  "food preparation - secondary school electric equipment",
@@ -2171,6 +2171,21 @@
         "hot_water_equipment_provenance":  "authored: sales | RetailStripmall Type1_SWH_SCH | fit: manual",
         "applies_to":  [
             "retail - mall concourse"
+        ]
+    },
+    {
+        "schedule_set_name":  "retail - mass merchandising schedule set",
+        "occupancy_schedule":  "retail - mass merchandising occupancy",
+        "occupancy_provenance":  "legacy",
+        "interior_lighting_schedule":  "retail - mass merchandising lighting",
+        "lighting_provenance":  "legacy: fit: grid_search",
+        "electric_equipment_schedule":  "retail - mass merchandising electric equipment",
+        "electric_equipment_provenance":  "legacy: fit: grid_search",
+        "gas_equipment_schedule":  null,
+        "hot_water_equipment_schedule":  "retail - mass merchandising hot water equipment",
+        "hot_water_equipment_provenance":  "authored: sales | RetailStripmall Type1_SWH_SCH | fit: manual",
+        "applies_to":  [
+            "retail - mass merchandising"
         ]
     },
     {
