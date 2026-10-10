@@ -69,11 +69,12 @@ module OpenstudioStandards
     # Set or autosize the central heating maximum system air flow ratio on a Sizing:System.
     #
     # @param sizing_system [OpenStudio::Model::SizingSystem] sizing system object
-    # @param minimum_system_airflow_ratio [Double, Symbol, nil] a number pins the ratio; :autosize or nil
-    #   lets EnergyPlus derive it from the zones' heating design flows
+    # @param minimum_system_airflow_ratio [Double, Symbol, String, nil] a number pins the ratio; :autosize,
+    #   'autosize' (the spelling a JSON spec uses) or nil lets EnergyPlus derive it from the zones'
+    #   heating design flows
     # @return [Boolean] returns true if successful, false if not
     def self.set_air_loop_system_sizing_heating_airflow_ratio(sizing_system, minimum_system_airflow_ratio)
-      autosize = minimum_system_airflow_ratio.nil? || minimum_system_airflow_ratio == :autosize
+      autosize = minimum_system_airflow_ratio.nil? || minimum_system_airflow_ratio == :autosize || minimum_system_airflow_ratio == 'autosize'
       if sizing_system.model.version < OpenStudio::VersionString.new('2.7.0')
         if autosize
           OpenStudio.logFree(OpenStudio::Warn, 'openstudio.standards.HVAC', "The minimum system air flow ratio cannot be autosized before OpenStudio 2.7.0; #{sizing_system.name} keeps 0.3.")

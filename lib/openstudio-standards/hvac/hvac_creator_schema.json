@@ -1,0 +1,2076 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openstudio-standards.nrel.gov/schemas/hvac_creator_schema.json",
+  "title": "OpenStudio HVAC Creator Inputs",
+  "description": "Declarative input for building custom HVAC systems in an OpenStudio model. Components are collected into air loops, plant loops, dedicated outdoor air systems, variable refrigerant flow systems, and zone equipment; system architecture is expressed by the ordering and placement of components. Conventions: (1) Physical quantities are given in either IP or SI units using a suffixed key (for example supply_temp_f or supply_temp_c). Each quantity accepts exactly one IP key and one SI key; if both are supplied they must agree within 0.5 percent after conversion. (2) Objects reference one another by name (loops, zones, schedules, condensing units). A reference may only point to an object defined earlier in the build order. (3) Build order: plant loops (primary then secondary), variable refrigerant flow condensing units, air loops, dedicated outdoor air systems, zone equipment (terminals, then zone equipment, sizing, humidistat, air paths), then cross-loop plant features declared on the loops (waterside economizer, two-pipe changeover, supply water temperature control), then energy management system objects.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of the input format this document targets.",
+      "default": "0.1.0"
+    },
+    "custom_system_type": {
+      "type": "string",
+      "description": "Name identifying this custom system type. Recorded on the Building as an additional property."
+    },
+    "description": {
+      "type": "string",
+      "description": "Free-text description of the system this input creates. Recorded on the Building as an additional property."
+    },
+    "apply_standard_sizing_and_controls": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true and this input is applied while creating a typical building, route the result through the standard sizing and efficiency logic (sizing parameters, sizing run, multizone outdoor air sizing, prototype HVAC assumptions, and the efficiency standard). Standards-applied sizes and efficiencies then override any specified here."
+    },
+    "plant_loop_info": {
+      "type": "array",
+      "description": "Plant loop definitions. Created first, in listed order, so downstream air and zone equipment may reference them by name.",
+      "items": { "$ref": "#/$defs/plantLoop" }
+    },
+    "vrf_info": {
+      "type": "array",
+      "description": "Variable refrigerant flow condensing unit definitions. Referenced by variable refrigerant flow terminals.",
+      "items": { "$ref": "#/$defs/vrfSystem" }
+    },
+    "air_system_info": {
+      "type": "array",
+      "description": "AirLoopHVAC system definitions.",
+      "items": { "$ref": "#/$defs/airLoop" }
+    },
+    "doas_info": {
+      "type": "array",
+      "description": "Dedicated outdoor air system definitions.",
+      "items": { "$ref": "#/$defs/doas" }
+    },
+    "zone_info": {
+      "type": "array",
+      "description": "Zone-level HVAC and terminal definitions.",
+      "items": { "$ref": "#/$defs/zoneHvac" }
+    },
+    "ems_info": {
+      "type": "array",
+      "description": "Declarative EnergyManagementSystem definitions. Applied last so programs may reference any HVAC object by name.",
+      "items": { "$ref": "#/$defs/emsEntry" }
+    }
+  },
+
+  "$defs": {
+
+    "availability": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Availability schedule and optional night-cycle operation for a loop or system.",
+      "properties": {
+        "schedule_name": { "type": "string", "description": "Availability schedule name. The sentinels AlwaysOn and AlwaysOff are resolved to the corresponding constant schedules; any other name must reference an existing schedule." },
+        "night_cycle": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Air-loop night-cycle control. Ignored for plant loops.",
+          "properties": {
+            "control_type": { "type": "string", "enum": ["StayOff", "CycleOnAny", "CycleOnAnyZoneFansOnly", "CycleOnControlZone"] },
+            "run_time_s": { "type": "number", "description": "Cycling run time (s)" }
+          }
+        }
+      }
+    },
+
+    "fan_operation": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Fan placement and operating-mode schedule shared by unitary systems, water-to-air heat pumps, variable refrigerant flow terminals, and fan coils.",
+      "properties": {
+        "placement": { "type": "string", "enum": ["DrawThrough", "BlowThrough"], "default": "DrawThrough" },
+        "op_mode_sch_name": { "type": "string", "description": "Fan operating-mode schedule name (continuous vs cycling)" }
+      }
+    },
+
+    "operating_airflows": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Supply and outdoor airflows by operating mode. Each mode accepts a CFM or m3/s value.",
+      "properties": {
+        "cooling_cfm": { "type": "number" },
+        "cooling_m3s": { "type": "number" },
+        "heating_cfm": { "type": "number" },
+        "heating_m3s": { "type": "number" },
+        "no_load_cfm": { "type": "number" },
+        "no_load_m3s": { "type": "number" },
+        "oa_cooling_cfm": { "type": "number", "description": "Outdoor airflow during cooling. Default 0." },
+        "oa_cooling_m3s": { "type": "number" },
+        "oa_heating_cfm": { "type": "number", "description": "Outdoor airflow during heating. Default 0." },
+        "oa_heating_m3s": { "type": "number" },
+        "oa_no_load_cfm": { "type": "number", "description": "Outdoor airflow with no cooling or heating load. Default 0." },
+        "oa_no_load_m3s": { "type": "number" }
+      }
+    },
+
+    "crankcase": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Compressor crankcase heater parameters.",
+      "properties": {
+        "heater_w": { "type": "number", "description": "Crankcase heater capacity (W)" },
+        "max_oat_f": { "type": "number", "description": "Maximum outdoor dry-bulb for crankcase heater operation (F)" },
+        "max_oat_c": { "type": "number" }
+      }
+    },
+
+    "equipment_list_position": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Placement of a terminal or zone equipment object within the zone equipment list.",
+      "properties": {
+        "heat_priority": { "type": "integer", "description": "Heating priority order (1 = first)" },
+        "cool_priority": { "type": "integer", "description": "Cooling priority order (1 = first)" },
+        "sequential_heat_fraction": { "type": "number", "description": "Sequential heating load fraction (0-1)" },
+        "sequential_cool_fraction": { "type": "number", "description": "Sequential cooling load fraction (0-1)" }
+      }
+    },
+
+    "setpoint_range": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Minimum and maximum setpoint temperature limits.",
+      "properties": {
+        "min_setpt_f": { "type": "number" },
+        "min_setpt_c": { "type": "number" },
+        "max_setpt_f": { "type": "number" },
+        "max_setpt_c": { "type": "number" }
+      }
+    },
+
+    "oat_reset": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Setpoint reset as a linear function of outdoor air temperature.",
+      "properties": {
+        "setpoint_at_oat_low_f": { "type": "number", "description": "Setpoint at the outdoor low temperature (F)" },
+        "setpoint_at_oat_low_c": { "type": "number" },
+        "oat_low_f": { "type": "number", "description": "Outdoor low temperature (F)" },
+        "oat_low_c": { "type": "number" },
+        "setpoint_at_oat_high_f": { "type": "number", "description": "Setpoint at the outdoor high temperature (F)" },
+        "setpoint_at_oat_high_c": { "type": "number" },
+        "oat_high_f": { "type": "number", "description": "Outdoor high temperature (F)" },
+        "oat_high_c": { "type": "number" }
+      }
+    },
+
+    "curveRef": {
+      "description": "Performance-curve reference: a named curve (a [source, key] pair into the packaged curve library, or a bare key string), or a user-entered curve object giving the curve type and coefficients directly.",
+      "oneOf": [
+        { "type": "array", "items": { "type": "string" }, "minItems": 2, "maxItems": 2 },
+        { "type": "string" },
+        { "$ref": "#/$defs/userCurve" }
+      ]
+    },
+
+    "userCurve": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["type", "coefficients"],
+      "description": "A performance curve given directly by type and coefficients.",
+      "properties": {
+        "type": { "type": "string", "enum": ["Biquadratic", "Bicubic", "Quadratic", "Cubic", "Exponent"] },
+        "coefficients": { "type": "array", "items": { "type": "number" }, "description": "Coefficients in order (count depends on type)" },
+        "name": { "type": "string" },
+        "min_x": { "type": "number" },
+        "max_x": { "type": "number" },
+        "min_y": { "type": "number", "description": "Biquadratic/Bicubic only" },
+        "max_y": { "type": "number", "description": "Biquadratic/Bicubic only" },
+        "min_out": { "type": "number" },
+        "max_out": { "type": "number" }
+      }
+    },
+
+    "fanCommon": {
+      "type": "object",
+      "description": "Fields shared by all fan component types. Mixed into the fan hashes; carries no unevaluatedProperties of its own.",
+      "properties": {
+        "fan_total_eff": { "type": "number", "description": "Fan total efficiency (0-1)" },
+        "motor_eff": { "type": "number", "description": "Motor efficiency (0-1)", "default": 0.9 },
+        "motor_airstream_frac": { "type": "number", "description": "Fraction of motor heat entering the airstream (0-1)", "default": 1.0 },
+        "pressure_rise_inh2o": { "type": "number", "description": "Fan pressure rise (in. H2O)" },
+        "pressure_rise_override_inh2o": { "type": "number", "description": "Explicit fan pressure rise (in. H2O) set after a preset fan is built (create_typical_fan ignores its pressure_rise argument for non-exhaust fans)" },
+        "pressure_rise_override_pa": { "type": "number", "description": "Explicit fan pressure rise (Pa) set after a preset fan is built" },
+        "pressure_rise_pa": { "type": "number", "description": "Fan pressure rise (Pa)" },
+        "max_airflow_cfm": { "type": "number", "description": "Maximum air flow rate (CFM)" },
+        "max_airflow_m3s": { "type": "number", "description": "Maximum air flow rate (m3/s)" },
+        "enduse_subcat": { "type": "string", "description": "End-use subcategory" }
+      }
+    },
+
+    "dx_rated_performance": {
+      "type": "object",
+      "description": "Rated performance fields shared by single-speed DX cooling and heating coils. Mixed in; carries no unevaluatedProperties of its own.",
+      "properties": {
+        "rated_capacity_btuh": { "type": "number", "description": "Rated total capacity (Btu/h)" },
+        "rated_capacity_w": { "type": "number", "description": "Rated total capacity (W)" },
+        "rated_cop": { "type": "number", "description": "Rated coefficient of performance" },
+        "rated_airflow_cfm": { "type": "number", "description": "Rated air flow rate (CFM)" },
+        "rated_airflow_m3s": { "type": "number", "description": "Rated air flow rate (m3/s)" },
+        "curve_type": { "type": "string", "description": "Curve-set key. Default Default." },
+        "min_oadb_temp_f": { "type": "number", "description": "Minimum outdoor dry-bulb for compressor operation (F)" },
+        "min_oadb_temp_c": { "type": "number" }
+      }
+    },
+
+    "water_coil_design": {
+      "type": "object",
+      "description": "Design entering/leaving conditions and flow rates shared by water heating and cooling coils. Mixed in; carries no unevaluatedProperties of its own.",
+      "required": ["plant_loop_name"],
+      "properties": {
+        "plant_loop_name": { "type": "string", "description": "Name of the plant loop serving the coil" },
+        "water_flow_gpm": { "type": "number", "description": "Design water flow rate (GPM)" },
+        "water_flow_m3s": { "type": "number" },
+        "air_flow_cfm": { "type": "number", "description": "Design air flow rate (CFM)" },
+        "air_flow_m3s": { "type": "number" },
+        "ewt_f": { "type": "number", "description": "Entering water temperature (F). Defaults to the loop design exit temperature." },
+        "ewt_c": { "type": "number" },
+        "lwt_f": { "type": "number", "description": "Leaving water temperature (F). Defaults to the entering water temperature minus the loop design temperature difference." },
+        "lwt_c": { "type": "number" },
+        "eat_f": { "type": "number", "description": "Entering air dry-bulb temperature (F)" },
+        "eat_c": { "type": "number" },
+        "lat_f": { "type": "number", "description": "Leaving air temperature (F)" },
+        "lat_c": { "type": "number" }
+      }
+    },
+
+    "ventilationControl": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Mechanical ventilation control mapping to the outdoor air and mechanical ventilation controllers.",
+      "properties": {
+        "min_oa_sch_name": { "type": "string", "description": "Minimum outdoor air schedule name" },
+        "min_oa_frac_sch_name": { "type": "string", "description": "Minimum outdoor air fraction schedule name" },
+        "min_oa_flow_cfm": { "type": "number", "description": "Minimum outdoor air flow rate (CFM)" },
+        "min_oa_flow_m3s": { "type": "number" },
+        "max_oa_flow_cfm": { "type": "number", "description": "Maximum outdoor air flow rate (CFM)" },
+        "max_oa_flow_m3s": { "type": "number" },
+        "sys_oa_method": { "type": "string", "description": "System outdoor air method for the mechanical ventilation controller" },
+        "dcv": { "type": "boolean", "description": "Enable demand controlled ventilation" },
+        "min_limit_type": { "type": "string", "enum": ["FixedMinimum", "ProportionalMinimum"], "description": "Minimum outdoor air limit type" },
+        "controller_mv_name": { "type": "string", "description": "Name for the mechanical ventilation controller" }
+      }
+    },
+
+    "economizerControl": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Airside economizer control. Presence of this object configures an economizer.",
+      "properties": {
+        "type": { "type": "string", "description": "Economizer control type", "examples": ["NoEconomizer", "FixedDryBulb", "FixedEnthalpy", "DifferentialDryBulb", "DifferentialEnthalpy"] },
+        "max_db_f": { "type": "number", "description": "Economizer maximum limit dry-bulb temperature (F)" },
+        "max_db_c": { "type": "number" },
+        "min_db_f": { "type": "number", "description": "Economizer minimum limit dry-bulb temperature (F)" },
+        "min_db_c": { "type": "number" },
+        "max_enth_btu_per_lb": { "type": "number", "description": "Economizer maximum limit enthalpy (Btu/lb)" },
+        "max_enth_j_per_kg": { "type": "number" },
+        "control_action": { "type": "string", "description": "Economizer control action type" },
+        "lockout_type": { "type": "string", "description": "Economizer lockout type" },
+        "min_limit_type": { "type": "string", "description": "Economizer minimum limit type" },
+        "max_oa_frac_sch_name": { "type": "string", "description": "Maximum outdoor air fraction schedule name" },
+        "reset_min_db": { "type": "boolean", "description": "Clear the economizer minimum limit dry-bulb temperature (leave it unset)" },
+        "heat_recovery_bypass_ctrl_type": { "type": "string", "description": "Heat recovery bypass control type", "examples": ["BypassWhenWithinEconomizerLimits", "BypassWhenOAFlowGreaterThanMinimum"] }
+      }
+    },
+
+    "oaControl": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Outdoor air control: mechanical ventilation and airside economizer. Presence of this object (even empty) requests an outdoor air system on the loop.",
+      "properties": {
+        "ventilation": { "$ref": "#/$defs/ventilationControl" },
+        "economizer": { "$ref": "#/$defs/economizerControl" },
+        "controller_name": { "type": "string", "description": "Name for the outdoor air controller (defaults to \"<loop> OA System Controller\")." }
+      }
+    },
+
+    "airLoop": {
+      "type": "object",
+      "required": ["name", "supply_components"],
+      "unevaluatedProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Name of the air loop" },
+        "existing": { "type": "boolean", "description": "Retrofit mode: apply this entry to an AirLoopHVAC already present in the model, matched by name. No new air loop, outdoor air system, night-cycle manager, or ducts are created. SingleDuct only. A quantity given as null clears (autosizes) the corresponding existing field." },
+        "availability": { "$ref": "#/$defs/availability" },
+        "ahu_type": { "type": "string", "enum": ["SingleDuct", "DualDuct"], "default": "SingleDuct" },
+        "design_info": { "$ref": "#/$defs/airLoopDesignInfo" },
+        "oa_control": { "$ref": "#/$defs/oaControl" },
+        "oa_components": { "type": "array", "items": { "$ref": "#/$defs/airStreamComponent" }, "description": "Components on the outdoor air stream, ordered outboard to mixed air" },
+        "relief_components": { "type": "array", "items": { "$ref": "#/$defs/airStreamComponent" }, "description": "Relief/exhaust components, ordered inboard to outboard" },
+        "return_components": { "type": "array", "items": { "$ref": "#/$defs/airStreamComponent" }, "description": "Components on the return air branch" },
+        "supply_components": { "type": "array", "items": { "$ref": "#/$defs/airSupplyComponentOrSpm" }, "description": "Supply-side components in airflow order, from the mixed-air supply inlet to the supply outlet (discharge to the zones): the first entry is nearest the inlet, the last nearest the discharge. Use the branch key on components for DualDuct." },
+        "controls": { "type": "array", "items": { "$ref": "#/$defs/setpointManager" }, "description": "Setpoint managers placed on the supply side" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "existing": { "const": true } }, "required": ["existing"] },
+          "then": {},
+          "else": { "required": ["controls"] }
+        }
+      ]
+    },
+
+    "airLoopDesignInfo": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "AirLoopHVAC sizing inputs mapping to SizingSystem.",
+      "properties": {
+        "des_supply_airflow_cfm": { "type": "number", "description": "Design supply air flow rate (CFM)" },
+        "des_supply_airflow_m3s": { "type": "number" },
+        "des_outdoor_airflow_cfm": { "type": "number", "description": "Design outdoor air flow rate (CFM)" },
+        "des_outdoor_airflow_m3s": { "type": "number" },
+        "des_cool_sat_f": { "type": "number", "description": "Central cooling design supply air temperature (F)" },
+        "des_cool_sat_c": { "type": "number" },
+        "des_heat_sat_f": { "type": "number", "description": "Central heating design supply air temperature (F)" },
+        "des_heat_sat_c": { "type": "number" },
+        "des_precool_sat_f": { "type": "number", "description": "Precool design temperature (F)" },
+        "des_precool_sat_c": { "type": "number" },
+        "des_preheat_sat_f": { "type": "number", "description": "Preheat design temperature (F)" },
+        "des_preheat_sat_c": { "type": "number" },
+        "all_outdoor_air": { "type": "boolean", "description": "Size for 100 percent outdoor air rather than a fractional minimum" },
+        "all_oa_in_cooling": { "type": "boolean" },
+        "all_oa_in_heating": { "type": "boolean" },
+        "des_sys_oa_method": { "type": "string", "description": "System outdoor air method" },
+        "load_type": { "type": "string", "description": "Load type to size on", "examples": ["Sensible", "Latent", "Total", "VentilationRequirement"] },
+        "des_heat_flow_ratio": { "type": "number", "description": "Central heating maximum system air flow ratio (0-1)" },
+        "use_standard_sizing": { "type": "boolean", "description": "Apply the standard air-loop SizingSystem defaults (preheat/precool/humidity/design-day airflow methods), taking preheat/precool/cooling/heating supply temperatures from this object." },
+        "min_sys_airflow_ratio": { "oneOf": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "const": "autosize" }], "description": "Minimum system (central heating maximum) air flow ratio used with use_standard_sizing: a number (0-1) pins it, 'autosize' derives it from the zones' heating design flows" },
+        "sizing_option": { "type": "string", "enum": ["Coincident", "NonCoincident"] },
+        "central_clg_capacity_ctrl_method": { "type": "string", "enum": ["VAV", "Bypass", "VT", "OnOff"], "description": "Central cooling capacity control method" },
+        "preheat_hr_kgpkg": { "type": "number", "description": "Preheat design humidity ratio (kg/kg)" },
+        "precool_hr_kgpkg": { "type": "number", "description": "Precool design humidity ratio (kg/kg)" },
+        "central_clg_hr_kgpkg": { "type": "number", "description": "Central cooling design supply air humidity ratio (kg/kg)" },
+        "central_htg_hr_kgpkg": { "type": "number", "description": "Central heating design supply air humidity ratio (kg/kg)" },
+        "clg_dsgn_airflow_method": { "type": "string", "description": "Cooling design air flow method", "examples": ["DesignDay", "Flow/System", "FlowPerFloorArea"] },
+        "htg_dsgn_airflow_method": { "type": "string", "description": "Heating design air flow method", "examples": ["DesignDay", "Flow/System", "FlowPerFloorArea"] }
+      }
+    },
+
+    "plantLoop": {
+      "type": "object",
+      "required": ["name", "design_info"],
+      "unevaluatedProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "availability": { "$ref": "#/$defs/availability" },
+        "design_info": { "$ref": "#/$defs/plantLoopDesignInfo" },
+        "supply_inlet_components": { "type": "array", "items": { "$ref": "#/$defs/plantComponent" }, "description": "Series components from the loop supply inlet to the supply splitter, in flow order (for example the loop pump)." },
+        "supply_branches": { "type": "array", "items": { "type": "array", "items": { "$ref": "#/$defs/plantComponent" } }, "description": "Parallel branches between the supply splitter and mixer. Each inner array is one branch, ordered inlet to outlet; multiple entries in an inner array are placed in series on that branch." },
+        "supply_outlet_components": { "type": "array", "items": { "$ref": "#/$defs/plantComponent" }, "description": "Series components from the supply mixer to the loop supply outlet, in flow order." },
+        "demand_components": { "type": "array", "items": { "$ref": "#/$defs/plantComponent" }, "description": "Components placed on the demand side of this loop (for example the load side of a fluid-to-fluid heat exchanger). Coils connect to the demand side implicitly by naming this loop, and are not listed here." },
+        "demand_inlet_components": { "type": "array", "items": { "$ref": "#/$defs/plantComponent" }, "description": "Series components on the demand inlet, in flow order (for example a variable-speed secondary pump in a primary-secondary common-pipe configuration)." },
+        "controls": { "type": "array", "items": { "$ref": "#/$defs/setpointManager" }, "description": "Setpoint managers placed on the loop." },
+        "supply_bypass_name": { "type": "string", "description": "Name for the supply-equipment bypass pipe (defaults to \"<loop> Supply Equipment Bypass\")." },
+        "demand_bypass_name": { "type": "string", "description": "Name for the demand (coil) bypass pipe (defaults to \"<loop> Coil Bypass\")." },
+        "fluid_type": { "type": "string", "enum": ["Water", "Steam", "PropyleneGlycol", "EthyleneGlycol"] },
+        "glycol_percent": { "type": "number", "description": "Glycol concentration (0-1)" },
+        "load_distribution_scheme": { "type": "string", "enum": ["Optimal", "SequentialLoad", "UniformLoad", "UniformPLR", "SequentialUniformPLR"] },
+        "common_pipe_sim": { "type": "string", "enum": ["CommonPipe", "TwoWayCommonPipe", "None"] },
+        "min_loop_temp_f": { "type": "number", "description": "Minimum loop temperature (F)" },
+        "min_loop_temp_c": { "type": "number" },
+        "max_loop_temp_f": { "type": "number", "description": "Maximum loop temperature (F)" },
+        "max_loop_temp_c": { "type": "number" },
+        "ground_hx_loop": { "type": "boolean", "description": "Treat this loop as a ground heat exchanger loop, driving its temperature-source component from the loop inlet temperature using ems_params." },
+        "ems_params": { "type": "object", "description": "Parameters for the ground heat exchanger temperature-source control (used when ground_hx_loop is true).", "additionalProperties": true },
+        "interconnection": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "How this loop, when it is a secondary_loop, is joined to its primary loop. Required on a secondary loop; ignored on a primary loop.",
+          "required": ["type"],
+          "properties": {
+            "type": { "type": "string", "enum": ["common_pipe", "heat_exchanger"] },
+            "hx": { "$ref": "#/$defs/hxFluidToFluidObj", "description": "Heat exchanger inputs when type is heat_exchanger" }
+          }
+        },
+        "secondary_loop": { "$ref": "#/$defs/plantLoop", "description": "Secondary distribution loop joined to this primary loop per its interconnection object." },
+        "waterside_economizer": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Adds a waterside economizer heat exchanger. Declared on the chilled water loop it serves.",
+          "required": ["condenser_loop_name"],
+          "properties": {
+            "condenser_loop_name": { "type": "string", "description": "Condenser water loop the economizer draws on" },
+            "integrated": { "type": "boolean", "default": true, "description": "true = in series with the chillers (may run simultaneously); false = parallel with the chillers, which are locked out during economizer operation." }
+          }
+        },
+        "supply_water_temperature_control": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Adds supply water temperature reset control to this loop.",
+          "properties": {
+            "strategy": { "type": "string", "enum": ["outdoor_air", "zone_demand"] },
+            "oat_reset": { "$ref": "#/$defs/oat_reset" },
+            "zone_names": { "type": "array", "items": { "type": "string" }, "description": "Zones driving a zone_demand strategy; each must have a thermostat." }
+          }
+        },
+        "two_pipe": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Converts this hot water loop and its chilled water partner to two-pipe changeover operation. Declared on the hot water loop only.",
+          "required": ["partner_loop_name"],
+          "properties": {
+            "partner_loop_name": { "type": "string", "description": "Chilled water loop paired with this hot water loop" },
+            "control_strategy": { "type": "string", "enum": ["outdoor_air_lockout", "zone_demand"] },
+            "lockout_temperature_f": { "type": "number", "description": "Changeover temperature (F)", "default": 65 },
+            "lockout_temperature_c": { "type": "number" },
+            "zone_names": { "type": "array", "items": { "type": "string" }, "description": "Zones driving a zone_demand strategy; each must have a thermostat." }
+          }
+        }
+      }
+    },
+
+    "plantLoopDesignInfo": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["loop_type"],
+      "description": "Plant loop sizing inputs mapping to SizingPlant.",
+      "properties": {
+        "loop_type": { "type": "string", "enum": ["Heating", "Cooling", "Condenser", "Steam"] },
+        "supply_temp_f": { "type": "number", "description": "Design loop exit temperature (F)" },
+        "supply_temp_c": { "type": "number" },
+        "temp_delta_r": { "type": "number", "description": "Loop design temperature difference (R)" },
+        "temp_delta_k": { "type": "number" },
+        "sizing_option": { "type": "string", "enum": ["Coincident", "NonCoincident"], "description": "SizingPlant sizing option" },
+        "averaging_window": { "type": "integer", "description": "Number of zone timesteps in the coincident sizing averaging window" },
+        "coincident_sizing_factor_mode": { "type": "string", "description": "Coincident sizing factor mode", "examples": ["GlobalCoolingSizingFactor", "None"] }
+      }
+    },
+
+    "doas": {
+      "type": "object",
+      "required": ["name", "air_loops", "components", "controls"],
+      "unevaluatedProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "availability": { "$ref": "#/$defs/availability" },
+        "precool_des_t_f": { "type": "number", "description": "Precool design temperature (F)" },
+        "precool_des_t_c": { "type": "number" },
+        "precool_des_hr_kgpkg": { "type": "number", "description": "Precool design humidity ratio (kg/kg)" },
+        "preheat_des_t_f": { "type": "number", "description": "Preheat design temperature (F)" },
+        "preheat_des_t_c": { "type": "number" },
+        "preheat_des_hr_kgpkg": { "type": "number", "description": "Preheat design humidity ratio (kg/kg)" },
+        "air_loops": { "type": "array", "items": { "type": "string" }, "description": "Names of AirLoopHVACs served by this dedicated outdoor air system" },
+        "components": { "type": "array", "items": { "$ref": "#/$defs/airStreamComponentOrSpm" }, "description": "Outdoor-air-side components, ordered outboard to mixed air" },
+        "relief_components": { "type": "array", "items": { "$ref": "#/$defs/airStreamComponent" } },
+        "controls": { "type": "array", "items": { "$ref": "#/$defs/setpointManager" } }
+      }
+    },
+
+    "vrfSystem": {
+      "type": "object",
+      "required": ["name"],
+      "unevaluatedProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "schedule_name": { "type": "string", "description": "Availability schedule name" },
+        "master_zone_name": { "type": "string", "description": "Zone for the master thermostat location" },
+        "priority_control_type": { "type": "string", "description": "Master thermostat priority control type" },
+        "cooling_rated_total_capacity_btuh": { "type": "number", "description": "Rated total cooling capacity (Btu/h)" },
+        "cooling_rated_total_capacity_w": { "type": "number" },
+        "heating_rated_total_capacity_btuh": { "type": "number", "description": "Rated total heating capacity (Btu/h)" },
+        "heating_rated_total_capacity_w": { "type": "number" },
+        "cooling_cop": { "type": "number", "description": "Rated cooling COP" },
+        "heating_cop": { "type": "number", "description": "Rated heating COP" },
+        "heat_recovery": { "type": "boolean", "description": "Enable heat recovery mode" },
+        "condenser_type": { "type": "string", "examples": ["AirCooled", "WaterCooled", "EvaporativelyCooled"] },
+        "min_oa_temp_cooling_f": { "type": "number", "description": "Minimum outdoor temperature in cooling mode (F)" },
+        "min_oa_temp_cooling_c": { "type": "number" },
+        "min_oa_temp_heating_f": { "type": "number", "description": "Minimum outdoor temperature in heating mode (F)" },
+        "min_oa_temp_heating_c": { "type": "number" },
+        "min_oa_temp_hr_f": { "type": "number", "description": "Minimum outdoor temperature in heat recovery mode (F)" },
+        "min_oa_temp_hr_c": { "type": "number" },
+        "curve_type": { "type": "string", "description": "Performance curve-set key for the condensing unit" }
+      }
+    },
+
+    "zoneHvac": {
+      "type": "object",
+      "required": ["zone_name"],
+      "unevaluatedProperties": false,
+      "properties": {
+        "zone_name": { "type": "string", "description": "Name of the ThermalZone" },
+        "air_loop_name": { "type": "string", "description": "Name of the AirLoopHVAC to attach the air terminal to. When set, air_terminal_info is required and its air_terminal_type selects the terminal." },
+        "air_terminal_info": { "$ref": "#/$defs/airTerminalInfo" },
+        "zone_equipment": { "type": "array", "items": { "$ref": "#/$defs/zoneEquipmentComponent" }, "description": "Zone-level HVAC equipment (fan coils, water-to-air heat pumps, variable refrigerant flow terminals, and so on)" },
+        "load_distribution": { "type": "string", "description": "Zone equipment list load distribution scheme" },
+        "zone_sizing": { "$ref": "#/$defs/zoneSizing" },
+        "humidistat": { "$ref": "#/$defs/humidistat" },
+        "air_path": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Plenums and zone mixing.",
+          "properties": {
+            "return_plenum": { "type": "string", "description": "Name of the return plenum ThermalZone" },
+            "supply_plenum": { "type": "string", "description": "Name of the supply plenum ThermalZone" },
+            "mixing_source": { "type": "string", "description": "Name of the source ThermalZone for zone mixing" },
+            "sch_name": { "type": "string", "description": "Schedule name for zone mixing" },
+            "flow_cfm": { "type": "number", "description": "Zone mixing design flow rate (CFM)" },
+            "flow_m3s": { "type": "number" },
+            "exhaust_from_source": { "type": "boolean", "description": "Add a dummy exhaust fan in the source zone" }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["air_loop_name"] },
+          "then": { "required": ["air_terminal_info"] }
+        }
+      ]
+    },
+
+    "airTerminalInfo": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["air_terminal_type"],
+      "description": "Terminal inputs. Common fields are top-level; type-specific fields are grouped into the vav, reheat, chilled_beam, piu, and inlet_mixer sub-objects, selected by air_terminal_type. Conditional validation enforces which sub-object each type permits.",
+      "properties": {
+        "air_terminal_type": {
+          "type": "string",
+          "description": "Terminal type. Selects which type-specific sub-object applies.",
+          "enum": [
+            "AirTerminalSingleDuctConstantVolumeNoReheat",
+            "AirTerminalSingleDuctConstantVolumeReheat",
+            "AirTerminalSingleDuctVAVReheat",
+            "AirTerminalSingleDuctVAVNoReheat",
+            "AirTerminalSingleDuctVAVHeatAndCoolNoReheat",
+            "AirTerminalSingleDuctVAVHeatAndCoolReheat",
+            "AirTerminalSingleDuctInletSideMixer",
+            "AirTerminalSingleDuctConstantVolumeChilledBeam",
+            "AirTerminalDualDuctVAVOutdoorAir",
+            "AirTerminalSingleDuctSeriesPIUReheat",
+            "AirTerminalSingleDuctParallelPIUReheat"
+          ]
+        },
+        "name": { "type": "string", "description": "Terminal name override" },
+        "schedule_name": { "type": "string", "description": "Availability schedule name. Defaults to AlwaysOn." },
+        "equipment_list_position": { "$ref": "#/$defs/equipment_list_position" },
+        "oa_ctrl": { "type": "boolean", "description": "Enable outdoor air control on the terminal" },
+        "max_airflow_cfm": { "type": "number", "description": "Maximum air flow rate (CFM)" },
+        "max_airflow_m3s": { "type": "number" },
+        "min_airflow_cfm": { "type": "number", "description": "Minimum fixed air flow rate (CFM)" },
+        "min_airflow_m3s": { "type": "number" },
+        "vav": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Fields for VAV terminals.",
+          "properties": {
+            "min_flow_frac": { "type": "number", "description": "Constant minimum air flow fraction (0-1)" },
+            "min_flow_input_method": { "type": "string", "enum": ["Constant", "Scheduled", "FixedFlowRate"], "description": "Zone minimum air flow input method" },
+            "max_reheat_air_temp_f": { "type": "number", "description": "Maximum reheat air temperature (F)" },
+            "max_reheat_air_temp_c": { "type": "number" },
+            "min_flowfrac_schedule": { "type": "string", "description": "Schedule name driving the minimum air flow fraction" },
+            "min_turndown_schedule": { "type": "string", "description": "Minimum air flow turndown schedule name" },
+            "damper_action": { "type": "string", "enum": ["Normal", "Reverse", "ReverseWithLimits"], "description": "Damper action" },
+            "max_flow_per_area_reheat_m2": { "type": "number", "description": "Maximum flow per zone floor area during reheat (m3/s-m2)" },
+            "max_flow_frac_reheat": { "type": "number", "description": "Maximum flow fraction during reheat (0-1)" },
+            "heat_flow_cfm": { "type": "number", "description": "Heating airflow rate (CFM), ReverseWithLimits" },
+            "heat_flow_m3s": { "type": "number" }
+          }
+        },
+        "reheat": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Reheat coil and controls for reheat terminals.",
+          "properties": {
+            "coil_info": { "$ref": "#/$defs/heatingCoilComponent", "description": "Reheat coil definition" },
+            "max_reheat_temp_f": { "type": "number", "description": "Maximum reheat air temperature (F)" },
+            "max_reheat_temp_c": { "type": "number" },
+            "max_hw_flow_gpm": { "type": "number", "description": "Maximum hot water flow (GPM)" },
+            "max_hw_flow_m3s": { "type": "number" },
+            "min_hw_flow_gpm": { "type": "number", "description": "Minimum hot water flow (GPM)" },
+            "min_hw_flow_m3s": { "type": "number" },
+            "convergence_tolerance": { "type": "number" }
+          }
+        },
+        "chilled_beam": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": ["chilled_water_loop_name"],
+          "description": "Fields for the chilled-beam terminal.",
+          "properties": {
+            "chilled_water_loop_name": { "type": "string", "description": "Chilled water plant loop name" },
+            "coil_surf_area_ft2_per_ft": { "type": "number", "description": "Beam coil surface area per coil length (ft2/ft)" },
+            "coil_surf_area_m2_per_m": { "type": "number" },
+            "pipe_diam_in": { "type": "number", "description": "Beam leaving pipe inside diameter (in.)" },
+            "pipe_diam_m": { "type": "number" },
+            "beam_len_ft": { "type": "number", "description": "Beam length (ft)" },
+            "beam_len_m": { "type": "number" },
+            "induc_coeff": { "type": "number", "description": "Beam induction coefficient" },
+            "beam_type": { "type": "string", "description": "Cooled beam type", "examples": ["Active", "Passive"] },
+            "ewt_f": { "type": "number", "description": "Beam entering water temperature (F)" },
+            "ewt_c": { "type": "number" },
+            "lwt_f": { "type": "number", "description": "Beam leaving water temperature (F)" },
+            "lwt_c": { "type": "number" },
+            "chw_flow_gpm": { "type": "number", "description": "Maximum chilled water flow (GPM)" },
+            "chw_flow_m3s": { "type": "number" },
+            "num_beams": { "type": "integer", "description": "Number of beams" },
+            "supply_air_flow_cfm": { "type": "number", "description": "Beam supply air volumetric flow rate (CFM)" },
+            "supply_air_flow_m3s": { "type": "number" }
+          }
+        },
+        "piu": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Fields for series and parallel powered induction unit terminals.",
+          "properties": {
+            "max_primary_airflow_cfm": { "type": "number", "description": "Maximum primary air flow (CFM)" },
+            "max_primary_airflow_m3s": { "type": "number" },
+            "min_primary_airflow_cfm": { "type": "number", "description": "Minimum primary air flow (CFM), used to compute the fraction" },
+            "min_primary_airflow_m3s": { "type": "number" },
+            "min_primary_airflow_frac": { "type": "number", "description": "Minimum primary air flow fraction (0-1); takes priority over the min/max flow values" },
+            "max_secondary_airflow_cfm": { "type": "number", "description": "Maximum secondary (recirculated) air flow (CFM), parallel unit" },
+            "max_secondary_airflow_m3s": { "type": "number" },
+            "fan_data": { "$ref": "#/$defs/fanSysObj", "description": "Fan overrides for the unit fan" },
+            "coil_data": { "$ref": "#/$defs/heatingCoilComponent", "description": "Reheat coil overrides; defaults to an electric heating coil if omitted" }
+          }
+        },
+        "inlet_mixer": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Fields for the inlet-side mixer terminal.",
+          "properties": {
+            "per_vent_rate_mode": { "type": "string", "description": "Per person ventilation rate mode", "examples": ["CurrentOccupancy", "DesignOccupancy"] }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["air_terminal_type"], "properties": { "air_terminal_type": { "const": "AirTerminalSingleDuctConstantVolumeChilledBeam" } } },
+          "then": { "required": ["chilled_beam"] }
+        },
+        {
+          "if": { "required": ["air_terminal_type"], "properties": { "air_terminal_type": { "not": { "enum": ["AirTerminalSingleDuctVAVReheat", "AirTerminalSingleDuctVAVNoReheat", "AirTerminalSingleDuctVAVHeatAndCoolNoReheat", "AirTerminalSingleDuctVAVHeatAndCoolReheat", "AirTerminalDualDuctVAVOutdoorAir"] } } } },
+          "then": { "not": { "required": ["vav"] } }
+        },
+        {
+          "if": { "required": ["air_terminal_type"], "properties": { "air_terminal_type": { "not": { "enum": ["AirTerminalSingleDuctConstantVolumeReheat", "AirTerminalSingleDuctVAVReheat", "AirTerminalSingleDuctVAVHeatAndCoolReheat"] } } } },
+          "then": { "not": { "required": ["reheat"] } }
+        },
+        {
+          "if": { "required": ["air_terminal_type"], "properties": { "air_terminal_type": { "not": { "const": "AirTerminalSingleDuctConstantVolumeChilledBeam" } } } },
+          "then": { "not": { "required": ["chilled_beam"] } }
+        },
+        {
+          "if": { "required": ["air_terminal_type"], "properties": { "air_terminal_type": { "not": { "enum": ["AirTerminalSingleDuctSeriesPIUReheat", "AirTerminalSingleDuctParallelPIUReheat"] } } } },
+          "then": { "not": { "required": ["piu"] } }
+        },
+        {
+          "if": { "required": ["air_terminal_type"], "properties": { "air_terminal_type": { "not": { "const": "AirTerminalSingleDuctInletSideMixer" } } } },
+          "then": { "not": { "required": ["inlet_mixer"] } }
+        }
+      ]
+    },
+
+    "airStraightComponentTypes": {
+      "description": "StraightComponent air-side types (fans, DX and fuel-fired coils, air-to-air heat exchanger, evaporative cooler, humidifier, HX-assisted cooling coil). Placeable on an air stream and as sub-components inside composites.",
+      "enum": [
+        "FanOnOff", "FanConstantVolume", "FanVariableVolume", "FanSystemModel",
+        "CoilCoolingDXSingleSpeed", "CoilCoolingDXVariableSpeed", "CoilCoolingDXMultiSpeed", "CoilCoolingDXTwoSpeed", "CoilCoolingDXTwoStageWithHumidityControlMode",
+        "CoilHeatingGas", "CoilHeatingElectric", "CoilHeatingDesuperheater", "CoilHeatingDXSingleSpeed", "CoilHeatingDXMultiSpeed",
+        "CoilSystemCoolingWaterHXAssist", "HeatExchangerAirToAirSensibleAndLatent",
+        "EvaporativeCoolerDirectResearchSpecial", "HumidifierSteamElectric"
+      ]
+    },
+
+    "waterToAirComponentTypes": {
+      "description": "WaterToAirComponent coils that connect both an air stream and a plant loop.",
+      "enum": [
+        "CoilCoolingWater", "CoilHeatingWater",
+        "CoilCoolingWaterToAirHeatPump", "CoilCoolingWaterToAirHeatPumpVariableSpeed", "CoilHeatingWaterToAirHeatPump"
+      ]
+    },
+
+    "heatingCoilComponentTypes": {
+      "description": "Heating coils used as terminal reheat or induction-unit coils.",
+      "enum": ["CoilHeatingWater", "CoilHeatingElectric", "CoilHeatingGas"]
+    },
+
+    "zoneEquipmentTypes": {
+      "description": "ZoneHVACComponent types placeable only as zone equipment.",
+      "enum": [
+        "ZoneHVACIdealLoadsAirSystem", "ZoneHVACFourPipeFanCoil", "ZoneHVACUnitHeater", "ZoneHVACUnitVentilator",
+        "ZoneHVACWaterToAirHeatPump", "ZoneHVACPackagedTerminalAirConditioner", "ZoneHVACPackagedTerminalHeatPump",
+        "ZoneHVACBaseboardConvectiveElectric", "ZoneHVACBaseboardConvectiveWater",
+        "ZoneHVACHighTemperatureRadiant", "ZoneHVACLowTemperatureRadiantElectric", "ZoneHVACLowTempRadiantVarFlow",
+        "ZoneHVACEnergyRecoveryVentilator", "ZoneHVACWindowAirConditioner",
+        "ZoneVentilationDesignFlowRate", "FanZoneExhaust"
+      ]
+    },
+
+    "zoneOrAirLoopEquipmentTypes": {
+      "description": "Equipment placeable either as zone equipment or as an air loop supply component.",
+      "enum": ["AirLoopHVACUnitarySystem", "ZoneHVACTerminalUnitVariableRefrigerantFlow"]
+    },
+
+    "airLoopContainerTypes": {
+      "description": "Container types placeable only on an air loop supply node.",
+      "enum": ["AirLoopHVACUnitaryHeatCoolVAVChangeoverBypass"]
+    },
+
+    "plantComponentTypes": {
+      "description": "Types placeable on a plant loop.",
+      "enum": [
+        "PumpVariableSpeed", "PumpConstantSpeed", "HeaderedPumpsVariableSpeed", "HeaderedPumpsConstantSpeed",
+        "ChillerElectricEIR", "BoilerHotWater", "AirSourceHeatPump",
+        "DistrictCooling", "DistrictHeatingWater", "DistrictHeatingSteam",
+        "CoolingTowerVariableSpeed", "CoolingTowerSingleSpeed", "CoolingTowerTwoSpeed",
+        "FluidCoolerSingleSpeed", "FluidCoolerTwoSpeed",
+        "EvaporativeFluidCoolerSingleSpeed", "EvaporativeFluidCoolerTwoSpeed",
+        "HeatExchangerFluidToFluid", "PlantComponentTemperatureSource",
+        "HeatPumpPlantLoopEIRCooling", "HeatPumpPlantLoopEIRHeating",
+        "HeatPumpWaterToWaterEquationFitCooling", "HeatPumpWaterToWaterEquationFitHeating",
+        "ThermalStorageIceDetailed"
+      ]
+    },
+
+    "airSupplyComponent": {
+      "description": "Component placeable on an air loop supply node: air-stream straight components, water-to-air coils, zone-or-air-loop equipment, and air-loop containers.",
+      "allOf": [ { "$ref": "#/$defs/hvacComponent" } ],
+      "properties": { "obj_type": { "anyOf": [
+        { "$ref": "#/$defs/airStraightComponentTypes" },
+        { "$ref": "#/$defs/waterToAirComponentTypes" },
+        { "$ref": "#/$defs/zoneOrAirLoopEquipmentTypes" },
+        { "$ref": "#/$defs/airLoopContainerTypes" }
+      ] } }
+    },
+
+    "airStreamComponent": {
+      "description": "Component placeable on an outdoor air, relief, or return air stream: air-stream straight components and water-to-air coils.",
+      "allOf": [ { "$ref": "#/$defs/hvacComponent" } ],
+      "properties": { "obj_type": { "anyOf": [
+        { "$ref": "#/$defs/airStraightComponentTypes" },
+        { "$ref": "#/$defs/waterToAirComponentTypes" }
+      ] } }
+    },
+
+    "plantComponent": {
+      "description": "Component placeable on a plant loop.",
+      "allOf": [ { "$ref": "#/$defs/hvacComponent" } ],
+      "properties": { "obj_type": { "$ref": "#/$defs/plantComponentTypes" } }
+    },
+
+    "zoneEquipmentComponent": {
+      "description": "Component placeable as zone equipment: zone-only ZoneHVAC equipment and zone-or-air-loop equipment.",
+      "allOf": [ { "$ref": "#/$defs/hvacComponent" } ],
+      "properties": { "obj_type": { "anyOf": [
+        { "$ref": "#/$defs/zoneEquipmentTypes" },
+        { "$ref": "#/$defs/zoneOrAirLoopEquipmentTypes" }
+      ] } }
+    },
+
+    "subComponent": {
+      "description": "Component placeable inside a composite (unitary system or zone equipment): fans and coils.",
+      "allOf": [ { "$ref": "#/$defs/hvacComponent" } ],
+      "properties": { "obj_type": { "anyOf": [
+        { "$ref": "#/$defs/airStraightComponentTypes" },
+        { "$ref": "#/$defs/waterToAirComponentTypes" }
+      ] } }
+    },
+
+    "heatingCoilComponent": {
+      "description": "A heating coil, for terminal reheat or induction-unit coils.",
+      "allOf": [ { "$ref": "#/$defs/hvacComponent" } ],
+      "properties": { "obj_type": { "$ref": "#/$defs/heatingCoilComponentTypes" } }
+    },
+
+    "airSupplyComponentOrSpm": {
+      "description": "An air loop supply component or a setpoint manager.",
+      "oneOf": [
+        { "$ref": "#/$defs/airSupplyComponent" },
+        { "$ref": "#/$defs/setpointManager" }
+      ]
+    },
+
+    "airStreamComponentOrSpm": {
+      "description": "An air-stream component or a setpoint manager.",
+      "oneOf": [
+        { "$ref": "#/$defs/airStreamComponent" },
+        { "$ref": "#/$defs/setpointManager" }
+      ]
+    },
+
+    "hvacComponent": {
+      "type": "object",
+      "required": ["obj_type"],
+      "unevaluatedProperties": false,
+      "properties": {
+        "obj_type": {
+          "type": "string",
+          "description": "OpenStudio class name of the component. AirSourceHeatPump and CoilSystemCoolingWaterHXAssist are composite pseudo-types that expand into several objects.",
+          "enum": [
+            "ZoneHVACIdealLoadsAirSystem",
+            "AirLoopHVACUnitarySystem", "AirLoopHVACUnitaryHeatCoolVAVChangeoverBypass",
+            "ZoneHVACTerminalUnitVariableRefrigerantFlow",
+            "HeatExchangerAirToAirSensibleAndLatent",
+            "CoilCoolingDXSingleSpeed", "CoilCoolingDXVariableSpeed", "CoilCoolingDXMultiSpeed", "CoilCoolingDXTwoSpeed",
+            "CoilCoolingDXTwoStageWithHumidityControlMode",
+            "CoilCoolingWater", "CoilCoolingWaterToAirHeatPump", "CoilCoolingWaterToAirHeatPumpVariableSpeed",
+            "CoilSystemCoolingWaterHXAssist",
+            "CoilHeatingGas", "CoilHeatingElectric", "CoilHeatingDesuperheater",
+            "CoilHeatingDXSingleSpeed", "CoilHeatingDXMultiSpeed", "CoilHeatingWater", "CoilHeatingWaterToAirHeatPump",
+            "FanOnOff", "FanConstantVolume", "FanVariableVolume", "FanSystemModel", "FanZoneExhaust",
+            "ZoneHVACLowTemperatureRadiantElectric",
+            "ZoneHVACFourPipeFanCoil",
+            "ZoneHVACUnitHeater", "ZoneHVACWaterToAirHeatPump",
+            "ZoneHVACPackagedTerminalAirConditioner", "ZoneHVACPackagedTerminalHeatPump",
+            "ZoneHVACBaseboardConvectiveElectric", "ZoneHVACBaseboardConvectiveWater",
+            "ZoneHVACHighTemperatureRadiant", "ZoneHVACLowTempRadiantVarFlow",
+            "ZoneHVACEnergyRecoveryVentilator", "ZoneHVACUnitVentilator",
+            "ZoneHVACWindowAirConditioner", "ZoneVentilationDesignFlowRate",
+            "EvaporativeCoolerDirectResearchSpecial",
+            "HumidifierSteamElectric",
+            "PumpVariableSpeed", "HeaderedPumpsVariableSpeed", "HeaderedPumpsConstantSpeed", "PumpConstantSpeed",
+            "ChillerElectricEIR",
+            "DistrictCooling", "DistrictHeatingWater", "DistrictHeatingSteam",
+            "BoilerHotWater", "AirSourceHeatPump",
+            "CoolingTowerVariableSpeed", "CoolingTowerSingleSpeed", "CoolingTowerTwoSpeed",
+            "FluidCoolerSingleSpeed", "FluidCoolerTwoSpeed",
+            "EvaporativeFluidCoolerSingleSpeed", "EvaporativeFluidCoolerTwoSpeed",
+            "HeatExchangerFluidToFluid", "PlantComponentTemperatureSource",
+            "HeatPumpPlantLoopEIRCooling", "HeatPumpPlantLoopEIRHeating",
+            "HeatPumpWaterToWaterEquationFitCooling", "HeatPumpWaterToWaterEquationFitHeating",
+            "ThermalStorageIceDetailed"
+          ]
+        },
+        "name": { "type": "string" },
+        "schedule_name": { "type": "string", "description": "Availability schedule name. Resolves the AlwaysOn and AlwaysOff sentinels. Defaults to AlwaysOn." },
+        "preset": { "type": "string", "description": "Named preset resolved against the packaged data for this component type (for example a fan preset, a DX curve set, or a chiller library entry). Applies preset property values before any explicit values below." },
+        "role": { "type": "string", "enum": ["supplemental"], "description": "Sub-component role override within a unitary system: supplemental forces the coil to be the supplemental heater regardless of list position." },
+        "branch": { "type": "string", "description": "For DualDuct air loops: which branch to place the component on (Main, OA, or the bypass branch label)." },
+        "equipment_list_position": { "$ref": "#/$defs/equipment_list_position", "description": "Placement within the zone equipment list, when this component is zone equipment." }
+      },
+      "allOf": [
+        { "if": { "properties": { "obj_type": { "enum": ["FanConstantVolume", "FanOnOff", "FanVariableVolume"] } } }, "then": { "$ref": "#/$defs/fanBasicObj" } },
+        { "if": { "properties": { "obj_type": { "const": "FanSystemModel" } } }, "then": { "$ref": "#/$defs/fanSysObj" } },
+        { "if": { "properties": { "obj_type": { "const": "FanZoneExhaust" } } }, "then": { "$ref": "#/$defs/fanZoneExhaustObj" } },
+        { "if": { "properties": { "obj_type": { "const": "HeatExchangerAirToAirSensibleAndLatent" } } }, "then": { "$ref": "#/$defs/hxAirToAirObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilCoolingDXSingleSpeed" } } }, "then": { "$ref": "#/$defs/coilDXSSObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilCoolingDXVariableSpeed" } } }, "then": { "$ref": "#/$defs/coilDXVSObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilCoolingDXMultiSpeed" } } }, "then": { "$ref": "#/$defs/coilDXMultiSpeedObj" } },
+        { "if": { "properties": { "obj_type": { "enum": ["CoilCoolingDXTwoSpeed", "CoilCoolingDXTwoStageWithHumidityControlMode"] } } }, "then": { "$ref": "#/$defs/coilDXTwoStageObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilCoolingWater" } } }, "then": { "$ref": "#/$defs/coilCoolWaterObj" } },
+        { "if": { "properties": { "obj_type": { "enum": ["CoilCoolingWaterToAirHeatPump", "CoilCoolingWaterToAirHeatPumpVariableSpeed"] } } }, "then": { "$ref": "#/$defs/coilCoolWAHPObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilSystemCoolingWaterHXAssist" } } }, "then": { "$ref": "#/$defs/coilSysHXAssistObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilHeatingGas" } } }, "then": { "$ref": "#/$defs/coilGasObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilHeatingElectric" } } }, "then": { "$ref": "#/$defs/coilElectricObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilHeatingDesuperheater" } } }, "then": { "$ref": "#/$defs/coilDesuperheaterObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilHeatingDXSingleSpeed" } } }, "then": { "$ref": "#/$defs/coilHeatDXSSObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilHeatingDXMultiSpeed" } } }, "then": { "$ref": "#/$defs/coilHeatDXMultiSpeedObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilHeatingWater" } } }, "then": { "$ref": "#/$defs/coilHeatWaterObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoilHeatingWaterToAirHeatPump" } } }, "then": { "$ref": "#/$defs/coilHeatWAHPObj" } },
+        { "if": { "properties": { "obj_type": { "const": "AirLoopHVACUnitarySystem" } } }, "then": { "$ref": "#/$defs/unitarySystemObj" } },
+        { "if": { "properties": { "obj_type": { "const": "AirLoopHVACUnitaryHeatCoolVAVChangeoverBypass" } } }, "then": { "$ref": "#/$defs/unitaryCBObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACTerminalUnitVariableRefrigerantFlow" } } }, "then": { "$ref": "#/$defs/vrfTerminalObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACLowTemperatureRadiantElectric" } } }, "then": { "$ref": "#/$defs/ltreObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACFourPipeFanCoil" } } }, "then": { "$ref": "#/$defs/fpfcObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACUnitHeater" } } }, "then": { "$ref": "#/$defs/uhObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACWaterToAirHeatPump" } } }, "then": { "$ref": "#/$defs/zoneWAHPObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACPackagedTerminalAirConditioner" } } }, "then": { "$ref": "#/$defs/ptacObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACPackagedTerminalHeatPump" } } }, "then": { "$ref": "#/$defs/pthpObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACBaseboardConvectiveElectric" } } }, "then": { "$ref": "#/$defs/baseboardElectricObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACBaseboardConvectiveWater" } } }, "then": { "$ref": "#/$defs/baseboardWaterObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACHighTemperatureRadiant" } } }, "then": { "$ref": "#/$defs/highTempRadiantObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACLowTempRadiantVarFlow" } } }, "then": { "$ref": "#/$defs/lowTempRadiantObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACEnergyRecoveryVentilator" } } }, "then": { "$ref": "#/$defs/zoneErvObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACUnitVentilator" } } }, "then": { "$ref": "#/$defs/unitVentilatorObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACWindowAirConditioner" } } }, "then": { "$ref": "#/$defs/windowACObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneVentilationDesignFlowRate" } } }, "then": { "$ref": "#/$defs/zoneVentilationObj" } },
+        { "if": { "properties": { "obj_type": { "const": "EvaporativeCoolerDirectResearchSpecial" } } }, "then": { "$ref": "#/$defs/evapCoolerDirectObj" } },
+        { "if": { "properties": { "obj_type": { "const": "HumidifierSteamElectric" } } }, "then": { "$ref": "#/$defs/humidifierSteamObj" } },
+        { "if": { "properties": { "obj_type": { "const": "PumpVariableSpeed" } } }, "then": { "$ref": "#/$defs/pumpVSObj" } },
+        { "if": { "properties": { "obj_type": { "const": "PumpConstantSpeed" } } }, "then": { "$ref": "#/$defs/pumpCSObj" } },
+        { "if": { "properties": { "obj_type": { "enum": ["HeaderedPumpsVariableSpeed", "HeaderedPumpsConstantSpeed"] } } }, "then": { "$ref": "#/$defs/headeredPumpsObj" } },
+        { "if": { "properties": { "obj_type": { "const": "BoilerHotWater" } } }, "then": { "$ref": "#/$defs/boilerHWObj" } },
+        { "if": { "properties": { "obj_type": { "const": "AirSourceHeatPump" } } }, "then": { "$ref": "#/$defs/ashpObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ChillerElectricEIR" } } }, "then": { "$ref": "#/$defs/chillerEIRObj" } },
+        { "if": { "properties": { "obj_type": { "enum": ["DistrictCooling", "DistrictHeatingWater", "DistrictHeatingSteam"] } } }, "then": { "$ref": "#/$defs/districtObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoolingTowerVariableSpeed" } } }, "then": { "$ref": "#/$defs/coolingTowerVSObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoolingTowerSingleSpeed" } } }, "then": { "$ref": "#/$defs/coolingTowerSSObj" } },
+        { "if": { "properties": { "obj_type": { "const": "CoolingTowerTwoSpeed" } } }, "then": { "$ref": "#/$defs/coolingTowerTSObj" } },
+        { "if": { "properties": { "obj_type": { "const": "FluidCoolerSingleSpeed" } } }, "then": { "$ref": "#/$defs/fluidCoolerSSObj" } },
+        { "if": { "properties": { "obj_type": { "const": "FluidCoolerTwoSpeed" } } }, "then": { "$ref": "#/$defs/fluidCoolerTSObj" } },
+        { "if": { "properties": { "obj_type": { "enum": ["EvaporativeFluidCoolerSingleSpeed", "EvaporativeFluidCoolerTwoSpeed"] } } }, "then": { "$ref": "#/$defs/evapFluidCoolerObj" } },
+        { "if": { "properties": { "obj_type": { "const": "HeatExchangerFluidToFluid" } } }, "then": { "$ref": "#/$defs/hxFluidToFluidObj" } },
+        { "if": { "properties": { "obj_type": { "const": "PlantComponentTemperatureSource" } } }, "then": { "$ref": "#/$defs/plantTempSourceObj" } },
+        { "if": { "properties": { "obj_type": { "enum": ["HeatPumpPlantLoopEIRCooling", "HeatPumpPlantLoopEIRHeating"] } } }, "then": { "$ref": "#/$defs/hpPlantLoopEIRObj" } },
+        { "if": { "properties": { "obj_type": { "enum": ["HeatPumpWaterToWaterEquationFitCooling", "HeatPumpWaterToWaterEquationFitHeating"] } } }, "then": { "$ref": "#/$defs/hpWWEFObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ThermalStorageIceDetailed" } } }, "then": { "$ref": "#/$defs/iceStorageObj" } },
+        { "if": { "properties": { "obj_type": { "const": "ZoneHVACIdealLoadsAirSystem" } } }, "then": { "$ref": "#/$defs/idealAirLoadsObj" } }
+      ]
+    },
+
+    "fanBasicObj": {
+      "description": "FanConstantVolume, FanOnOff, FanVariableVolume.",
+      "allOf": [ { "$ref": "#/$defs/fanCommon" } ],
+      "properties": {
+        "curve_type": { "type": "string", "description": "FanVariableVolume only: fan curve coefficient type", "examples": ["VSD901", "VSDGoodSpReset", "VSDPerfSpReset", "AForBI", "FC", "FCVanes", "VaneAxVp", "VSD"] }
+      }
+    },
+
+    "fanSysObj": {
+      "description": "FanSystemModel.",
+      "allOf": [ { "$ref": "#/$defs/fanCommon" } ],
+      "properties": {
+        "speed_ctrl_method": { "type": "string", "enum": ["Continuous", "Discrete"] },
+        "speeds": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }, "description": "Discrete speeds: array of [flow_fraction, power_fraction] pairs" },
+        "curve_type": { "type": "string", "description": "Continuous speed control: fan power curve coefficient key" },
+        "power_bhp": { "type": "number", "description": "Design brake horsepower; used with max_airflow to compute pressure rise" },
+        "fan_power_w": { "type": "number", "description": "Design electric power consumption (W); takes priority over pressure-rise sizing" },
+        "w_per_cfm": { "type": "number", "description": "Design power per unit flow (W/CFM)" }
+      }
+    },
+
+    "fanZoneExhaustObj": {
+      "description": "FanZoneExhaust.",
+      "allOf": [ { "$ref": "#/$defs/fanCommon" } ],
+      "properties": {}
+    },
+
+    "hxAirToAirObj": {
+      "description": "HeatExchangerAirToAirSensibleAndLatent.",
+      "properties": {
+        "econ_lockout": { "type": "boolean", "description": "Lock out heat recovery during economizer operation" },
+        "sa_temp_ctrl": { "type": "boolean", "description": "Enable supply air outlet temperature control" },
+        "hx_type": { "type": "string", "enum": ["Plate", "Rotary"] },
+        "economizer_lockout": { "type": "boolean", "description": "Lock out heat recovery during economizer operation (delegated-creator form)" },
+        "frost_control_type": { "type": "string", "description": "Frost control type (delegated-creator form)" },
+        "threshold_temp_f": { "type": "number", "description": "Frost control threshold temperature (F)" },
+        "threshold_temp_c": { "type": "number" },
+        "initial_defrost_time_fraction": { "type": "number", "description": "Initial defrost time fraction" },
+        "defrost_time_increase_rate": { "type": "number", "description": "Rate of defrost time fraction increase" },
+        "nom_flow_cfm": { "type": "number", "description": "Nominal supply air flow rate (CFM)" },
+        "nom_flow_m3s": { "type": "number" },
+        "frost_ctrl_type": { "type": "string" },
+        "sens_eff_cool_100": { "type": "number" },
+        "sens_eff_heat_100": { "type": "number" },
+        "sens_eff_cool_75": { "type": "number" },
+        "sens_eff_heat_75": { "type": "number" },
+        "lat_eff_cool_100": { "type": "number" },
+        "lat_eff_heat_100": { "type": "number" },
+        "lat_eff_cool_75": { "type": "number" },
+        "lat_eff_heat_75": { "type": "number" },
+        "nom_elec_power_w": { "type": "number", "description": "Nominal electric power (W)" }
+      }
+    },
+
+    "coilDXSSObj": {
+      "description": "CoilCoolingDXSingleSpeed. Default performance curves are supplied by the SDK; cap_ft overrides the total cooling capacity as a function of temperature.",
+      "allOf": [ { "$ref": "#/$defs/dx_rated_performance" } ],
+      "properties": {
+        "sens_heat_ratio": { "type": "number", "description": "Rated sensible heat ratio. Default 0.69." },
+        "cap_ft": { "$ref": "#/$defs/curveRef", "description": "Total cooling capacity as a function of temperature curve override" },
+        "condenser_type": { "type": "string", "enum": ["AirCooled", "EvaporativelyCooled"], "description": "Condenser type" },
+        "evap_fan_power_w_per_m3s": { "type": "number", "description": "Rated evaporator fan power per volume flow rate (W/(m3/s))" },
+        "condensate_removal_time_s": { "type": "number", "description": "Nominal time for condensate removal to begin (s)" },
+        "moisture_evap_ratio": { "type": "number", "description": "Ratio of initial moisture evaporation rate and steady-state latent capacity" },
+        "max_cycling_rate": { "type": "number", "description": "Maximum cycling rate (cycles/hr)" },
+        "latent_capacity_time_constant_s": { "type": "number", "description": "Latent capacity time constant (s)" },
+        "crankcase_heater_capacity_w": { "type": "number", "description": "Crankcase heater capacity (W)" },
+        "crankcase_max_oat_f": { "type": "number", "description": "Maximum outdoor dry-bulb for crankcase heater operation (F)" },
+        "crankcase_max_oat_c": { "type": "number" },
+        "evap_condenser_effectiveness": { "type": "number", "description": "Evaporative condenser effectiveness" },
+        "basin_heater_setpoint_f": { "type": "number", "description": "Basin heater setpoint temperature (F)" },
+        "basin_heater_setpoint_c": { "type": "number" }
+      }
+    },
+
+    "coilDXVSObj": {
+      "description": "CoilCoolingDXVariableSpeed. Supply either preset (via the component preset key) or an explicit speeds array.",
+      "properties": {
+        "rated_total_capacity_btuh": { "type": "number", "description": "Nominal total cooling capacity (Btu/h); used for capacity_frac scaling" },
+        "rated_total_capacity_w": { "type": "number" },
+        "rated_airflow_cfm": { "type": "number", "description": "Nominal air flow rate (CFM); used for flow_frac scaling" },
+        "rated_airflow_m3s": { "type": "number" },
+        "nominal_speed_level": { "type": "integer", "description": "Speed level at which nominal performance is reported. Defaults to the last speed." },
+        "min_oadb_temp_f": { "type": "number", "description": "Minimum outdoor dry-bulb for compressor operation (F)" },
+        "min_oadb_temp_c": { "type": "number" },
+        "plf_curve": { "$ref": "#/$defs/curveRef", "description": "Part-load fraction curve" },
+        "basin_heater_capacity_w": { "type": "number", "description": "Basin heater capacity (W/K)" },
+        "basin_heater_setpoint_f": { "type": "number", "description": "Basin heater setpoint temperature (F)" },
+        "basin_heater_setpoint_c": { "type": "number" },
+        "speeds": {
+          "type": "array",
+          "description": "Per-speed definitions, lowest to highest.",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "required": ["cop", "curves"],
+            "properties": {
+              "cop": { "type": "number", "description": "Reference gross rated cooling COP" },
+              "capacity_frac": { "type": "number", "description": "Fraction of rated_total_capacity. Mutually exclusive with capacity_w." },
+              "capacity_w": { "type": "number", "description": "Absolute gross rated capacity (W); takes priority over capacity_frac" },
+              "flow_frac": { "type": "number", "description": "Fraction of rated_airflow. Mutually exclusive with flow_m3s." },
+              "flow_m3s": { "type": "number", "description": "Absolute rated air flow rate (m3/s); takes priority over flow_frac" },
+              "shr": { "type": "number", "description": "Reference gross rated sensible heat ratio" },
+              "curves": {
+                "type": "object",
+                "unevaluatedProperties": false,
+                "required": ["cap_ft", "cap_ff", "eir_ft", "eir_ff"],
+                "description": "Per-speed performance curves.",
+                "properties": {
+                  "cap_ft": { "$ref": "#/$defs/curveRef" },
+                  "cap_ff": { "$ref": "#/$defs/curveRef" },
+                  "eir_ft": { "$ref": "#/$defs/curveRef" },
+                  "eir_ff": { "$ref": "#/$defs/curveRef" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "coilDXMultiSpeedObj": {
+      "description": "CoilCoolingDXMultiSpeed. Stages ordered lowest to highest speed.",
+      "required": ["stages"],
+      "properties": {
+        "condenser_type": { "type": "string" },
+        "fuel_type": { "type": "string" },
+        "min_oadb_temp_f": { "type": "number" },
+        "min_oadb_temp_c": { "type": "number" },
+        "apply_plf_to_speeds_above_1": { "type": "boolean" },
+        "apply_latent_degradation_above_1": { "type": "boolean" },
+        "crankcase": { "$ref": "#/$defs/crankcase" },
+        "stages": {
+          "type": "array",
+          "description": "Per-stage data, lowest to highest speed.",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "properties": {
+              "capacity_w": { "type": "number" },
+              "shr": { "type": "number" },
+              "flow_m3s": { "type": "number" },
+              "cop": { "type": "number" },
+              "evap_fan_power_2017_w_per_m3s": { "type": "number" },
+              "evap_cond_effectiveness": { "type": "number" },
+              "condensate_begin_s": { "type": "number" },
+              "init_moisture_ratio": { "type": "number" },
+              "latent_time_constant_s": { "type": "number" },
+              "curves": {
+                "type": "object",
+                "unevaluatedProperties": false,
+                "description": "Per-stage performance curves.",
+                "properties": {
+                  "cap_ft": { "$ref": "#/$defs/curveRef" },
+                  "cap_ff": { "$ref": "#/$defs/curveRef" },
+                  "eir_ft": { "$ref": "#/$defs/curveRef" },
+                  "eir_ff": { "$ref": "#/$defs/curveRef" },
+                  "plf_fplr": { "$ref": "#/$defs/curveRef" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "coilHeatDXMultiSpeedObj": {
+      "description": "CoilHeatingDXMultiSpeed. Stages ordered lowest to highest speed.",
+      "required": ["stages"],
+      "properties": {
+        "fuel_type": { "type": "string" },
+        "min_oadb_temp_f": { "type": "number" },
+        "min_oadb_temp_c": { "type": "number" },
+        "apply_plf_to_speeds_above_1": { "type": "boolean" },
+        "crankcase": { "$ref": "#/$defs/crankcase" },
+        "defrost": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "description": "Defrost configuration.",
+          "properties": {
+            "max_oat_defrost_f": { "type": "number" },
+            "max_oat_defrost_c": { "type": "number" },
+            "strategy": { "type": "string" },
+            "control": { "type": "string" },
+            "time_period_fraction": { "type": "number" },
+            "eir_curve": { "$ref": "#/$defs/curveRef" }
+          }
+        },
+        "stages": {
+          "type": "array",
+          "description": "Per-stage data, lowest to highest speed.",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "properties": {
+              "capacity_w": { "type": "number" },
+              "cop": { "type": "number" },
+              "flow_m3s": { "type": "number" },
+              "supply_fan_power_2017_w_per_m3s": { "type": "number" },
+              "curves": {
+                "type": "object",
+                "unevaluatedProperties": false,
+                "description": "Per-stage performance curves.",
+                "properties": {
+                  "cap_ft": { "$ref": "#/$defs/curveRef" },
+                  "cap_ff": { "$ref": "#/$defs/curveRef" },
+                  "eir_ft": { "$ref": "#/$defs/curveRef" },
+                  "eir_ff": { "$ref": "#/$defs/curveRef" },
+                  "plf_fplr": { "$ref": "#/$defs/curveRef" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "coilDXTwoStageObj": {
+      "description": "CoilCoolingDXTwoSpeed and CoilCoolingDXTwoStageWithHumidityControlMode.",
+      "properties": {
+        "ls_rated_capacity_btuh": { "type": "number", "description": "Low-speed rated capacity (Btu/h)" },
+        "ls_rated_capacity_w": { "type": "number" },
+        "ls_rated_cop": { "type": "number" },
+        "ls_shr": { "type": "number" },
+        "hs_rated_capacity_btuh": { "type": "number", "description": "High-speed rated capacity (Btu/h)" },
+        "hs_rated_capacity_w": { "type": "number" },
+        "hs_rated_cop": { "type": "number" },
+        "hs_shr": { "type": "number" }
+      }
+    },
+
+    "coilCoolWaterObj": {
+      "description": "CoilCoolingWater.",
+      "allOf": [ { "$ref": "#/$defs/water_coil_design" } ],
+      "properties": {
+        "eahr_kgpkg": { "type": "number", "description": "Design inlet air humidity ratio (kg/kg)" },
+        "lahr_kgpkg": { "type": "number", "description": "Design outlet air humidity ratio (kg/kg)" },
+        "ctrl_var": { "type": "string", "enum": ["Temperature", "HumidityRatio", "TemperatureAndHumidityRatio"] }
+      }
+    },
+
+    "coilCoolWAHPObj": {
+      "description": "CoilCoolingWaterToAirHeatPump and CoilCoolingWaterToAirHeatPumpVariableSpeed.",
+      "required": ["plant_loop_name"],
+      "properties": {
+        "plant_loop_name": { "type": "string" },
+        "air_flow_cfm": { "type": "number" },
+        "air_flow_m3s": { "type": "number" },
+        "water_flow_gpm": { "type": "number" },
+        "water_flow_m3s": { "type": "number" },
+        "cooling_cap_total_btuh": { "type": "number" },
+        "cooling_cap_total_w": { "type": "number" },
+        "cooling_cap_sens_btuh": { "type": "number" },
+        "cooling_cap_sens_w": { "type": "number" },
+        "rated_cop": { "type": "number" },
+        "curve_type": { "type": "string", "description": "Default Default." }
+      }
+    },
+
+    "coilSysHXAssistObj": {
+      "description": "CoilSystemCoolingWaterHXAssist wraps a CoilCoolingWater inside an air-to-air heat exchanger.",
+      "required": ["coil_inputs"],
+      "properties": {
+        "coil_inputs": { "$ref": "#/$defs/coilCoolWaterObj", "description": "Inputs for the inner CoilCoolingWater" },
+        "hx_inputs": { "$ref": "#/$defs/hxAirToAirObj", "description": "Inputs for the heat exchanger" }
+      }
+    },
+
+    "coilGasObj": {
+      "description": "CoilHeatingGas.",
+      "properties": {
+        "eff_percent": { "type": "number", "description": "Gas burner efficiency (percent)" },
+        "plf_curve_coeffs": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4, "description": "Part-load fraction correlation cubic curve coefficients" },
+        "plf_curve_min_x": { "type": "number", "description": "Part-load fraction curve minimum x (default 0)" },
+        "plf_curve_max_x": { "type": "number", "description": "Part-load fraction curve maximum x (default 1)" }
+      }
+    },
+
+    "coilElectricObj": {
+      "description": "CoilHeatingElectric.",
+      "properties": {
+        "capacity_btuh": { "type": "number", "description": "Nominal capacity (Btu/h)" },
+        "capacity_w": { "type": "number" }
+      }
+    },
+
+    "coilDesuperheaterObj": {
+      "description": "CoilHeatingDesuperheater.",
+      "properties": {
+        "reclaim_eff": { "type": "number", "description": "Heat reclaim recovery efficiency (0-1)" }
+      }
+    },
+
+    "coilHeatDXSSObj": {
+      "description": "CoilHeatingDXSingleSpeed.",
+      "allOf": [ { "$ref": "#/$defs/dx_rated_performance" } ],
+      "properties": {
+        "min_oadb_compressor_f": { "type": "number", "description": "Minimum outdoor dry-bulb for compressor operation (F)" },
+        "min_oadb_compressor_c": { "type": "number" },
+        "max_oadb_defrost_f": { "type": "number", "description": "Maximum outdoor dry-bulb for defrost operation (F)" },
+        "max_oadb_defrost_c": { "type": "number" },
+        "crankcase_heater_capacity_w": { "type": "number", "description": "Crankcase heater capacity (W)" },
+        "reset_defrost_time": { "type": "boolean", "description": "Reset the defrost time period fraction to its default" }
+      }
+    },
+
+    "coilHeatWaterObj": {
+      "description": "CoilHeatingWater.",
+      "allOf": [ { "$ref": "#/$defs/water_coil_design" } ],
+      "properties": {
+        "capacity_btuh": { "type": "number", "description": "Nominal capacity (Btu/h)" },
+        "capacity_w": { "type": "number" },
+        "ua_ip": { "type": "number", "description": "U-factor times area (Btu/h-F)" },
+        "ua_si": { "type": "number", "description": "U-factor times area (W/K)" },
+        "controller_convergence_tolerance": { "type": "number", "description": "Water coil controller convergence tolerance" }
+      }
+    },
+
+    "coilHeatWAHPObj": {
+      "description": "CoilHeatingWaterToAirHeatPump.",
+      "required": ["plant_loop_name"],
+      "properties": {
+        "plant_loop_name": { "type": "string" },
+        "air_flow_cfm": { "type": "number" },
+        "air_flow_m3s": { "type": "number" },
+        "water_flow_gpm": { "type": "number" },
+        "water_flow_m3s": { "type": "number" },
+        "heating_cap_btuh": { "type": "number" },
+        "heating_cap_w": { "type": "number" },
+        "rated_cop": { "type": "number" },
+        "curve_type": { "type": "string", "description": "Default Default." }
+      }
+    },
+
+    "unitarySystemObj": {
+      "description": "AirLoopHVACUnitarySystem.",
+      "required": ["components"],
+      "properties": {
+        "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Sub-components: fan, cooling coil, heating coil, supplemental coil" },
+        "dehum_ctrl_type": { "type": "string", "enum": ["None", "Multimode", "CoolReheat"] },
+        "control_type": { "type": "string", "enum": ["Load", "Setpoint", "SingleZoneVAV"] },
+        "control_zone_name": { "type": "string" },
+        "fan_operation": { "$ref": "#/$defs/fan_operation" },
+        "latent_ctrl": { "type": "string", "enum": ["SensibleOnlyLoadControl", "LatentOnlyLoadControl", "LatentWithSensibleLoadControl", "LatentOrSensibleLoadControl"] },
+        "operating_airflows": { "$ref": "#/$defs/operating_airflows" },
+        "max_supply_air_temp_f": { "type": "number", "description": "Maximum supply air temperature (F)" },
+        "max_supply_air_temp_c": { "type": "number" },
+        "supplemental_max_oat_f": { "type": "number", "description": "Maximum outdoor dry-bulb temperature for supplemental heater operation (F)" },
+        "supplemental_max_oat_c": { "type": "number" }
+      }
+    },
+
+    "unitaryCBObj": {
+      "description": "AirLoopHVACUnitaryHeatCoolVAVChangeoverBypass.",
+      "required": ["components"],
+      "properties": {
+        "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" } },
+        "fan_operation": { "$ref": "#/$defs/fan_operation" },
+        "priority_ctrl_mode": { "type": "string", "enum": ["CoolingPriority", "HeatingPriority", "ZonePriority", "LoadPriority"] },
+        "dehum_ctrl_type": { "type": "string", "enum": ["None", "Multimode", "CoolReheat"] },
+        "operating_airflows": { "$ref": "#/$defs/operating_airflows" }
+      }
+    },
+
+    "vrfTerminalObj": {
+      "description": "ZoneHVACTerminalUnitVariableRefrigerantFlow.",
+      "required": ["cu_name"],
+      "properties": {
+        "cu_name": { "type": "string", "description": "Name of the variable refrigerant flow condensing unit" },
+        "sa_cfm": { "type": "number", "description": "Supply air flow rate (CFM)" },
+        "sa_m3s": { "type": "number" },
+        "cooling_cap_total_btuh": { "type": "number" },
+        "cooling_cap_total_w": { "type": "number" },
+        "cooling_cap_sens_btuh": { "type": "number" },
+        "cooling_cap_sens_w": { "type": "number" },
+        "heating_cap_btuh": { "type": "number" },
+        "heating_cap_w": { "type": "number" },
+        "motor_w": { "type": "number", "description": "Fan motor power (W)" },
+        "fan_type": { "type": "string", "enum": ["OnOff", "SystemModel"], "description": "Supply fan type" },
+        "fan_data": { "$ref": "#/$defs/fanSysObj", "description": "Additional fan property overrides" },
+        "fan_operation": { "$ref": "#/$defs/fan_operation" },
+        "availability_sch_name": { "type": "string", "description": "Terminal unit availability schedule name" },
+        "op_mode_sch_name": { "type": "string", "description": "Supply air fan operating mode schedule name" },
+        "no_ventilation": { "type": "boolean", "description": "Zero the outdoor air flow rates" },
+        "fan": { "$ref": "#/$defs/subComponent", "description": "Overrides for the terminal's built-in supply fan (name, pressure rise, efficiencies)" },
+        "heating_only": { "type": "boolean", "description": "Disable the cooling coil" },
+        "cooling_only": { "type": "boolean", "description": "Disable the heating coil" },
+        "zone_name": { "type": "string" }
+      }
+    },
+
+    "ltreObj": {
+      "description": "ZoneHVACLowTemperatureRadiantElectric.",
+      "required": ["surface_type"],
+      "properties": {
+        "surface_type": { "type": "string", "description": "Radiant surface type", "examples": ["Floors", "Ceilings", "FloorAndCeiling"] },
+        "temp_control_type": { "type": "string" },
+        "heat_throt_range_k": { "type": "number", "description": "Heating throttling range (K)" },
+        "heat_throt_range_r": { "type": "number", "description": "Heating throttling range (R)" },
+        "max_elec_w": { "type": "number", "description": "Maximum electrical power to the panel (W)" }
+      }
+    },
+
+    "fpfcObj": {
+      "description": "ZoneHVACFourPipeFanCoil. With components, the fan and coils are built from the sub-hashes; without them, typical sub-components are synthesized from the loop names.",
+      "properties": {
+        "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Fan, cooling coil, heating coil" },
+        "chilled_water_loop_name": { "type": "string", "description": "Chilled water loop for a synthesized cooling coil" },
+        "hot_water_loop_name": { "type": "string", "description": "Hot water loop for a synthesized heating coil; electric heat when absent" },
+        "htg_coil_lat_f": { "type": "number", "description": "Synthesized heating coil rated leaving air temperature (F)" },
+        "htg_coil_lat_c": { "type": "number" },
+        "ventilation": { "type": "boolean", "description": "Include outdoor air ventilation on the unit" },
+        "max_airflow_cfm": { "type": "number" },
+        "max_airflow_m3s": { "type": "number" },
+        "oa_airflow_cfm": { "type": "number" },
+        "oa_airflow_m3s": { "type": "number" },
+        "fan_operation": { "$ref": "#/$defs/fan_operation" },
+        "capacity_ctrl_method": { "type": "string", "examples": ["ConstantFanVariableFlow", "CyclingFan", "VariableFanVariableFlow", "VariableFanConstantFlow"] },
+        "no_ventilation": { "type": "boolean", "description": "Zero the maximum outdoor air flow rate (ventilation supplied by a separate system)" },
+        "schedule_name": { "type": "string" }
+      }
+    },
+
+    "uhObj": {
+      "description": "ZoneHVACUnitHeater. With components, the fan and coil are built from the sub-hashes; without them, typical sub-components are synthesized from heating_type.",
+      "properties": {
+        "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Fan and heating coil" },
+        "heating_type": { "type": "string", "description": "Synthesized heating coil fuel", "examples": ["NaturalGas", "Electricity", "DistrictHeating"] },
+        "hot_water_loop_name": { "type": "string", "description": "Hot water loop for a synthesized water heating coil" },
+        "fan_pressure_rise_inh2o": { "type": "number", "description": "Synthesized fan pressure rise (in. H2O)" },
+        "fan_pressure_rise_pa": { "type": "number" },
+        "max_airflow_cfm": { "type": "number" },
+        "max_airflow_m3s": { "type": "number" },
+        "control_type": { "type": "string", "description": "Fan control type", "examples": ["OnOff", "Continuous"] },
+        "schedule_name": { "type": "string" }
+      }
+    },
+
+    "zoneWAHPObj": {
+      "description": "ZoneHVACWaterToAirHeatPump. With components, the coils and fan are built from the sub-hashes; without them, typical sub-components are synthesized from the condenser loop.",
+      "properties": {
+        "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Cooling coil, heating coil, fan, and optional supplemental coil" },
+        "condenser_loop_name": { "type": "string", "description": "Condenser loop for synthesized water-to-air heat pump coils" },
+        "ventilation": { "type": "boolean", "description": "Include outdoor air ventilation on the unit" },
+        "no_ventilation": { "type": "boolean", "description": "Zero the outdoor air flow rates (ventilation supplied by a separate system)" },
+        "schedule_name": { "type": "string" },
+        "fan_operation": { "$ref": "#/$defs/fan_operation" },
+        "operating_airflows": { "$ref": "#/$defs/operating_airflows" }
+      }
+    },
+
+    "ptacObj": {
+      "description": "ZoneHVACPackagedTerminalAirConditioner. Sub-components are either an explicit components list or synthesized from the type selections.",
+      "properties": {
+        "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Explicit sub-components: fan, cooling coil, heating coil" },
+        "heating_type": { "type": "string", "description": "Heating coil fuel (synthesized form)", "examples": ["NaturalGas", "Electricity", "Water"] },
+        "hot_water_loop_name": { "type": "string", "description": "Hot water loop when heating_type is Water" },
+        "cooling_type": { "type": "string", "examples": ["Single Speed DX AC", "Two Speed DX AC"] },
+        "fan_type": { "type": "string", "examples": ["Cycling", "ConstantVolume"] },
+        "fan_placement": { "type": "string", "enum": ["DrawThrough", "BlowThrough"] },
+        "op_mode_sch_name": { "type": "string", "description": "Supply air fan operating mode schedule name" },
+        "no_ventilation": { "type": "boolean", "description": "Zero the outdoor air flow rates (ventilation supplied by a separate system)" },
+        "ventilation": { "type": "boolean", "description": "Include outdoor air ventilation on the unit" }
+      }
+    },
+
+    "pthpObj": {
+      "description": "ZoneHVACPackagedTerminalHeatPump. Sub-components are either an explicit components list or synthesized.",
+      "properties": {
+        "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Explicit sub-components: fan, cooling coil, heating coil, supplemental heating coil" },
+        "fan_type": { "type": "string", "examples": ["Cycling", "ConstantVolume"] },
+        "fan_placement": { "type": "string", "enum": ["DrawThrough", "BlowThrough"] },
+        "op_mode_sch_name": { "type": "string", "description": "Supply air fan operating mode schedule name" },
+        "no_ventilation": { "type": "boolean", "description": "Zero the outdoor air flow rates (ventilation supplied by a separate system)" },
+        "ventilation": { "type": "boolean", "description": "Include outdoor air ventilation on the unit" }
+      }
+    },
+
+    "baseboardElectricObj": {
+      "description": "ZoneHVACBaseboardConvectiveElectric.",
+      "properties": {}
+    },
+
+    "baseboardWaterObj": {
+      "description": "ZoneHVACBaseboardConvectiveWater with a hot water baseboard coil.",
+      "required": ["hot_water_loop_name"],
+      "properties": {
+        "hot_water_loop_name": { "type": "string" },
+        "coil_name": { "type": "string", "description": "Name for the hot water baseboard heating coil" }
+      }
+    },
+
+    "highTempRadiantObj": {
+      "description": "ZoneHVACHighTemperatureRadiant.",
+      "properties": {
+        "heating_type": { "type": "string", "examples": ["NaturalGas", "Electricity"] },
+        "combustion_efficiency": { "type": "number", "description": "Combustion efficiency (0-1)" },
+        "control_type": { "type": "string", "description": "Temperature control type", "examples": ["MeanAirTemperature", "OperativeTemperature"] },
+        "radiant_fraction": { "type": "number", "description": "Fraction of input converted to radiant energy (0-1)" },
+        "heating_setpoint_sch_name": { "type": "string", "description": "Heating setpoint temperature schedule name" },
+        "throttling_range_k": { "type": "number", "description": "Heating throttling range (K)" },
+        "throttling_range_r": { "type": "number" }
+      }
+    },
+
+    "lowTempRadiantObj": {
+      "description": "ZoneHVACLowTempRadiantVarFlow: slab internal-source constructions, control schedules, and control-strategy logic. Two-pipe changeover and plant supply water temperature control are declared on the plant loop entries, not here.",
+      "required": ["hot_water_loop_name", "chilled_water_loop_name"],
+      "properties": {
+        "hot_water_loop_name": { "type": "string" },
+        "chilled_water_loop_name": { "type": "string" },
+        "control_zone_names": { "type": "array", "items": { "type": "string" }, "description": "All zones in the radiant group, used by zone-demand control strategies" },
+        "radiant_type": { "type": "string", "enum": ["floor", "ceiling"] },
+        "heating_coil_name": { "type": "string", "description": "Radiant heating coil name" },
+        "cooling_coil_name": { "type": "string", "description": "Radiant cooling coil name" },
+        "heating_control_temp_sch_name": { "type": "string", "description": "Heating control temperature schedule name" },
+        "cooling_control_temp_sch_name": { "type": "string", "description": "Cooling control temperature schedule name" },
+        "schedule_name": { "type": "string", "description": "Radiant loop availability schedule name" },
+        "throttling_range_r": { "type": "number", "description": "Heating/cooling control throttling range (R)" },
+        "throttling_range_k": { "type": "number" },
+        "tubing_inside_diameter_m": { "type": "number", "description": "Hydronic tubing inside diameter (m)" },
+        "number_of_circuits": { "type": "string", "description": "Number of circuits method", "examples": ["CalculateFromCircuitLength", "OneCircuit"] },
+        "circuit_length_m": { "type": "number", "description": "Hydronic circuit length (m)" },
+        "temperature_control_type": { "type": "string", "examples": ["SurfaceFaceTemperature", "MeanAirTemperature"] },
+        "setpoint_control_type": { "type": "string", "enum": ["ZeroFlowPower", "HalfFlowPower"] },
+        "radiant_temperature_control_type": { "type": "string", "examples": ["SurfaceFaceTemperature", "MeanAirTemperature", "OperativeTemperature"] },
+        "radiant_setpoint_control_type": { "type": "string", "enum": ["ZeroFlowPower", "HalfFlowPower"] },
+        "include_carpet": { "type": "boolean" },
+        "carpet_thickness_in": { "type": "number" },
+        "carpet_thickness_mm": { "type": "number" },
+        "control_strategy": { "type": "string", "enum": ["proportional_control", "oa_based_control", "constant_control", "none"] },
+        "use_zone_occupancy_for_control": { "type": "boolean" },
+        "occupied_percentage_threshold": { "type": "number" },
+        "model_occ_hr_start": { "type": "number" },
+        "model_occ_hr_end": { "type": "number" },
+        "proportional_gain": { "type": "number" },
+        "switch_over_time_hr": { "type": "number", "description": "Heating/cooling changeover time limit (hours)" },
+        "slab_setpoint_reset": { "$ref": "#/$defs/oat_reset", "description": "Slab setpoint reset as a function of outdoor air temperature" },
+        "radiant_availability_type": { "type": "string", "enum": ["all_day", "precool", "afternoon_shutoff", "occupancy"] },
+        "radiant_lockout": { "type": "boolean" },
+        "radiant_lockout_start_time": { "type": "number" },
+        "radiant_lockout_end_time": { "type": "number" }
+      }
+    },
+
+    "zoneErvObj": {
+      "description": "ZoneHVACEnergyRecoveryVentilator with supply and exhaust fans and a heat exchanger.",
+      "properties": {
+        "min_oa_flow_m3_per_s_per_m2": { "type": "number", "description": "Ventilation rate per floor area (m3/s-m2)" },
+        "erv_preset": { "type": "string", "examples": ["residential"], "description": "Preset fan and heat exchanger configuration" },
+        "hx": { "$ref": "#/$defs/subComponent", "description": "Heat exchanger sub-hash" },
+        "supply_fan": { "$ref": "#/$defs/subComponent", "description": "Supply fan sub-hash" },
+        "exhaust_fan": { "$ref": "#/$defs/subComponent", "description": "Exhaust fan sub-hash" },
+        "controller_name": { "type": "string", "description": "ERV controller name" },
+        "high_humidity_control": { "type": "boolean", "description": "Control high indoor humidity based on outdoor humidity ratio" },
+        "supply_flow_cfm": { "type": "number", "description": "Supply air flow rate (CFM)" },
+        "supply_flow_m3s": { "type": "number" },
+        "exhaust_flow_cfm": { "type": "number", "description": "Exhaust air flow rate (CFM)" },
+        "exhaust_flow_m3s": { "type": "number" },
+        "vent_per_area_m3s_m2": { "type": "number", "description": "Ventilation rate per unit floor area (m3/s-m2)" },
+        "vent_per_occupant_m3s": { "type": "number", "description": "Ventilation rate per occupant (m3/s)" }
+      }
+    },
+
+    "unitVentilatorObj": {
+      "description": "ZoneHVACUnitVentilator.",
+      "properties": {
+        "min_oa_flow_m3_per_s_per_m2": { "type": "number", "description": "Ventilation rate per floor area (m3/s-m2)" },
+        "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Supply fan sub-hash (first component)" },
+        "max_supply_airflow_cfm": { "type": "number", "description": "Maximum supply air flow rate (CFM)" },
+        "max_supply_airflow_m3s": { "type": "number" }
+      }
+    },
+
+    "windowACObj": {
+      "description": "ZoneHVACWindowAirConditioner.",
+      "properties": {
+        "eer": { "type": "number", "description": "Energy efficiency ratio (Btu/W-h)" },
+        "shr": { "type": "number", "description": "Rated sensible heat ratio (0-1)" }
+      }
+    },
+
+    "zoneVentilationObj": {
+      "description": "ZoneVentilationDesignFlowRate.",
+      "required": ["ventilation_type"],
+      "properties": {
+        "ventilation_type": { "type": "string", "enum": ["Exhaust", "Natural", "Intake"] },
+        "flow_rate": { "type": "number", "description": "Flow rate: per zone floor area (m3/s-m2) for Exhaust and Intake, absolute (m3/s) for Natural" },
+        "availability_schedule_name": { "type": "string" }
+      }
+    },
+
+    "evapCoolerDirectObj": {
+      "description": "EvaporativeCoolerDirectResearchSpecial.",
+      "properties": {
+        "design_effectiveness": { "type": "number", "description": "Cooler design effectiveness (0-1)", "default": 0.90 },
+        "pump_power_sizing_factor": { "type": "number", "description": "Recirculating water pump sizing factor (W-s/m3)", "default": 90 },
+        "water_pump_power_sizing_factor": { "type": "number", "description": "Recirculating water pump power sizing factor (W-s/m3)" },
+        "water_pump_power_w": { "type": "number", "description": "Recirculating water pump power consumption (W)" },
+        "autosize_primary_air": { "type": "boolean", "description": "Autosize the primary air design flow rate" },
+        "autosize_water_pump": { "type": "boolean", "description": "Autosize the recirculating water pump power consumption" },
+        "blowdown_concentration_ratio": { "type": "number", "default": 3.0 }
+      }
+    },
+
+    "humidifierSteamObj": {
+      "description": "HumidifierSteamElectric. Capacity and power autosize when not given.",
+      "properties": {
+        "rated_capacity_m3s": { "type": "number", "description": "Rated water capacity (m3/s)" },
+        "rated_power_w": { "type": "number", "description": "Rated power (W)" }
+      }
+    },
+
+    "pumpVSObj": {
+      "description": "PumpVariableSpeed.",
+      "properties": {
+        "pump_head_fth2o": { "type": "number", "description": "Rated pump head (ft H2O)" },
+        "pump_head_pa": { "type": "number" },
+        "pump_flow_gpm": { "type": "number" },
+        "pump_flow_m3s": { "type": "number" },
+        "pump_power_w": { "type": "number" },
+        "motor_efficiency": { "type": "number", "description": "Motor efficiency (0-1)" },
+        "pump_ctrl_type": { "type": "string", "examples": ["Intermittent", "Continuous"] },
+        "vsd_control_type": { "type": "string", "description": "Selects part-load ratio curve coefficients when plr_coeffs is absent" },
+        "plr_coeffs": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4, "description": "Part-load ratio curve coefficients" },
+        "frac_motor_to_fluid": { "type": "number", "description": "Fraction of motor inefficiencies to the fluid stream (0-1)" }
+      }
+    },
+
+    "pumpCSObj": {
+      "description": "PumpConstantSpeed.",
+      "properties": {
+        "w_per_gpm": { "type": "number", "description": "Design power per unit flow (W/gpm)" },
+        "des_power_siz_method": { "type": "string" },
+        "pump_ctrl_type": { "type": "string" },
+        "pump_head_fth2o": { "type": "number" },
+        "pump_head_pa": { "type": "number" },
+        "pump_flow_gpm": { "type": "number" },
+        "pump_flow_m3s": { "type": "number" },
+        "pump_power_w": { "type": "number" }
+      }
+    },
+
+    "headeredPumpsObj": {
+      "description": "HeaderedPumpsVariableSpeed and HeaderedPumpsConstantSpeed.",
+      "properties": {
+        "num_pumps": { "type": "integer", "description": "Number of pumps in the bank" },
+        "pump_head_fth2o": { "type": "number" },
+        "pump_head_pa": { "type": "number" },
+        "pump_flow_gpm": { "type": "number" },
+        "pump_flow_m3s": { "type": "number" },
+        "motor_efficiency": { "type": "number" },
+        "pump_ctrl_type": { "type": "string", "examples": ["Intermittent", "Continuous"] }
+      }
+    },
+
+    "boilerHWObj": {
+      "description": "BoilerHotWater.",
+      "properties": {
+        "type": { "type": "string", "examples": ["HotWater", "Condensing"], "description": "When Condensing, the efficiency curve uses the entering boiler temperature." },
+        "fuel_type": { "type": "string", "description": "Boiler fuel type", "examples": ["NaturalGas", "Electricity", "Propane", "FuelOilNo2"] },
+        "draft_type": { "type": "string", "description": "Boiler draft type", "examples": ["Natural", "Mechanical", "Condensing"] },
+        "eff": { "type": "number", "description": "Nominal thermal efficiency (0-1)" },
+        "eff_curve_temp_eval_var": { "type": "string", "description": "Efficiency curve temperature evaluation variable", "examples": ["LeavingBoiler", "EnteringBoiler"] },
+        "flow_mode": { "type": "string", "description": "Boiler flow mode", "examples": ["LeavingSetpointModulated", "ConstantFlow", "NotModulated"] },
+        "leaving_temp_design_f": { "type": "number", "description": "Design leaving water temperature (F)" },
+        "leaving_temp_design_c": { "type": "number" },
+        "outlet_temp_limit_f": { "type": "number", "description": "Water outlet upper temperature limit (F)" },
+        "outlet_temp_limit_c": { "type": "number" },
+        "min_plr": { "type": "number", "description": "Minimum part-load ratio" },
+        "max_plr": { "type": "number", "description": "Maximum part-load ratio" },
+        "opt_plr": { "type": "number", "description": "Optimum part-load ratio" },
+        "sizing_factor": { "type": "number", "description": "Sizing factor" },
+        "capacity_btuh": { "type": "number", "description": "Nominal capacity (Btu/h)" },
+        "capacity_w": { "type": "number" },
+        "water_flow_gpm": { "type": "number", "description": "Design water flow rate (GPM)" },
+        "water_flow_m3s": { "type": "number" }
+      }
+    },
+
+    "ashpObj": {
+      "description": "AirSourceHeatPump, a plant-loop heating source with a coefficient of performance. Placed on the loop named by plant_loop_name, or on the enclosing plant loop when absent.",
+      "properties": {
+        "plant_loop_name": { "type": "string", "description": "Loop to place the heat pump on. Defaults to the enclosing plant loop." },
+        "cop": { "type": "number", "description": "Heating coefficient of performance" }
+      }
+    },
+
+    "districtObj": {
+      "description": "DistrictCooling, DistrictHeatingWater, and DistrictHeatingSteam.",
+      "properties": {
+        "capacity_btuh": { "type": "number", "description": "Nominal capacity (Btu/h); autosized when absent" },
+        "capacity_w": { "type": "number" },
+        "autosize": { "type": "boolean", "description": "Explicitly autosize the nominal capacity" }
+      }
+    },
+
+    "chillerEIRObj": {
+      "description": "ChillerElectricEIR. Placed on the chilled water loop supply. When condenser_type is WaterCooled, condenser_loop_name names the condenser loop the chiller rejects heat to (that loop must be defined earlier in the spec).",
+      "properties": {
+        "condenser_type": { "type": "string", "enum": ["AirCooled", "WaterCooled", "EvaporativelyCooled"], "description": "Defaults to WaterCooled when condenser_loop_name is given, otherwise AirCooled." },
+        "condenser_loop_name": { "type": "string", "description": "Condenser loop the chiller rejects heat to (WaterCooled)" },
+        "cop": { "type": "number", "description": "Reference coefficient of performance" },
+        "capacity_btuh": { "type": "number", "description": "Reference capacity (Btu/h)" },
+        "capacity_w": { "type": "number" },
+        "leaving_chw_temp_f": { "type": "number", "description": "Reference leaving chilled water temperature (F)" },
+        "leaving_chw_temp_c": { "type": "number" },
+        "entering_cw_temp_f": { "type": "number", "description": "Reference entering condenser fluid temperature (F)" },
+        "entering_cw_temp_c": { "type": "number" },
+        "chw_flow_gpm": { "type": "number", "description": "Reference chilled water flow rate (GPM)" },
+        "chw_flow_m3s": { "type": "number" },
+        "cw_flow_gpm": { "type": "number", "description": "Reference condenser fluid flow rate (GPM)" },
+        "cw_flow_m3s": { "type": "number" },
+        "leaving_chw_lower_limit_f": { "type": "number", "description": "Leaving chilled water lower temperature limit (F)" },
+        "leaving_chw_lower_limit_c": { "type": "number" },
+        "min_plr": { "type": "number", "description": "Minimum part-load ratio" },
+        "max_plr": { "type": "number", "description": "Maximum part-load ratio" },
+        "opt_plr": { "type": "number", "description": "Optimum part-load ratio" },
+        "min_unloading_ratio": { "type": "number", "description": "Minimum unloading ratio" },
+        "flow_mode": { "type": "string", "description": "Chiller flow mode", "examples": ["ConstantFlow", "LeavingSetpointModulated", "NotModulated"] },
+        "sizing_factor": { "type": "number", "description": "Sizing factor" },
+        "curve_type": { "type": "string", "description": "Performance curve-set key" }
+      }
+    },
+
+    "coolingTowerVSObj": {
+      "description": "CoolingTowerVariableSpeed.",
+      "properties": {
+        "water_flow_gpm": { "type": "number" },
+        "water_flow_m3s": { "type": "number" },
+        "air_flow_cfm": { "type": "number" },
+        "air_flow_m3s": { "type": "number" },
+        "fan_power_w": { "type": "number" }
+      }
+    },
+
+    "coolingTowerSSObj": {
+      "description": "CoolingTowerSingleSpeed.",
+      "properties": {
+        "capacity_control": { "type": "string", "examples": ["FanCycling", "FluidBypass"] },
+        "cell_control": { "type": "string", "examples": ["MinimalCell", "MaximalCell"] },
+        "sizing_factor": { "type": "number" },
+        "num_cells": { "type": "integer" }
+      }
+    },
+
+    "coolingTowerTSObj": {
+      "description": "CoolingTowerTwoSpeed.",
+      "properties": {
+        "sizing_factor": { "type": "number" },
+        "num_cells": { "type": "integer" }
+      }
+    },
+
+    "fluidCoolerSSObj": {
+      "description": "FluidCoolerSingleSpeed.",
+      "properties": {
+        "performance_input_method": { "type": "string", "examples": ["UFactorTimesAreaAndDesignWaterFlowRate", "NominalCapacity"] },
+        "design_water_flow_m3s": { "type": "number" },
+        "design_water_flow_gpm": { "type": "number" },
+        "design_air_flow_m3s": { "type": "number" },
+        "design_air_flow_cfm": { "type": "number" }
+      }
+    },
+
+    "fluidCoolerTSObj": {
+      "description": "FluidCoolerTwoSpeed.",
+      "properties": {
+        "performance_input_method": { "type": "string" },
+        "design_water_flow_m3s": { "type": "number" },
+        "design_water_flow_gpm": { "type": "number" },
+        "design_high_fan_speed_air_flow_m3s": { "type": "number" },
+        "design_high_fan_speed_air_flow_cfm": { "type": "number" },
+        "design_low_fan_speed_air_flow_m3s": { "type": "number" },
+        "design_low_fan_speed_air_flow_cfm": { "type": "number" }
+      }
+    },
+
+    "evapFluidCoolerObj": {
+      "description": "EvaporativeFluidCoolerSingleSpeed and EvaporativeFluidCoolerTwoSpeed.",
+      "properties": {
+        "performance_input_method": { "type": "string", "examples": ["UFactorTimesAreaAndDesignWaterFlowRate", "StandardDesignCapacity"] },
+        "spray_water_flow_m3s": { "type": "number", "description": "Design spray water flow rate (m3/s)" },
+        "spray_water_flow_gpm": { "type": "number" }
+      }
+    },
+
+    "hxFluidToFluidObj": {
+      "description": "HeatExchangerFluidToFluid.",
+      "properties": {
+        "hx_mode_type": { "type": "string", "enum": ["CrossFlowBothUnMixed", "CrossFlowBothMixed", "CrossFlowSupplyMixedDemandUnMixed", "CrossFlowSupplyUnMixedDemandMixed", "ParallelFlow", "CounterFlow", "Ideal"] },
+        "control_type": { "type": "string", "enum": ["UncontrolledOn", "OperationSchemeModulated", "OperationSchemeOnOff", "HeatingSetpointModulated", "HeatingSetpointOnOff", "CoolingSetpointModulated", "CoolingSetpointOnOff", "DualDeadbandSetpointModulated", "DualDeadbandSetpointOnOff", "CoolingDifferentialOnOff", "CoolingSetpointOnOffWithComponentOverride"] },
+        "hx_end_use": { "type": "string", "enum": ["FreeCooling", "HeatRecovery", "HeatRejection", "HeatRecoveryForCooling", "HeatRecoveryForHeating", "LoopToLoop"] },
+        "component_override_temp_mode": { "type": "string", "enum": ["WetBulbTemperature", "DryBulbTemperature", "Loop"] }
+      }
+    },
+
+    "hpPlantLoopEIRObj": {
+      "description": "HeatPumpPlantLoopEIRCooling and HeatPumpPlantLoopEIRHeating.",
+      "required": ["condenser_type"],
+      "properties": {
+        "condenser_type": { "type": "string", "enum": ["AirSource", "WaterSource"] },
+        "cop": { "type": "number" },
+        "capacity_btuh": { "type": "number", "description": "Reference capacity (Btu/h)" },
+        "capacity_w": { "type": "number" },
+        "sizing_factor": { "type": "number" },
+        "source_flow_m3s": { "type": "number" },
+        "source_flow_gpm": { "type": "number" },
+        "load_flow_m3s": { "type": "number" },
+        "load_flow_gpm": { "type": "number" },
+        "curve_type": { "type": "string" }
+      }
+    },
+
+    "hpWWEFObj": {
+      "description": "HeatPumpWaterToWaterEquationFitCooling and HeatPumpWaterToWaterEquationFitHeating.",
+      "properties": {
+        "ref_load_flow_gpm": { "type": "number", "description": "Reference load side flow rate (GPM)" },
+        "ref_load_flow_m3s": { "type": "number" },
+        "ref_src_flow_gpm": { "type": "number", "description": "Reference source side flow rate (GPM)" },
+        "ref_src_flow_m3s": { "type": "number" },
+        "ref_cap_btuh": { "type": "number", "description": "Reference capacity (Btu/h)" },
+        "ref_cap_w": { "type": "number" },
+        "ref_power_w": { "type": "number", "description": "Reference power consumption (W)" },
+        "curve_type": { "type": "string" }
+      }
+    },
+
+    "plantTempSourceObj": {
+      "description": "PlantComponentTemperatureSource, a constant or scheduled temperature source (for example mimicking a ground heat exchanger). On a plant loop with ground_hx_loop true, its source schedule is driven from the loop inlet temperature using the loop ems_params.",
+      "properties": {
+        "temp_spec_type": { "type": "string", "enum": ["Constant", "Scheduled"] },
+        "source_temp_f": { "type": "number", "description": "Constant source temperature (F)" },
+        "source_temp_c": { "type": "number" },
+        "source_temp_schedule_name": { "type": "string", "description": "Source temperature schedule name (created as a constant schedule if missing)" }
+      }
+    },
+
+    "iceStorageObj": {
+      "description": "ThermalStorageIceDetailed.",
+      "properties": {
+        "capacity_gj": { "type": "number", "description": "Storage capacity (GJ)" },
+        "capacity_mbtu": { "type": "number", "description": "Storage capacity (MBtu)" }
+      }
+    },
+
+    "idealAirLoadsObj": {
+      "description": "ZoneHVACIdealLoadsAirSystem.",
+      "properties": {
+        "max_heat_f": { "type": "number", "description": "Maximum heating supply air temperature (F)" },
+        "max_heat_c": { "type": "number" },
+        "min_cool_f": { "type": "number", "description": "Minimum cooling supply air temperature (F)" },
+        "min_cool_c": { "type": "number" },
+        "hvac_op_sch_name": { "type": "string", "description": "Availability schedule name" },
+        "heat_avail_sch_name": { "type": "string", "description": "Heating availability schedule name" },
+        "cool_avail_sch_name": { "type": "string", "description": "Cooling availability schedule name" },
+        "heat_limit_type": { "type": "string" },
+        "cool_limit_type": { "type": "string" },
+        "dehum_ctrl_type": { "type": "string" },
+        "dehumid_limit_type": { "type": "string", "description": "Dehumidification control type" },
+        "design_oa_name": { "type": "string", "description": "Design specification outdoor air object name to reference" },
+        "cool_sensible_heat_ratio": { "type": "number", "description": "Cooling sensible heat ratio (with ConstantSensibleHeatRatio dehumidification)" },
+        "humid_ctrl_type": { "type": "string" },
+        "include_outdoor_air": { "type": "boolean", "description": "Use the zone design specification outdoor air object" },
+        "enable_dcv": { "type": "boolean", "description": "Enable demand controlled ventilation" },
+        "dcv_type": { "type": "string" },
+        "econo_ctrl_mthd": { "type": "string", "description": "Outdoor air economizer type" },
+        "heat_recovery_type": { "type": "string" },
+        "heat_recovery_sensible_eff": { "type": "number", "description": "Sensible heat recovery effectiveness (0-1)" },
+        "heat_recovery_latent_eff": { "type": "number", "description": "Latent heat recovery effectiveness (0-1)" }
+      }
+    },
+
+    "setpointManager": {
+      "type": "object",
+      "required": ["spm_type"],
+      "unevaluatedProperties": false,
+      "description": "Setpoint manager definition used in air loop controls, plant loop controls, and inline with air and outdoor air component lists.",
+      "properties": {
+        "spm_type": {
+          "type": "string",
+          "enum": [
+            "Scheduled", "ScheduledDual",
+            "SingleZoneReheat", "SingleZoneCooling", "SingleZoneHeating",
+            "MixedAir", "Warmest", "WarmestTemperatureFlow",
+            "OutdoorAirReset",
+            "SingleZoneHumidityMaximum", "SingleZoneHumidityMinimum",
+            "MultiZoneHumidityMaximum", "MultiZoneHeatingAverage",
+            "FollowOutdoorAir", "FollowSystemNode",
+            "OAPretreat"
+          ]
+        },
+        "spm_node": {
+          "type": "string",
+          "description": "Placement override. Supply = supply outlet node; Mixed = mixed air node; any other string is matched first against a component name on the loop, then against a component IDD type, and the manager is placed at that component's outlet. When omitted, the manager is placed at its natural default node (mixed air node for MixedAir, supply outlet otherwise)."
+        },
+        "spm_sch_name": { "type": "string", "description": "Existing schedule name for scheduled managers; takes precedence over constant setpoints." }
+      },
+      "allOf": [
+        { "if": { "properties": { "spm_type": { "const": "Scheduled" } } }, "then": { "$ref": "#/$defs/spmScheduledObj" } },
+        { "if": { "properties": { "spm_type": { "const": "ScheduledDual" } } }, "then": { "$ref": "#/$defs/spmScheduledDualObj" } },
+        { "if": { "properties": { "spm_type": { "const": "Warmest" } } }, "then": { "$ref": "#/$defs/spmWarmestObj" } },
+        { "if": { "properties": { "spm_type": { "const": "WarmestTemperatureFlow" } } }, "then": { "$ref": "#/$defs/spmWarmestTFObj" } },
+        { "if": { "properties": { "spm_type": { "const": "SingleZoneReheat" } } }, "then": { "$ref": "#/$defs/spmSZRHObj" } },
+        { "if": { "properties": { "spm_type": { "const": "SingleZoneCooling" } } }, "then": { "$ref": "#/$defs/spmSZCObj" } },
+        { "if": { "properties": { "spm_type": { "const": "SingleZoneHeating" } } }, "then": { "$ref": "#/$defs/spmSZHObj" } },
+        { "if": { "properties": { "spm_type": { "const": "MixedAir" } } }, "then": { "$ref": "#/$defs/spmMixedAirObj" } },
+        { "if": { "properties": { "spm_type": { "const": "OutdoorAirReset" } } }, "then": { "$ref": "#/$defs/spmOARObj" } },
+        { "if": { "properties": { "spm_type": { "const": "SingleZoneHumidityMaximum" } } }, "then": { "$ref": "#/$defs/spmSZHumObj" } },
+        { "if": { "properties": { "spm_type": { "const": "SingleZoneHumidityMinimum" } } }, "then": { "$ref": "#/$defs/spmSZHumMinObj" } },
+        { "if": { "properties": { "spm_type": { "const": "MultiZoneHumidityMaximum" } } }, "then": { "$ref": "#/$defs/spmMZHumMaxObj" } },
+        { "if": { "properties": { "spm_type": { "const": "MultiZoneHeatingAverage" } } }, "then": { "$ref": "#/$defs/spmMZHeatAvgObj" } },
+        { "if": { "properties": { "spm_type": { "const": "FollowOutdoorAir" } } }, "then": { "$ref": "#/$defs/spmFollowOAObj" } },
+        { "if": { "properties": { "spm_type": { "const": "FollowSystemNode" } } }, "then": { "$ref": "#/$defs/spmFollowSysNodeObj" } },
+        { "if": { "properties": { "spm_type": { "const": "OAPretreat" } } }, "then": { "$ref": "#/$defs/spmOAPretreatObj" } }
+      ]
+    },
+
+    "spmScheduledObj": {
+      "description": "SetpointManagerScheduled. Requires exactly one of spm_temp or spm_hr.",
+      "properties": {
+        "spm_temp_f": { "type": "number", "description": "Constant temperature setpoint (F). Creates a temperature control variable." },
+        "spm_temp_c": { "type": "number" },
+        "spm_hr_kgpkg": { "type": "number", "description": "Constant humidity ratio setpoint (kg/kg)" },
+        "ctrl_var": { "type": "string", "description": "Control variable for humidity ratio setpoints. Defaults to MaximumHumidityRatio.", "examples": ["MaximumHumidityRatio", "MinimumHumidityRatio", "HumidityRatio"] }
+      }
+    },
+
+    "spmScheduledDualObj": {
+      "description": "SetpointManagerScheduledDualSetpoint.",
+      "properties": {
+        "spm_lo_temp_f": { "type": "number", "description": "Low setpoint temperature (F)" },
+        "spm_lo_temp_c": { "type": "number" },
+        "spm_hi_temp_f": { "type": "number", "description": "High setpoint temperature (F)" },
+        "spm_hi_temp_c": { "type": "number" },
+        "spm_lo_sch_name": { "type": "string", "description": "Low setpoint schedule name (used instead of spm_lo_temp to reference a shared schedule)" },
+        "spm_hi_sch_name": { "type": "string", "description": "High setpoint schedule name (used instead of spm_hi_temp to reference a shared schedule)" }
+      }
+    },
+
+    "spmWarmestObj": {
+      "description": "SetpointManagerWarmest.",
+      "allOf": [ { "$ref": "#/$defs/setpoint_range" } ],
+      "properties": {}
+    },
+
+    "spmWarmestTFObj": {
+      "description": "SetpointManagerWarmestTemperatureFlow.",
+      "allOf": [ { "$ref": "#/$defs/setpoint_range" } ],
+      "properties": {
+        "strategy": { "type": "string", "description": "Default TemperatureFirst.", "examples": ["TemperatureFirst", "FlowFirst"] },
+        "min_turndown": { "type": "number", "description": "Minimum turndown ratio. Default 0.4." }
+      }
+    },
+
+    "spmSZRHObj": {
+      "description": "SetpointManagerSingleZoneReheat.",
+      "required": ["control_zone_name"],
+      "allOf": [ { "$ref": "#/$defs/setpoint_range" } ],
+      "properties": {
+        "control_zone_name": { "type": "string" }
+      }
+    },
+
+    "spmSZCObj": {
+      "description": "SetpointManagerSingleZoneCooling.",
+      "required": ["control_zone_name"],
+      "allOf": [ { "$ref": "#/$defs/setpoint_range" } ],
+      "properties": {
+        "control_zone_name": { "type": "string" }
+      }
+    },
+
+    "spmSZHObj": {
+      "description": "SetpointManagerSingleZoneHeating.",
+      "required": ["control_zone_name"],
+      "allOf": [ { "$ref": "#/$defs/setpoint_range" } ],
+      "properties": {
+        "control_zone_name": { "type": "string" }
+      }
+    },
+
+    "spmOARObj": {
+      "description": "SetpointManagerOutdoorAirReset.",
+      "allOf": [ { "$ref": "#/$defs/oat_reset" } ],
+      "properties": {}
+    },
+
+    "spmSZHumObj": {
+      "description": "SetpointManagerSingleZoneHumidityMaximum.",
+      "required": ["control_zone_name"],
+      "properties": {
+        "control_zone_name": { "type": "string" }
+      }
+    },
+
+    "spmSZHumMinObj": {
+      "description": "SetpointManagerSingleZoneHumidityMinimum, typically placed at a humidifier outlet via the spm_node override.",
+      "required": ["control_zone_name"],
+      "properties": {
+        "control_zone_name": { "type": "string" },
+        "name": { "type": "string" }
+      }
+    },
+
+    "spmMZHumMaxObj": {
+      "description": "SetpointManagerMultiZoneHumidityMaximum.",
+      "properties": {}
+    },
+
+    "spmMZHeatAvgObj": {
+      "description": "SetpointManagerMultiZoneHeatingAverage.",
+      "allOf": [ { "$ref": "#/$defs/setpoint_range" } ],
+      "properties": {}
+    },
+
+    "spmMixedAirObj": {
+      "description": "SetpointManagerMixedAir.",
+      "properties": {}
+    },
+
+    "spmFollowOAObj": {
+      "description": "SetpointManagerFollowOutdoorAirTemperature.",
+      "allOf": [ { "$ref": "#/$defs/setpoint_range" } ],
+      "properties": {
+        "ctrl_var": { "type": "string", "enum": ["Temperature", "MaximumTemperature", "MinimumTemperature"] },
+        "ref_temp": { "type": "string", "enum": ["OutdoorDryBulb", "OutdoorWetBulb"] },
+        "offset_temp_r": { "type": "number", "description": "Offset temperature difference (R)" },
+        "offset_temp_k": { "type": "number" }
+      }
+    },
+
+    "spmFollowSysNodeObj": {
+      "description": "SetpointManagerFollowSystemNodeTemperature.",
+      "properties": {
+        "reference_node": { "type": "string", "description": "Name of the reference node, or Supply to use the supply outlet node" }
+      }
+    },
+
+    "spmOAPretreatObj": {
+      "description": "SetpointManagerOutdoorAirPretreat. The reference, mixed air, outdoor air, and return air nodes are set from the enclosing dedicated outdoor air or outdoor air component list.",
+      "properties": {}
+    },
+
+    "zoneSizing": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Zone sizing inputs mapping to SizingZone.",
+      "properties": {
+        "clg_dsgn_sup_air_temp_f": { "type": "number", "description": "Zone cooling design supply air temperature (F)" },
+        "clg_dsgn_sup_air_temp_c": { "type": "number" },
+        "htg_dsgn_sup_air_temp_f": { "type": "number", "description": "Zone heating design supply air temperature (F)" },
+        "htg_dsgn_sup_air_temp_c": { "type": "number" },
+        "clg_dsgn_sup_air_humidity_ratio_kgpkg": { "type": "number", "description": "Zone cooling design supply air humidity ratio (kg/kg)" },
+        "htg_dsgn_sup_air_humidity_ratio_kgpkg": { "type": "number", "description": "Zone heating design supply air humidity ratio (kg/kg)" },
+        "htg_max_airflow_fraction": { "type": "number", "description": "Heating maximum air flow fraction (0-1)" },
+        "clg_dsgn_airflow_method": { "type": "string", "description": "Cooling design air flow method" },
+        "htg_dsgn_airflow_method": { "type": "string", "description": "Heating design air flow method" },
+        "account_for_doas": { "type": "boolean", "description": "Account for a dedicated outdoor air system" },
+        "doas_control_strategy": { "type": "string", "examples": ["NeutralSupplyAir", "NeutralDehumidifiedSupplyAir", "ColdSupplyAir"] },
+        "doas_low_setpoint_f": { "type": "number", "description": "Dedicated outdoor air system low design setpoint (F)" },
+        "doas_low_setpoint_c": { "type": "number" },
+        "doas_high_setpoint_f": { "type": "number", "description": "Dedicated outdoor air system high design setpoint (F)" },
+        "doas_high_setpoint_c": { "type": "number" }
+      }
+    },
+
+    "humidistat": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "ZoneControlHumidistat. Provide a schedule name to use an existing schedule, or a relative humidity percentage to create a constant schedule.",
+      "properties": {
+        "humidifying_sch_name": { "type": "string", "description": "Humidifying relative humidity setpoint schedule name" },
+        "humidifying_rel_hum_pct": { "type": "number", "description": "Constant humidifying relative humidity setpoint (percent); used when no schedule name is given" },
+        "dehumidifying_sch_name": { "type": "string", "description": "Dehumidifying relative humidity setpoint schedule name" },
+        "dehumidifying_rel_hum_pct": { "type": "number", "description": "Constant dehumidifying relative humidity setpoint (percent); used when no schedule name is given" }
+      }
+    },
+
+    "emsEntry": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "description": "Declarative EnergyManagementSystem objects. Creation order: sensors, internal variables, global variables, actuators, programs, calling managers, output variables, so programs may reference earlier objects by name. Sensors and actuators deduplicate by name.",
+      "properties": {
+        "sensors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "required": ["name", "keyname", "variable"],
+            "properties": {
+              "name": { "type": "string", "description": "Runtime language variable name" },
+              "keyname": { "type": "string", "description": "Output variable key name (for example a zone or schedule name)" },
+              "variable": { "type": "string", "description": "Output variable or meter name" }
+            }
+          }
+        },
+        "internal_vars": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "required": ["name", "data_type"],
+            "properties": {
+              "name": { "type": "string" },
+              "data_type": { "type": "string", "description": "Internal data type" },
+              "key_name": { "type": "string", "description": "Internal data index key name" }
+            }
+          }
+        },
+        "global_vars": { "type": "array", "items": { "type": "string" } },
+        "actuators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "required": ["name", "component_name", "component_type", "control_type"],
+            "properties": {
+              "name": { "type": "string", "description": "Runtime language variable name" },
+              "component_name": { "type": "string", "description": "Name of the actuated object, resolved by exact name" },
+              "component_type": { "type": "string", "description": "Actuated component type" },
+              "control_type": { "type": "string", "description": "Actuated component control type" },
+              "create_schedule_constant": { "type": "number", "description": "Create or reuse a constant schedule named component_name with this value, used as the actuated object" },
+              "schedule_type_limit": { "type": "string", "description": "Schedule type limits for a created constant schedule", "examples": ["Dimensionless", "Temperature", "OnOff"] }
+            }
+          }
+        },
+        "programs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "required": ["name", "body"],
+            "properties": {
+              "name": { "type": "string" },
+              "body": { "type": "string", "description": "Newline-separated runtime language program lines" }
+            }
+          }
+        },
+        "calling_managers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "required": ["name", "calling_point"],
+            "properties": {
+              "name": { "type": "string" },
+              "calling_point": { "type": "string", "examples": ["BeginTimestepBeforePredictor", "EndOfZoneTimestepAfterZoneReporting", "BeginNewEnvironment", "AfterNewEnvironmentWarmUpIsComplete"] },
+              "program_names": { "type": "array", "items": { "type": "string" }, "description": "Programs to attach, by name" }
+            }
+          }
+        },
+        "output_variables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "required": ["name", "ems_var_name"],
+            "properties": {
+              "name": { "type": "string" },
+              "ems_var_name": { "type": "string" },
+              "data_type": { "type": "string", "enum": ["Averaged", "Summed"] },
+              "update_freq": { "type": "string", "enum": ["ZoneTimestep", "SystemTimestep"] },
+              "prog_name": { "type": "string", "description": "Program or subroutine name" },
+              "units": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

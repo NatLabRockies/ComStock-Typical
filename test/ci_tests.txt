@@ -1,10 +1,10 @@
 # Test files run in CI: every test_*.rb under test/modules, test/90_1_general and test/os_stds_methods.
 # Paths are relative to test/. Regenerate with the snippet in test/BASELINE.md after adding,
 # moving or removing a test file.
-
 90_1_general/test_boiler_hot_water.rb
 90_1_general/test_chiller_electric_eir.rb
 90_1_general/test_coil_dx.rb
+90_1_general/test_fan_motor_efficiency.rb
 90_1_general/test_find_ashrae_hot_water_demand.rb
 90_1_general/test_find_construction_properties_data.rb
 90_1_general/test_find_space_type_standards_data.rb
@@ -29,6 +29,7 @@ modules/equipment/test_create_typical.rb
 modules/exterior_lighting/test_create.rb
 modules/exterior_lighting/test_exterior_lighting_building_types.rb
 modules/exterior_lighting/test_information.rb
+modules/geometry/test_geometry_bar_slivers.rb
 modules/geometry/test_geometry_create.rb
 modules/geometry/test_geometry_create_bar.rb
 modules/geometry/test_geometry_create_shape.rb
@@ -37,7 +38,6 @@ modules/geometry/test_geometry_group.rb
 modules/geometry/test_geometry_information.rb
 modules/geometry/test_geometry_modify.rb
 modules/geometry/test_geometry_space_area_constraints.rb
-modules/geometry/test_geometry_bar_slivers.rb
 modules/geometry/test_slice_adjacency.rb
 modules/hvac/components/test_air_conditioner_vrf.rb
 modules/hvac/components/test_air_terminal.rb
@@ -60,13 +60,37 @@ modules/hvac/components/test_component.rb
 modules/hvac/components/test_fan.rb
 modules/hvac/components/test_heat_exchanger_air_to_air.rb
 modules/hvac/components/test_pump.rb
+modules/hvac/creator/test_air_loop_builder.rb
+modules/hvac/creator/test_apply_hvac.rb
+modules/hvac/creator/test_breadth.rb
+modules/hvac/creator/test_chilled_water_plant.rb
+modules/hvac/creator/test_coefficients.rb
+modules/hvac/creator/test_component_factory.rb
+modules/hvac/creator/test_composers.rb
+modules/hvac/creator/test_composites_radiant.rb
+modules/hvac/creator/test_context.rb
+modules/hvac/creator/test_doas_builder.rb
+modules/hvac/creator/test_dx_multispeed_coils.rb
+modules/hvac/creator/test_ems_builder.rb
+modules/hvac/creator/test_integration_annual.rb
+modules/hvac/creator/test_integration_annual_fcu_doas.rb
+modules/hvac/creator/test_integration_annual_radiant.rb
+modules/hvac/creator/test_integration_annual_vav.rb
+modules/hvac/creator/test_integration_annual_vrf.rb
+modules/hvac/creator/test_plant_demand.rb
+modules/hvac/creator/test_plant_loop_builder.rb
+modules/hvac/creator/test_post_steps.rb
+modules/hvac/creator/test_quantities.rb
+modules/hvac/creator/test_vrf.rb
+modules/hvac/creator/test_zone_builder.rb
+modules/hvac/creator/test_zone_hvac_equipment.rb
 modules/hvac/test_conversions.rb
 modules/hvac/test_curves.rb
+modules/hvac/test_extreme_load_zones.rb
 modules/hvac/test_helpers.rb
 modules/hvac/test_hvac_exhaust.rb
 modules/hvac/test_hvac_exhaust_all_level.rb
 modules/hvac/test_hvac_exhaust_vertical_makeup.rb
-modules/hvac/test_extreme_load_zones.rb
 modules/hvac/test_legacy_outdoor_air_controls.rb
 modules/hvac/test_vav_sizing_inputs.rb
 modules/infiltration/test_infiltration.rb
@@ -107,10 +131,10 @@ modules/service_water_heating/test_create_water_heater.rb
 modules/service_water_heating/test_create_water_heating_loop.rb
 modules/service_water_heating/test_create_water_use.rb
 modules/service_water_heating/test_swh_booster_preheat_sizing.rb
+modules/service_water_heating/test_swh_fixture_flow_zone_multipliers.rb
 modules/service_water_heating/test_swh_loop_temperature_limits.rb
 modules/service_water_heating/test_swh_overrides.rb
 modules/service_water_heating/test_swh_point_of_use_sizing.rb
-modules/service_water_heating/test_swh_fixture_flow_zone_multipliers.rb
 modules/service_water_heating/test_swh_sizing_zone_multipliers.rb
 modules/service_water_heating/test_swh_supply_temperature.rb
 modules/space/test_space.rb
@@ -130,12 +154,12 @@ modules/weather/test_weather_stat_file.rb
 os_stds_methods/test_add_hvac_systems.rb
 os_stds_methods/test_apply_hvac_efficiency_standard.rb
 os_stds_methods/test_daylighting_controls.rb
+os_stds_methods/test_dx_coil_rated_shr_cap.rb
 os_stds_methods/test_minimum_efficiency_lookups.rb
 os_stds_methods/test_misc.rb
 os_stds_methods/test_optimum_start.rb
-os_stds_methods/test_residential_air_flow_floor.rb
-os_stds_methods/test_dx_coil_rated_shr_cap.rb
 os_stds_methods/test_radiant_controls.rb
+os_stds_methods/test_residential_air_flow_floor.rb
 os_stds_methods/test_service_water_heating.rb
 os_stds_methods/test_space_type.rb
 os_stds_methods/test_vav_dual_maximum_reheat_fraction.rb
