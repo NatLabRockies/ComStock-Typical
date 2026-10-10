@@ -891,7 +891,7 @@
   {
     "name": "corridor - primary school lighting",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
     "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Lighting",
     "units": null,
@@ -1005,7 +1005,7 @@
   {
     "name": "corridor - secondary school lighting",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
     "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Lighting",
     "units": null,
@@ -3287,7 +3287,7 @@
   {
     "name": "restroom - primary school lighting",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
     "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Lighting",
     "units": null,
@@ -3401,7 +3401,7 @@
   {
     "name": "restroom - secondary school lighting",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
     "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Lighting",
     "units": null,
@@ -3527,6 +3527,18 @@
   },
   {
     "name": "retail - mall concourse lighting",
+    "category": "Lighting",
+    "derivation_type": "exponential",
+    "base": 0.0642,
+    "peak": 0.9714,
+    "response": 0.05,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
+    "name": "retail - mass merchandising lighting",
     "category": "Lighting",
     "derivation_type": "exponential",
     "base": 0.0642,
