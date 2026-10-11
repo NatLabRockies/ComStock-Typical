@@ -88,6 +88,7 @@ modules/hvac/creator/test_validation.rb
 modules/hvac/creator/test_vrf.rb
 modules/hvac/creator/test_zone_builder.rb
 modules/hvac/creator/test_zone_hvac_equipment.rb
+modules/hvac/test_cbecs_hvac_sweep.rb
 modules/hvac/test_conversions.rb
 modules/hvac/test_curves.rb
 modules/hvac/test_extreme_load_zones.rb
