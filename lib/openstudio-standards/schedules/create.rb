@@ -146,6 +146,43 @@ module OpenstudioStandards
       return schedule
     end
 
+    # Create a ScheduleConstant with a given value
+    #
+    # Unlike a ScheduleRuleset, a ScheduleConstant can be the target of an EnergyManagementSystem
+    # actuator, so this is the form to use for a schedule an EMS program drives.
+    # An existing ScheduleConstant of the same name is returned rather than duplicated, so repeated
+    # calls for one named schedule converge on a single object.
+    #
+    # @param model [OpenStudio::Model::Model] OpenStudio model object
+    # @param value [Double] the value to use, 24-7, 365
+    # @param name [String] the name of the schedule
+    # @param schedule_type_limit [String] the name of a schedule type limit
+    #   options are Dimensionless, Temperature, Humidity Ratio, Fraction, Fractional, OnOff, and Activity
+    # @return [OpenStudio::Model::ScheduleConstant] OpenStudio ScheduleConstant object
+    def self.create_schedule_constant(model,
+                                      value,
+                                      name: nil,
+                                      schedule_type_limit: nil)
+      unless name.nil?
+        existing_sch = model.getScheduleConstantByName(name)
+        return existing_sch.get if existing_sch.is_initialized
+      end
+
+      schedule = OpenStudio::Model::ScheduleConstant.new(model)
+      schedule.setName(name) unless name.nil?
+      schedule.setValue(value)
+
+      unless schedule_type_limit.nil?
+        sch_type_limits_obj = OpenstudioStandards::Schedules.create_schedule_type_limits(model,
+                                                                                         standard_schedule_type_limit: schedule_type_limit)
+        # create_schedule_type_limits returns false and logs the reason for an unrecognized limit
+        # name; leave the schedule without limits rather than failing on the false.
+        schedule.setScheduleTypeLimits(sch_type_limits_obj) if sch_type_limits_obj
+      end
+
+      return schedule
+    end
+
     # create a ruleset schedule with a basic profile
     #
     # @param model [OpenStudio::Model::Model] OpenStudio model object

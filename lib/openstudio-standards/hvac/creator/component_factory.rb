@@ -156,6 +156,10 @@ module OpenstudioStandards
         # override sets the pressure rise directly afterward, as the legacy DOAS exhaust fan does.
         fan.setPressureRise(OpenStudio.convert(spec[:pressure_rise_override_inh2o], 'inH_{2}O', 'Pa').get) if spec[:pressure_rise_override_inh2o]
         fan.setPressureRise(spec[:pressure_rise_override_pa]) if spec[:pressure_rise_override_pa]
+        # The packaged preset carries no flow rate, so an explicit maximum is applied here the same
+        # way {apply_fan_fields} applies it to a bare fan.
+        max_flow = Quantities.resolve(spec, 'max_airflow', :air_flow)
+        fan.setMaximumFlowRate(max_flow) unless max_flow.nil?
         fan
       end
 
@@ -316,6 +320,10 @@ module OpenstudioStandards
         coil = OpenStudio::Model::CoilHeatingElectric.new(context.model)
         capacity = Quantities.resolve(spec, 'capacity', :capacity)
         coil.setNominalCapacity(capacity) unless capacity.nil?
+        # Written explicitly, as the shared creator does. It is also the OpenStudio default, so the
+        # model behaves the same either way, but a coil that leaves the field blank does not match
+        # the checked-in prototype models object for object.
+        coil.setEfficiency(spec[:efficiency] || 1.0)
         coil
       end
 
@@ -675,12 +683,27 @@ module OpenstudioStandards
       # @param airflows [Hash] the operating_airflows spec
       # @return [void]
       def self.apply_operating_airflows(unitary, airflows)
+        # +autosize+ sizes all three operating airflows from the design run. Left off, an airflow the
+        # spec does not give keeps the unitary's 'None' method, which is a different system: it
+        # supplies no air in that operating mode rather than its design flow.
         cooling = Quantities.resolve(airflows, 'cooling', :air_flow)
-        unitary.setSupplyAirFlowRateDuringCoolingOperation(cooling) unless cooling.nil?
+        if cooling.nil?
+          unitary.autosizeSupplyAirFlowRateDuringCoolingOperation if airflows[:autosize]
+        else
+          unitary.setSupplyAirFlowRateDuringCoolingOperation(cooling)
+        end
         heating = Quantities.resolve(airflows, 'heating', :air_flow)
-        unitary.setSupplyAirFlowRateDuringHeatingOperation(heating) unless heating.nil?
+        if heating.nil?
+          unitary.autosizeSupplyAirFlowRateDuringHeatingOperation if airflows[:autosize]
+        else
+          unitary.setSupplyAirFlowRateDuringHeatingOperation(heating)
+        end
         no_load = Quantities.resolve(airflows, 'no_load', :air_flow)
-        unitary.setSupplyAirFlowRateWhenNoCoolingorHeatingisRequired(no_load) unless no_load.nil?
+        if no_load.nil?
+          unitary.autosizeSupplyAirFlowRateWhenNoCoolingorHeatingisRequired if airflows[:autosize]
+        else
+          unitary.setSupplyAirFlowRateWhenNoCoolingorHeatingisRequired(no_load)
+        end
         nil
       end
 
@@ -738,16 +761,39 @@ module OpenstudioStandards
       end
 
       # @param spec [Hash] a ZoneHVACUnitHeater spec. Either an explicit +components+ list (fan and
-      #   heating coil) or the synthesized form (from heating_type). +schedule_name+ sets the unit
+      #   heating coil) or the synthesized form: a constant-volume fan taking +fan_pressure_rise+ and
+      #   +max_airflow+, and a heating coil from +heating_type+ (a hot-water coil when a
+      #   +hot_water_loop_name+ is given and no fuel is named). +schedule_name+ sets the unit
       #   availability schedule.
       # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
       # @return [OpenStudio::Model::ZoneHVACUnitHeater] the unit heater
       def self.build_unit_heater(spec, context)
         schedule = spec[:schedule_name] ? context.schedule(spec[:schedule_name]) : context.model.alwaysOnDiscreteSchedule
-        fan, _cooling, heating = spec[:components] ? classify_zone_hvac_components(spec[:components], context) : [build({ obj_type: 'FanConstantVolume' }, context), nil, build_zone_heating_coil(spec, context)]
+        fan, _cooling, heating =
+          if spec[:components]
+            classify_zone_hvac_components(spec[:components], context)
+          else
+            [build(unit_heater_fan_spec(spec), context), nil, build_zone_heating_coil(spec, context)]
+          end
         unit_heater = OpenStudio::Model::ZoneHVACUnitHeater.new(context.model, schedule, fan, heating)
         unit_heater.setFanControlType(spec[:control_type]) if spec[:control_type]
+        max_flow = Quantities.resolve(spec, 'max_airflow', :air_flow)
+        unit_heater.setMaximumSupplyAirFlowRate(max_flow) unless max_flow.nil?
         unit_heater
+      end
+
+      # The spec for a unit heater's synthesized constant-volume fan, carrying the unit's
+      # +fan_pressure_rise+ and +max_airflow+ when given.
+      #
+      # @param spec [Hash] the unit heater spec
+      # @return [Hash] a FanConstantVolume component spec
+      def self.unit_heater_fan_spec(spec)
+        fan = { obj_type: 'FanConstantVolume' }
+        pressure = Quantities.resolve(spec, 'fan_pressure_rise', :pressure)
+        fan[:pressure_rise_pa] = pressure unless pressure.nil?
+        max_flow = Quantities.resolve(spec, 'max_airflow', :air_flow)
+        fan[:max_airflow_m3s] = max_flow unless max_flow.nil?
+        fan
       end
 
       # @param spec [Hash] a ZoneHVACPackagedTerminalAirConditioner spec. Either an explicit
@@ -819,16 +865,24 @@ module OpenstudioStandards
         nil
       end
 
-      # Build a zone-equipment heating coil from the spec heating_type.
+      # Build a zone-equipment heating coil from the spec heating_type: a hot-water coil for +Water+
+      # or a district-heating type (a +hot_water_loop_name+ is then required), gas for +NaturalGas+ /
+      # +Gas+, otherwise electric. With no heating_type, a hot_water_loop_name alone selects a
+      # hot-water coil.
       #
       # @param spec [Hash] the zone equipment spec (heating_type, hot_water_loop_name)
       # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
       # @return [OpenStudio::Model::ModelObject] the heating coil
+      # @raise [ArgumentError] when a hot-water coil is requested without a hot water loop
       def self.build_zone_heating_coil(spec, context)
-        case spec[:heating_type]
-        when 'Water'
-          build({ obj_type: 'CoilHeatingWater', plant_loop_name: spec[:hot_water_loop_name] }, context)
-        when 'NaturalGas', 'Gas'
+        heating_type = spec[:heating_type].to_s
+        loop_name = spec[:hot_water_loop_name]
+        water = heating_type == 'Water' || heating_type.include?('DistrictHeating') || (heating_type.empty? && loop_name)
+        if water
+          raise ArgumentError, "#{spec[:obj_type]} '#{spec[:name]}' asks for hot-water heat (heating_type '#{heating_type}') but names no hot_water_loop_name" unless loop_name
+
+          build({ obj_type: 'CoilHeatingWater', plant_loop_name: loop_name }, context)
+        elsif %w[NaturalGas Gas].include?(heating_type)
           build({ obj_type: 'CoilHeatingGas' }, context)
         else
           build({ obj_type: 'CoilHeatingElectric' }, context)
@@ -856,6 +910,11 @@ module OpenstudioStandards
         fan.setPressureRise(pressure) unless pressure.nil?
         max_flow = Quantities.resolve(spec, 'max_airflow', :air_flow)
         fan.setMaximumFlowRate(max_flow) unless max_flow.nil?
+        fan.setFlowFractionSchedule(context.schedule(spec[:flow_fraction_sch_name])) if spec[:flow_fraction_sch_name]
+        fan.setSystemAvailabilityManagerCouplingMode(spec[:system_availability_coupling_mode]) if spec[:system_availability_coupling_mode]
+        if spec[:balanced_exhaust_fraction_sch_name]
+          fan.setBalancedExhaustFractionSchedule(context.schedule(spec[:balanced_exhaust_fraction_sch_name]))
+        end
         fan
       end
 
@@ -1110,12 +1169,17 @@ module OpenstudioStandards
         tower
       end
 
+      # The design flow rates autosize when the spec omits them, so a cooler carries sized flows
+      # rather than the constructor's hard-coded defaults.
+      #
       # @return [OpenStudio::Model::FluidCoolerSingleSpeed] the fluid cooler
       def self.build_fluid_cooler_single_speed(spec, context)
         cooler = OpenStudio::Model::FluidCoolerSingleSpeed.new(context.model)
         cooler.setPerformanceInputMethod(spec[:performance_input_method]) if spec[:performance_input_method]
         water = Quantities.resolve(spec, 'design_water_flow', :water_flow)
-        cooler.setDesignWaterFlowRate(water) unless water.nil?
+        water.nil? ? cooler.autosizeDesignWaterFlowRate : cooler.setDesignWaterFlowRate(water)
+        air = Quantities.resolve(spec, 'design_air_flow', :air_flow)
+        air.nil? ? cooler.autosizeDesignAirFlowRate : cooler.setDesignAirFlowRate(air)
         cooler
       end
 
@@ -1124,7 +1188,11 @@ module OpenstudioStandards
         cooler = OpenStudio::Model::FluidCoolerTwoSpeed.new(context.model)
         cooler.setPerformanceInputMethod(spec[:performance_input_method]) if spec[:performance_input_method]
         water = Quantities.resolve(spec, 'design_water_flow', :water_flow)
-        cooler.setDesignWaterFlowRate(water) unless water.nil?
+        water.nil? ? cooler.autosizeDesignWaterFlowRate : cooler.setDesignWaterFlowRate(water)
+        high = Quantities.resolve(spec, 'design_high_fan_speed_air_flow', :air_flow)
+        high.nil? ? cooler.autosizeHighFanSpeedAirFlowRate : cooler.setHighFanSpeedAirFlowRate(high)
+        low = Quantities.resolve(spec, 'design_low_fan_speed_air_flow', :air_flow)
+        low.nil? ? cooler.autosizeLowFanSpeedAirFlowRate : cooler.setLowFanSpeedAirFlowRate(low)
         cooler
       end
 
@@ -1149,7 +1217,15 @@ module OpenstudioStandards
       def self.build_plant_temperature_source(spec, context)
         source = OpenStudio::Model::PlantComponentTemperatureSource.new(context.model)
         source.setTemperatureSpecificationType(spec[:temp_spec_type]) if spec[:temp_spec_type]
-        source.setSourceTemperature(spec[:source_temp_c]) if spec[:source_temp_c]
+        temp = Quantities.resolve(spec, 'source_temp', :temperature)
+        source.setSourceTemperature(temp) unless temp.nil?
+        # A named source schedule is a Schedule:Constant, because the ground-heat-exchanger EMS
+        # actuates it as one. It is created here if the model does not already carry it.
+        if spec[:source_temp_schedule_name]
+          schedule = OpenstudioStandards::Schedules.create_schedule_constant(context.model, temp || 24.0,
+                                                                            name: spec[:source_temp_schedule_name])
+          source.setSourceTemperatureSchedule(schedule)
+        end
         source
       end
 
@@ -1218,9 +1294,45 @@ module OpenstudioStandards
       # @return [OpenStudio::Model::ZoneVentilationDesignFlowRate] the zone ventilation object
       def self.build_zone_ventilation(spec, context)
         ventilation = OpenStudio::Model::ZoneVentilationDesignFlowRate.new(context.model)
+        # The flow is given either absolutely or per unit floor area; the ventilation type selects
+        # which, and each type carries its own fan and control-temperature envelope.
+        design_flow = Quantities.resolve(spec, 'design_flow', :air_flow)
+        ventilation.setDesignFlowRate(design_flow) unless design_flow.nil?
+        ventilation.setFlowRateperZoneFloorArea(spec[:flow_per_area_m3s]) if spec[:flow_per_area_m3s]
+        # ZoneVentilation takes a plain schedule, not an availability schedule, so apply_common's
+        # schedule_name handling does not reach it.
+        ventilation.setSchedule(context.schedule(spec[:schedule_name])) if spec[:schedule_name]
+
+        pressure = Quantities.resolve(spec, 'fan_pressure_rise', :pressure)
+        ventilation.setFanPressureRise(pressure) unless pressure.nil?
+        ventilation.setFanTotalEfficiency(spec[:fan_total_eff]) if spec[:fan_total_eff]
+        ventilation.setConstantTermCoefficient(spec[:constant_term_coeff]) if spec[:constant_term_coeff]
+        ventilation.setVelocityTermCoefficient(spec[:velocity_term_coeff]) if spec[:velocity_term_coeff]
+        ventilation.setTemperatureTermCoefficient(spec[:temperature_term_coeff]) if spec[:temperature_term_coeff]
+
+        apply_zone_ventilation_limits(ventilation, spec)
         ventilation.setVentilationType(spec[:ventilation_type]) if spec[:ventilation_type]
-        ventilation.setDesignFlowRate(spec[:flow_rate]) if spec[:flow_rate]
         ventilation
+      end
+
+      # The indoor / outdoor temperature and wind-speed envelope outside which the ventilation stops.
+      #
+      # @param ventilation [OpenStudio::Model::ZoneVentilationDesignFlowRate] the ventilation object
+      # @param spec [Hash] the spec
+      # @return [void]
+      def self.apply_zone_ventilation_limits(ventilation, spec)
+        min_indoor = Quantities.resolve(spec, 'min_indoor_temp', :temperature)
+        ventilation.setMinimumIndoorTemperature(min_indoor) unless min_indoor.nil?
+        max_indoor = Quantities.resolve(spec, 'max_indoor_temp', :temperature)
+        ventilation.setMaximumIndoorTemperature(max_indoor) unless max_indoor.nil?
+        min_outdoor = Quantities.resolve(spec, 'min_outdoor_temp', :temperature)
+        ventilation.setMinimumOutdoorTemperature(min_outdoor) unless min_outdoor.nil?
+        max_outdoor = Quantities.resolve(spec, 'max_outdoor_temp', :temperature)
+        ventilation.setMaximumOutdoorTemperature(max_outdoor) unless max_outdoor.nil?
+        delta = Quantities.resolve(spec, 'delta_temp', :temperature_difference)
+        ventilation.setDeltaTemperature(delta) unless delta.nil?
+        ventilation.setMaximumWindSpeed(spec[:max_wind_speed_m_per_s]) if spec[:max_wind_speed_m_per_s]
+        nil
       end
 
       # @param spec [Hash] a ZoneHVACTerminalUnitVariableRefrigerantFlow spec (requires cu_name). An
@@ -1465,9 +1577,8 @@ module OpenstudioStandards
       # @return [OpenStudio::Model::CoilHeatingWater] the coil (water side connected by apply_common)
       def self.build_coil_heating_water(spec, context)
         coil = OpenStudio::Model::CoilHeatingWater.new(context.model)
-        ewt = Quantities.resolve(spec, 'ewt', :temperature)
+        ewt, lwt = heating_coil_water_temperatures(spec, context)
         coil.setRatedInletWaterTemperature(ewt) unless ewt.nil?
-        lwt = Quantities.resolve(spec, 'lwt', :temperature)
         coil.setRatedOutletWaterTemperature(lwt) unless lwt.nil?
         eat = Quantities.resolve(spec, 'eat', :temperature)
         coil.setRatedInletAirTemperature(eat) unless eat.nil?
@@ -1475,8 +1586,32 @@ module OpenstudioStandards
         coil.setRatedOutletAirTemperature(lat) unless lat.nil?
         water_flow = Quantities.resolve(spec, 'water_flow', :water_flow)
         coil.setMaximumWaterFlowRate(water_flow) unless water_flow.nil?
-        coil.setUFactorTimesAreaValue(spec[:ua_si]) if spec[:ua_si]
+        capacity = Quantities.resolve(spec, 'capacity', :capacity)
+        coil.setRatedCapacity(capacity) unless capacity.nil?
+        ua = spec[:ua_si] || (spec[:ua_ip] && OpenStudio.convert(spec[:ua_ip], 'Btu/hr*R', 'W/K').get)
+        coil.setUFactorTimesAreaValue(ua) if ua
         coil
+      end
+
+      # The rated entering and leaving water temperatures of a hot-water coil: as given, else the
+      # serving loop's design exit temperature and that less the loop design temperature difference.
+      #
+      # @param spec [Hash] a CoilHeatingWater spec
+      # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+      # @return [Array(Float, Float)] entering and leaving water temperatures (C), either nil when
+      #   neither the spec nor a loop supplies it
+      def self.heating_coil_water_temperatures(spec, context)
+        ewt = Quantities.resolve(spec, 'ewt', :temperature)
+        lwt = Quantities.resolve(spec, 'lwt', :temperature)
+        return [ewt, lwt] if ewt && lwt
+
+        loop = spec[:plant_loop_name] && context.plant_loop(spec[:plant_loop_name])
+        return [ewt, lwt] unless loop
+
+        sizing = loop.sizingPlant
+        ewt ||= sizing.designLoopExitTemperature
+        lwt ||= ewt - sizing.loopDesignTemperatureDifference
+        [ewt, lwt]
       end
 
       # @param spec [Hash] a ChillerElectricEIR spec
@@ -1519,6 +1654,15 @@ module OpenstudioStandards
         air_flow = Quantities.resolve(spec, 'air_flow', :air_flow)
         tower.setDesignAirFlowRate(air_flow) unless air_flow.nil?
         tower.setDesignFanPower(spec[:fan_power_w]) if spec[:fan_power_w]
+        # Only the variable-speed tower exposes its design temperatures and part-load fan power.
+        range = Quantities.resolve(spec, 'design_range_temp', :temperature_difference)
+        tower.setDesignRangeTemperature(range) unless range.nil?
+        approach = Quantities.resolve(spec, 'design_approach_temp', :temperature_difference)
+        tower.setDesignApproachTemperature(approach) unless approach.nil?
+        tower.setFractionofTowerCapacityinFreeConvectionRegime(spec[:free_convection_capacity_frac]) if spec[:free_convection_capacity_frac]
+        tower.setFanPowerRatioFunctionofAirFlowRateRatioCurve(context.curve(spec[:fan_power_ratio_curve])) if spec[:fan_power_ratio_curve]
+        tower.setSizingFactor(spec[:sizing_factor]) if spec[:sizing_factor]
+        tower.setNumberofCells(spec[:num_cells]) if spec[:num_cells]
         tower
       end
 

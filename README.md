@@ -58,6 +58,7 @@ whichever loads first wins.
 
 - [User Quick Start Guide](docs/UserQuickStartGuide.md) — creating a model
 - [Custom Buildings](docs/CustomBuildings.md) — the building specification format
+- [The HVAC Creator](docs/HVACCreator.md) — building whole HVAC systems from a declarative spec
 - [Features](docs/Features.md) — what the library does and how the pieces fit
 - [Repository Structure](docs/RepositoryStructure.md) — what is in each directory
 - [Code Architecture](docs/CodeArchitecture.md) — modules, the Standard class, and template lookup

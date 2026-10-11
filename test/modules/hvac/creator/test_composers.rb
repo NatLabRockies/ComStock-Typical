@@ -1,4 +1,6 @@
+require 'English'
 require_relative '../../../helpers/minitest_helper'
+require_relative 'legacy_reference'
 
 # Phase 11 parity tests: each converted composer must build a model identical to its legacy
 # model_add_* counterpart — same object counts by type, same object names, and the same values on a
@@ -9,10 +11,27 @@ class TestHVACCreatorComposers < Minitest::Test
     @composers = OpenstudioStandards::HVAC::Composers
   end
 
-  # Assert two models have identical object counts by IDD type and identical object names.
+  # The pre-conversion implementation, loaded from the commit the cutover started from.
+  # Every model_add_* method now delegates to its composer, so comparing @hvac against
+  # @composers would compare the composer with itself; the legacy side must come from here.
+  def legacy_hvac
+    skip("pinned legacy reference unavailable: #{LegacyReference.unavailable_reason}") unless LegacyReference.available?
+
+    LegacyReference.hvac
+  end
+
+  # Assert two models are the same model: identical object counts by IDD type, identical object
+  # names, and identical field values on every object the two models share by name.
+  #
+  # The field comparison exists because counts and names alone let real defects through - a field
+  # that is populated in the legacy model and blank in the composed one leaves both counts and names
+  # untouched. Two such defects reached EnergyPlus before this check existed: an air-source heat
+  # pump's EMS sensor with an empty key name, and a unitary system with a blank controlling zone.
   def assert_model_parity(legacy, composed)
     assert_equal(type_counts(legacy), type_counts(composed), 'object counts by IDD type differ')
     assert_equal(object_names(legacy), object_names(composed), 'object names differ')
+    diffs = field_diffs(legacy, composed)
+    assert_empty(diffs, "object fields differ:\n  #{diffs.join("\n  ")}")
   end
 
   def type_counts(model)
@@ -24,14 +43,137 @@ class TestHVACCreatorComposers < Minitest::Test
   def object_names(model)
     model.getModelObjects.map { |object| object.name.is_initialized ? object.name.get : nil }
          .compact
-         .reject { |name| name.match?(/\A\{[0-9a-f-]+\}\z/) } # skip non-deterministic handle-style names
+         .reject { |name| handle_style_name?(name) } # skip non-deterministic handle-style names
          .sort
+  end
+
+  def handle_style_name?(name)
+    name.match?(/\A\{[0-9a-f-]+\}\z/)
+  end
+
+  # Compare every field of each object the two models share, keyed by IDD type and name.
+  #
+  # @return [Array<String>] one description per differing field
+  def field_diffs(legacy, composed)
+    composed_objects = objects_by_key(composed)
+    objects_by_key(legacy).filter_map do |key, legacy_object|
+      composed_object = composed_objects[key]
+      next if composed_object.nil?
+
+      object_field_diffs(key, legacy_object, composed_object)
+    end.flatten
+  end
+
+  # Objects that can be matched across models: those carrying a name someone chose. A name
+  # OpenStudio generated ("Curve Biquadratic 3") only records creation order, so two objects sharing
+  # one across models are not necessarily the same object and comparing their fields is meaningless.
+  # Those are left to the count and name checks.
+  def objects_by_key(model)
+    model.getModelObjects.each_with_object({}) do |object, hash|
+      next unless object.name.is_initialized
+
+      name = object.name.get
+      next if handle_style_name?(name) || auto_generated_name?(object, name)
+      # An availability manager list is created implicitly with its loop and named after the loop's
+      # generated name, which the loop may later be renamed away from - so the list's name records
+      # creation order too, and two lists sharing one across models need not be the same list.
+      next if implicit_container?(object)
+
+      hash["#{object.iddObjectType.valueName} '#{name}'"] = object
+    end
+  end
+
+  def object_field_diffs(key, legacy_object, composed_object)
+    field_count = [legacy_object.numFields, composed_object.numFields].max
+    (0...field_count).filter_map do |index|
+      next if field_name(legacy_object, index) == 'Handle'
+
+      legacy_value = field_value(legacy_object, index)
+      composed_value = field_value(composed_object, index)
+      next if same_value?(legacy_value, composed_value)
+
+      "#{key} field '#{field_name(legacy_object, index)}': legacy #{legacy_value.inspect}, composed #{composed_value.inspect}"
+    end
+  end
+
+  # Numbers are compared as numbers, so "1" and "1.0" are the same value written two ways.
+  def same_value?(legacy_value, composed_value)
+    return true if legacy_value == composed_value
+
+    legacy_number = numeric(legacy_value)
+    composed_number = numeric(composed_value)
+    return false if legacy_number.nil? || composed_number.nil?
+
+    (legacy_number - composed_number).abs < 1.0e-9
+  end
+
+  def numeric(value)
+    return nil unless value.is_a?(String)
+
+    Float(value)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  def field_name(object, index)
+    field = object.iddObject.getField(index)
+    field.is_initialized ? field.get.name : "field #{index}"
+  end
+
+  # A field's value with every object handle resolved to what it points at, so the comparison does
+  # not trip over handles - which differ between any two models. Handles appear both as a whole
+  # field value (a reference field) and embedded in text (an EMS program line), so they are resolved
+  # wherever they occur; that makes an EMS program compare by the objects it drives rather than by
+  # its handles.
+  def field_value(object, index)
+    # returnDefault: a field left empty reports its IDD default, so setting a field to the value it
+    # would default to anyway does not read as a difference. Only values that actually differ do.
+    raw = object.getString(index, true)
+    return nil unless raw.is_initialized
+
+    resolve_handles(raw.get, object.model)
+  end
+
+  def resolve_handles(value, model)
+    resolved = value.gsub(/\{[0-9a-f-]{36}\}/i) do |handle|
+      target = model.getObject(OpenStudio.toUUID(handle))
+      target.is_initialized ? reference_label(target.get) : '(unresolved)'
+    end
+    # A reference field can hold the target's name outright rather than its handle; normalize the
+    # generated names the same way, so a reference reads as what it points at rather than as the
+    # order its target happened to be created in.
+    named = model.getModelObjectByName(resolved)
+    named.is_initialized ? reference_label(named.get) : resolved
+  end
+
+  # What a reference points at: the target's name, or its type when the name is one OpenStudio
+  # generated (node and curve names follow creation order, not whether the model is correct).
+  # Undecorated, so a legacy EMS line written with a handle matches a composed one written with
+  # the object's own name - the two say the same thing.
+  def reference_label(target)
+    name = target.name.is_initialized ? target.name.get : nil
+    return "(#{target.iddObject.name})" if name.nil? || auto_generated_name?(target, name) || implicit_container?(target)
+
+    name
+  end
+
+  # Objects OpenStudio creates on a loop's behalf and names after the loop's generated name: which
+  # of them a loop points at says nothing about whether the model is right.
+  def implicit_container?(target)
+    target.iddObject.name == 'OS:AvailabilityManagerAssignmentList'
+  end
+
+  # True when a name is the one OpenStudio assigns by default: the object's type words, optionally
+  # followed by a number ("Node 7", "Thermal Zone 1").
+  def auto_generated_name?(object, name)
+    base = object.iddObject.name.sub(/\AOS:/, '').tr(':', ' ').gsub(/([a-z0-9])([A-Z])/, '\1 \2')
+    name.match?(/\A#{Regexp.escape(base)}\s*\d*\z/)
   end
 
   # Build the same hot water loop with the legacy method and the composer.
   def build_pair(fuel_type, **kwargs)
     legacy = OpenStudio::Model::Model.new
-    @hvac.model_add_hw_loop(legacy, fuel_type, **kwargs)
+    legacy_hvac.model_add_hw_loop(legacy, fuel_type, **kwargs)
     composed = OpenStudio::Model::Model.new
     @composers.hw_loop(composed, fuel_type, **kwargs)
     [legacy, composed]
@@ -86,6 +228,19 @@ class TestHVACCreatorComposers < Minitest::Test
     assert(proxies.first.plantLoop.is_initialized)
   end
 
+  # The heat pump's EMS setpoint sensor takes its key from the loop's scheduled setpoint manager,
+  # which must therefore already be on the supply outlet node when the component is built. An empty
+  # key is accepted by the model and by a name/count parity diff, but is an EnergyPlus fatal
+  # ("Unique Key Name not found"), so assert the key directly in both models.
+  def test_hw_loop_air_source_heat_pump_ems_sensor_key
+    legacy, composed = build_pair('AirSourceHeatPump')
+    [legacy, composed].each do |model|
+      sensor = model.getEnergyManagementSystemSensors.find { |s| s.name.get.include?('Setpt_Mgr_Temp_Sen') }
+      refute_nil(sensor, 'the setpoint temperature sensor should exist')
+      assert_equal('Hot Water Loop Temp - 180F', sensor.keyName)
+    end
+  end
+
   def test_hw_loop_boiler_numeric_checklist
     _legacy, composed = build_pair('NaturalGas')
     boiler = composed.getBoilerHotWaters.first
@@ -115,7 +270,7 @@ class TestHVACCreatorComposers < Minitest::Test
       composed_cond = OpenStudio::Model::PlantLoop.new(composed)
       composed_cond.setName('Condenser Water Loop')
     end
-    @hvac.model_add_chw_loop(legacy, condenser_water_loop: legacy_cond, **kwargs)
+    legacy_hvac.model_add_chw_loop(legacy, condenser_water_loop: legacy_cond, **kwargs)
     @composers.chw_loop(composed, condenser_water_loop: composed_cond, **kwargs)
     [legacy, composed]
   end
@@ -172,11 +327,52 @@ class TestHVACCreatorComposers < Minitest::Test
     assert_in_delta(OpenstudioStandards::HVAC.kw_per_ton_to_cop(1.188), chiller.referenceCOP, 0.01)
   end
 
-  def test_chw_loop_heat_exchanger_config_raises
+  # The PRM baseline's system 7/8 chilled water plant: the loop the caller names becomes the
+  # secondary (it keeps the plain name and the coils), and the chillers move to a renamed primary
+  # joined through a fluid-to-fluid heat exchanger.
+  def test_chw_loop_heat_exchanger_config_parity
+    legacy, composed = build_chw_pair(with_condenser: true,
+                                      chw_pumping_configuration: 'constant primary variable secondary heat exchanger',
+                                      chiller_cooling_type: 'WaterCooled', chiller_compressor_type: 'Rotary Screw',
+                                      outdoor_air_reset: true)
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getHeatExchangerFluidToFluids.size)
+  end
+
+  def test_chw_loop_heat_exchanger_config_returns_primary
     model = OpenStudio::Model::Model.new
-    assert_raises(NotImplementedError) do
-      @composers.chw_loop(model, chw_pumping_configuration: 'constant primary variable secondary heat exchanger')
-    end
+    cw = @hvac.model_add_cw_loop(model, use_90_1_design_sizing: false)
+    loop = @composers.chw_loop(model, chw_pumping_configuration: 'constant primary variable secondary heat exchanger',
+                                      chiller_cooling_type: 'WaterCooled', condenser_water_loop: cw,
+                                      outdoor_air_reset: true)
+    assert_equal('Chilled Water Loop_Primary', loop.name.get)
+    assert(loop.additionalProperties.hasFeature('is_primary_loop'))
+    assert_equal('Chilled Water Loop', loop.additionalProperties.getFeatureAsString('secondary_loop_name').get)
+    secondary = model.getPlantLoopByName('Chilled Water Loop').get
+    assert(secondary.additionalProperties.hasFeature('is_secondary_loop'))
+  end
+
+  # This configuration is reached only through the PRM baseline, which test_add_hvac_systems does
+  # not exercise, so translate the composed model here to catch a structurally invalid plant.
+  def test_chw_loop_heat_exchanger_config_forward_translates
+    _legacy, composed = build_chw_pair(with_condenser: true,
+                                       chw_pumping_configuration: 'constant primary variable secondary heat exchanger',
+                                       chiller_cooling_type: 'WaterCooled', chiller_compressor_type: 'Rotary Screw',
+                                       outdoor_air_reset: true)
+    ft = OpenStudio::EnergyPlus::ForwardTranslator.new
+    ft.translateModel(composed)
+    assert_equal(0, ft.errors.size, ft.errors.map(&:logMessage).join("\n"))
+  end
+
+  # The primary pump's head is shared across the chillers.
+  def test_chw_loop_heat_exchanger_config_multiple_chillers_parity
+    legacy, composed = build_chw_pair(with_condenser: true, num_chillers: 2,
+                                      chw_pumping_configuration: 'constant primary variable secondary heat exchanger',
+                                      chiller_cooling_type: 'WaterCooled', chiller_compressor_type: 'Rotary Screw',
+                                      outdoor_air_reset: true)
+    assert_model_parity(legacy, composed)
+    pump = composed.getPumpVariableSpeeds.find { |p| p.name.get.include?('Primary Pump') }
+    assert_in_delta(OpenStudio.convert(7.5, 'ftH_{2}O', 'Pa').get, pump.ratedPumpHead, 1.0)
   end
 
   # ---- condenser water loop ----
@@ -184,7 +380,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_cw_pair(**kwargs)
     legacy = OpenStudio::Model::Model.new
     composed = OpenStudio::Model::Model.new
-    @hvac.model_add_cw_loop(legacy, use_90_1_design_sizing: false, **kwargs)
+    legacy_hvac.model_add_cw_loop(legacy, use_90_1_design_sizing: false, **kwargs)
     @composers.cw_loop(composed, use_90_1_design_sizing: false, **kwargs)
     [legacy, composed]
   end
@@ -243,16 +439,50 @@ class TestHVACCreatorComposers < Minitest::Test
     assert_equal('GlobalCoolingSizingFactor', sizing.coincidentSizingFactorMode)
   end
 
-  def test_cw_loop_90_1_design_sizing_raises
-    model = OpenStudio::Model::Model.new
-    assert_raises(NotImplementedError) { @composers.cw_loop(model, use_90_1_design_sizing: true) }
+  # use_90_1_design_sizing defaults to true and no caller overrides it, so this is the path every
+  # condenser loop in the library actually takes. The sizing runs as an imperative tail because it
+  # reads the model's design days.
+  def build_cw_pair_90_1(**kwargs)
+    legacy = OpenStudio::Model::Model.new
+    composed = OpenStudio::Model::Model.new
+    legacy_hvac.model_add_cw_loop(legacy, **kwargs)
+    @composers.cw_loop(composed, **kwargs)
+    [legacy, composed]
   end
 
-  def test_cw_loop_variable_speed_tower_raises
-    model = OpenStudio::Model::Model.new
-    assert_raises(NotImplementedError) do
-      @composers.cw_loop(model, use_90_1_design_sizing: false, cooling_tower_capacity_control: 'Variable Speed Fan')
-    end
+  def test_cw_loop_90_1_design_sizing_parity_no_design_days
+    legacy, composed = build_cw_pair_90_1
+    assert_model_parity(legacy, composed)
+    # With no design days in the model the CTI 78 F rating condition is used.
+    spm = composed.getSetpointManagerFollowOutdoorAirTemperatures.first
+    assert_equal('Condenser Water Loop Setpoint Manager Follow OATwb with 7.0F Approach', spm.name.get)
+    assert_in_delta(OpenStudio.convert(85.0, 'F', 'C').get, composed.getPlantLoops.first.sizingPlant.designLoopExitTemperature, 1e-6)
+  end
+
+  def test_cw_loop_90_1_design_sizing_parity_variable_speed_tower
+    legacy, composed = build_cw_pair_90_1(cooling_tower_capacity_control: 'Variable Speed Fan')
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getCoolingTowerVariableSpeeds.size)
+  end
+
+  # Every standard's model_cw_loop_cooling_tower_fan_type returns 'Variable Speed Fan', so this is
+  # the tower every PRM baseline condenser loop builds.
+  def test_cw_loop_variable_speed_tower_parity
+    legacy, composed = build_cw_pair(cooling_tower_capacity_control: 'Variable Speed Fan')
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getCoolingTowerVariableSpeeds.size)
+  end
+
+  def test_cw_loop_variable_speed_tower_checklist
+    _legacy, composed = build_cw_pair(cooling_tower_capacity_control: 'Variable Speed Fan')
+    tower = composed.getCoolingTowerVariableSpeeds.first
+    assert_in_delta(OpenStudio.convert(10.0, 'R', 'K').get, tower.designRangeTemperature.get, 1e-6)
+    assert_in_delta(OpenStudio.convert(7.0, 'R', 'K').get, tower.designApproachTemperature.get, 1e-6)
+    assert_in_delta(0.125, tower.fractionofTowerCapacityinFreeConvectionRegime.get, 1e-9)
+    curve = tower.fanPowerRatioFunctionofAirFlowRateRatioCurve.get.to_CurveCubic.get
+    assert_equal('VSD-TWR-FAN-FPLR', curve.name.get)
+    assert_in_delta(0.33162901, curve.coefficient1Constant, 1e-9)
+    assert_in_delta(0.9484823, curve.coefficient4xPOW3, 1e-9)
   end
 
   # ---- heat pump loop ----
@@ -260,7 +490,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_hp_pair(**kwargs)
     legacy = OpenStudio::Model::Model.new
     composed = OpenStudio::Model::Model.new
-    @hvac.model_add_hp_loop(legacy, **kwargs)
+    legacy_hvac.model_add_hp_loop(legacy, **kwargs)
     @composers.hp_loop(composed, **kwargs)
     [legacy, composed]
   end
@@ -303,19 +533,50 @@ class TestHVACCreatorComposers < Minitest::Test
     assert_equal(2, schedules.size, 'all three managers share the same high and low temperature schedules')
   end
 
-  def test_hp_loop_air_source_heat_pump_raises
-    model = OpenStudio::Model::Model.new
-    assert_raises(NotImplementedError) { @composers.hp_loop(model, heating_fuel: 'AirSourceHeatPump') }
+  def test_hp_loop_air_source_heat_pump_parity
+    legacy, composed = build_hp_pair(heating_fuel: 'AirSourceHeatPump')
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getPlantComponentUserDefineds.size)
   end
 
-  def test_hp_loop_variable_speed_tower_raises
-    model = OpenStudio::Model::Model.new
-    assert_raises(NotImplementedError) { @composers.hp_loop(model, cooling_type: 'CoolingTowerVariableSpeed') }
+  # Reproduced legacy behavior, not an endorsement: the heat pump's EMS setpoint sensor looks for a
+  # SetpointManagerScheduled, but this loop carries dual-setpoint managers, so the key is empty in
+  # both models. A model built this way is an EnergyPlus fatal; the corresponding CI case is
+  # commented out in test_add_hvac_systems.rb.
+  def test_hp_loop_air_source_heat_pump_reproduces_empty_sensor_key
+    legacy, composed = build_hp_pair(heating_fuel: 'AirSourceHeatPump')
+    [legacy, composed].each do |model|
+      sensor = model.getEnergyManagementSystemSensors.find { |s| s.name.get.include?('Setpt_Mgr_Temp_Sen') }
+      refute_nil(sensor)
+      assert_equal('', sensor.keyName)
+    end
   end
 
-  def test_hp_loop_dry_fluid_cooler_raises
-    model = OpenStudio::Model::Model.new
-    assert_raises(NotImplementedError) { @composers.hp_loop(model, cooling_type: 'FluidCoolerSingleSpeed') }
+  def test_hp_loop_variable_speed_tower_parity
+    legacy, composed = build_hp_pair(cooling_type: 'CoolingTowerVariableSpeed')
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getCoolingTowerVariableSpeeds.size)
+  end
+
+  def test_hp_loop_dry_fluid_cooler_parity
+    legacy, composed = build_hp_pair(cooling_type: 'FluidCooler')
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getFluidCoolerSingleSpeeds.size)
+  end
+
+  def test_hp_loop_dry_fluid_cooler_two_speed_parity
+    legacy, composed = build_hp_pair(cooling_type: 'FluidCoolerTwoSpeed')
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getFluidCoolerTwoSpeeds.size)
+  end
+
+  # The legacy method replaces the constructor's hard-coded design flows with autosized ones.
+  def test_hp_loop_dry_fluid_cooler_autosizes_flows
+    _legacy, composed = build_hp_pair(cooling_type: 'FluidCooler')
+    cooler = composed.getFluidCoolerSingleSpeeds.first
+    assert_equal('UFactorTimesAreaAndDesignWaterFlowRate', cooler.performanceInputMethod)
+    assert(cooler.isDesignWaterFlowRateAutosized)
+    assert(cooler.isDesignAirFlowRateAutosized)
   end
 
   # ---- PSZ-AC (air-system family) ----
@@ -335,7 +596,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_psz_pair(zone_count: 1, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_psz_ac(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_psz_ac(legacy, legacy_zones, **kwargs)
     @composers.psz_ac(composed, composed_zones, **kwargs)
     [legacy, composed]
   end
@@ -403,16 +664,67 @@ class TestHVACCreatorComposers < Minitest::Test
     legacy_chw = add_water_loop(legacy, 'CHW', 6.7, 6.7)
     composed_hw = add_water_loop(composed, 'HW', 82.2, 11.1)
     composed_chw = add_water_loop(composed, 'CHW', 6.7, 6.7)
-    @hvac.model_add_psz_ac(legacy, legacy_zones, cooling_type: 'Water', heating_type: 'Water', hot_water_loop: legacy_hw, chilled_water_loop: legacy_chw)
+    legacy_hvac.model_add_psz_ac(legacy, legacy_zones, cooling_type: 'Water', heating_type: 'Water', hot_water_loop: legacy_hw, chilled_water_loop: legacy_chw)
     @composers.psz_ac(composed, composed_zones, cooling_type: 'Water', heating_type: 'Water', hot_water_loop: composed_hw, chilled_water_loop: composed_chw)
     assert_model_parity(legacy, composed)
     assert_equal(1, composed.getCoilCoolingWaters.size)
     assert_equal(1, composed.getCoilHeatingWaters.size)
   end
 
-  def test_psz_ac_heat_pump_heating_raises
-    model, zones = model_with_zones(1)
-    assert_raises(NotImplementedError) { @composers.psz_ac(model, zones, heating_type: 'Water To Air Heat Pump') }
+  # PSZ-HP: the dispatcher's heat-pump packaged system, reached by create_typical, the hvac
+  # inference data of all three standards, and the PRM baseline.
+  def test_psz_ac_single_speed_heat_pump_parity
+    legacy, composed = build_psz_pair(cooling_type: 'Single Speed Heat Pump',
+                                      heating_type: 'Single Speed Heat Pump',
+                                      supplemental_heating_type: 'Electricity')
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getCoilHeatingDXSingleSpeeds.size)
+    assert_equal(1, composed.getCoilCoolingDXSingleSpeeds.size)
+  end
+
+  # EnergyPlus rejects a unitary system whose controlling zone is blank ("Controlling Zone or
+  # Thermostat Location cannot be blank when Control Type = Load"), and a name-and-count parity diff
+  # does not compare the field, so assert it directly in both models.
+  def test_psz_ac_unitary_controlling_zone
+    legacy, composed = build_psz_pair
+    [legacy, composed].each do |model|
+      unitary = model.getAirLoopHVACUnitarySystems.first
+      assert(unitary.controllingZoneorThermostatLocation.is_initialized, 'controlling zone must be set')
+      assert_equal('Zone 1', unitary.controllingZoneorThermostatLocation.get.name.get)
+    end
+  end
+
+  def test_psz_ac_heat_pump_checklist
+    _legacy, composed = build_psz_pair(cooling_type: 'Single Speed Heat Pump',
+                                       heating_type: 'Single Speed Heat Pump',
+                                       supplemental_heating_type: 'Electricity')
+    unitary = composed.getAirLoopHVACUnitarySystems.first
+    assert_equal('Zone 1 PSZ-AC Unitary HP', unitary.name.get)
+    assert_in_delta(OpenStudio.convert(40.0, 'F', 'C').get,
+                    unitary.maximumOutdoorDryBulbTemperatureforSupplementalHeaterOperation, 1e-6)
+    coil = composed.getCoilHeatingDXSingleSpeeds.first
+    assert_equal('Zone 1 HP Htg Coil', coil.name.get)
+    assert_in_delta(3.3, coil.ratedCOP, 1e-9)
+  end
+
+  def test_psz_ac_water_to_air_heat_pump_parity
+    legacy, legacy_zones = model_with_zones(1)
+    composed, composed_zones = model_with_zones(1)
+    [[legacy, legacy_zones, true], [composed, composed_zones, false]].each do |model, zones, is_legacy|
+      builder = is_legacy ? legacy_hvac : @hvac
+      hw = builder.model_add_hw_loop(model, 'NaturalGas')
+      chw = builder.model_add_chw_loop(model, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled')
+      args = { cooling_type: 'Water To Air Heat Pump', heating_type: 'Water To Air Heat Pump',
+               supplemental_heating_type: 'Electricity', hot_water_loop: hw, chilled_water_loop: chw }
+      if is_legacy
+        legacy_hvac.model_add_psz_ac(model, zones, **args)
+      else
+        @composers.psz_ac(model, zones, **args)
+      end
+    end
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getCoilHeatingWaterToAirHeatPumpEquationFits.size)
+    assert_equal(1, composed.getCoilCoolingWaterToAirHeatPumpEquationFits.size)
   end
 
   # ---- PSZ-VAV ----
@@ -420,7 +732,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_psz_vav_pair(zone_count: 1, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_psz_vav(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_psz_vav(legacy, legacy_zones, **kwargs)
     @composers.psz_vav(composed, composed_zones, **kwargs)
     [legacy, composed]
   end
@@ -476,7 +788,7 @@ class TestHVACCreatorComposers < Minitest::Test
     legacy_chw = add_water_loop(legacy, 'CHW', 6.7, 6.7)
     composed_hw = add_water_loop(composed, 'HW', 82.2, 11.1)
     composed_chw = add_water_loop(composed, 'CHW', 6.7, 6.7)
-    @hvac.model_add_psz_vav(legacy, legacy_zones, cooling_type: 'WaterCooled', heating_type: 'Water', hot_water_loop: legacy_hw, chilled_water_loop: legacy_chw)
+    legacy_hvac.model_add_psz_vav(legacy, legacy_zones, cooling_type: 'WaterCooled', heating_type: 'Water', hot_water_loop: legacy_hw, chilled_water_loop: legacy_chw)
     @composers.psz_vav(composed, composed_zones, cooling_type: 'WaterCooled', heating_type: 'Water', hot_water_loop: composed_hw, chilled_water_loop: composed_chw)
     assert_model_parity(legacy, composed)
     assert_equal(1, composed.getCoilCoolingWaters.size)
@@ -488,9 +800,44 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_vav_pair(zone_count: 2, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_vav_reheat(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_vav_reheat(legacy, legacy_zones, **kwargs)
     @composers.vav_reheat(composed, composed_zones, **kwargs)
     [legacy, composed]
+  end
+
+  # Build a pair of models where the last zone is the return plenum for the rest — the shape the
+  # LargeOffice / MediumOffice hvac maps use.
+  def build_plenum_pair(zone_count: 2, &block)
+    legacy, legacy_zones = model_with_zones(zone_count + 1)
+    composed, composed_zones = model_with_zones(zone_count + 1)
+    block.call(legacy, legacy_zones[0...-1], legacy_zones.last, true)
+    block.call(composed, composed_zones[0...-1], composed_zones.last, false)
+    [legacy, composed]
+  end
+
+  def test_vav_reheat_return_plenum_parity
+    legacy, composed = build_plenum_pair do |model, zones, plenum, is_legacy|
+      if is_legacy
+        legacy_hvac.model_add_vav_reheat(model, zones, return_plenum: plenum)
+      else
+        @composers.vav_reheat(model, zones, return_plenum: plenum)
+      end
+    end
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getAirLoopHVACReturnPlenums.size)
+    assert_equal('Zone 3', composed.getAirLoopHVACReturnPlenums.first.thermalZone.get.name.get)
+  end
+
+  def test_pvav_return_plenum_parity
+    legacy, composed = build_plenum_pair do |model, zones, plenum, is_legacy|
+      if is_legacy
+        legacy_hvac.model_add_pvav(model, zones, return_plenum: plenum)
+      else
+        @composers.pvav(model, zones, return_plenum: plenum)
+      end
+    end
+    assert_model_parity(legacy, composed)
+    assert_equal(1, composed.getAirLoopHVACReturnPlenums.size)
   end
 
   def test_vav_reheat_default_parity
@@ -554,7 +901,7 @@ class TestHVACCreatorComposers < Minitest::Test
     composed, composed_zones = model_with_zones(2)
     legacy_loops = [add_water_loop(legacy, 'HW', 82.2, 11.1), add_water_loop(legacy, 'CHW', 6.7, 6.7)]
     composed_loops = [add_water_loop(composed, 'HW', 82.2, 11.1), add_water_loop(composed, 'CHW', 6.7, 6.7)]
-    @hvac.model_add_vav_reheat(legacy, legacy_zones, hot_water_loop: legacy_loops[0], chilled_water_loop: legacy_loops[1], **kwargs)
+    legacy_hvac.model_add_vav_reheat(legacy, legacy_zones, hot_water_loop: legacy_loops[0], chilled_water_loop: legacy_loops[1], **kwargs)
     @composers.vav_reheat(composed, composed_zones, hot_water_loop: composed_loops[0], chilled_water_loop: composed_loops[1], **kwargs)
     [legacy, composed]
   end
@@ -588,7 +935,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def test_pvav_default_parity
     legacy, legacy_zones = model_with_zones(2)
     composed, composed_zones = model_with_zones(2)
-    @hvac.model_add_pvav(legacy, legacy_zones)
+    legacy_hvac.model_add_pvav(legacy, legacy_zones)
     @composers.pvav(composed, composed_zones)
     assert_model_parity(legacy, composed)
     assert_equal(1, composed.getAirLoopHVACs.size)
@@ -603,7 +950,7 @@ class TestHVACCreatorComposers < Minitest::Test
     lchw = add_water_loop(legacy, 'CHW', 6.7, 6.7)
     chw = add_water_loop(composed, 'HW', 82.2, 11.1)
     cchw = add_water_loop(composed, 'CHW', 6.7, 6.7)
-    @hvac.model_add_pvav(legacy, legacy_zones, hot_water_loop: lhw, chilled_water_loop: lchw)
+    legacy_hvac.model_add_pvav(legacy, legacy_zones, hot_water_loop: lhw, chilled_water_loop: lchw)
     @composers.pvav(composed, composed_zones, hot_water_loop: chw, chilled_water_loop: cchw)
     assert_model_parity(legacy, composed)
     assert_equal(3, composed.getCoilHeatingWaters.size, 'main coil plus one reheat coil per zone')
@@ -631,7 +978,7 @@ class TestHVACCreatorComposers < Minitest::Test
       extra_legacy[:chilled_water_loop] = add_water_loop(legacy, 'CHW', 6.7, 6.7)
       extra_composed[:chilled_water_loop] = add_water_loop(composed, 'CHW', 6.7, 6.7)
     end
-    @hvac.model_add_cav(legacy, legacy_zones, hot_water_loop: legacy_hw, **extra_legacy, **kwargs)
+    legacy_hvac.model_add_cav(legacy, legacy_zones, hot_water_loop: legacy_hw, **extra_legacy, **kwargs)
     @composers.cav(composed, composed_zones, hot_water_loop: composed_hw, **extra_composed, **kwargs)
     [legacy, composed]
   end
@@ -669,7 +1016,7 @@ class TestHVACCreatorComposers < Minitest::Test
     composed, composed_zones = model_with_zones(2)
     legacy_chw = add_water_loop(legacy, 'CHW', 6.7, 6.7)
     composed_chw = add_water_loop(composed, 'CHW', 6.7, 6.7)
-    @hvac.model_add_vav_pfp_boxes(legacy, legacy_zones, chilled_water_loop: legacy_chw)
+    legacy_hvac.model_add_vav_pfp_boxes(legacy, legacy_zones, chilled_water_loop: legacy_chw)
     @composers.vav_pfp_boxes(composed, composed_zones, chilled_water_loop: composed_chw)
     assert_model_parity(legacy, composed)
     assert_equal(2, composed.getAirTerminalSingleDuctParallelPIUReheats.size)
@@ -703,7 +1050,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def test_pvav_pfp_boxes_dx_parity
     legacy, legacy_zones = model_with_zones(2)
     composed, composed_zones = model_with_zones(2)
-    @hvac.model_add_pvav_pfp_boxes(legacy, legacy_zones)
+    legacy_hvac.model_add_pvav_pfp_boxes(legacy, legacy_zones)
     @composers.pvav_pfp_boxes(composed, composed_zones)
     assert_model_parity(legacy, composed)
     assert_equal('2 Zone PVAV with PFP Boxes and Reheat', composed.getAirLoopHVACs.first.name.get)
@@ -716,7 +1063,7 @@ class TestHVACCreatorComposers < Minitest::Test
     composed, composed_zones = model_with_zones(2)
     legacy_chw = add_water_loop(legacy, 'CHW', 6.7, 6.7)
     composed_chw = add_water_loop(composed, 'CHW', 6.7, 6.7)
-    @hvac.model_add_pvav_pfp_boxes(legacy, legacy_zones, chilled_water_loop: legacy_chw)
+    legacy_hvac.model_add_pvav_pfp_boxes(legacy, legacy_zones, chilled_water_loop: legacy_chw)
     @composers.pvav_pfp_boxes(composed, composed_zones, chilled_water_loop: composed_chw)
     assert_model_parity(legacy, composed)
     assert_equal(1, composed.getCoilCoolingWaters.size)
@@ -727,7 +1074,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_furnace_pair(**kwargs)
     legacy, legacy_zones = model_with_zones(2)
     composed, composed_zones = model_with_zones(2)
-    @hvac.model_add_furnace_central_ac(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_furnace_central_ac(legacy, legacy_zones, **kwargs)
     @composers.furnace_central_ac(composed, composed_zones, **kwargs)
     [legacy, composed]
   end
@@ -793,11 +1140,11 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_doas_pair(zone_count: 2, with_hw: false, with_chw: false, **kwargs)
     legacy, legacy_zones = model_with_oa_zones(zone_count)
     composed, composed_zones = model_with_oa_zones(zone_count)
-    legacy_hw = with_hw ? @hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
+    legacy_hw = with_hw ? legacy_hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
     composed_hw = with_hw ? @hvac.model_add_hw_loop(composed, 'NaturalGas') : nil
-    legacy_chw = with_chw ? @hvac.model_add_chw_loop(legacy, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled') : nil
+    legacy_chw = with_chw ? legacy_hvac.model_add_chw_loop(legacy, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled') : nil
     composed_chw = with_chw ? @hvac.model_add_chw_loop(composed, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled') : nil
-    @hvac.model_add_doas(legacy, legacy_zones, hot_water_loop: legacy_hw, chilled_water_loop: legacy_chw, **kwargs)
+    legacy_hvac.model_add_doas(legacy, legacy_zones, hot_water_loop: legacy_hw, chilled_water_loop: legacy_chw, **kwargs)
     @composers.doas(composed, composed_zones, hot_water_loop: composed_hw, chilled_water_loop: composed_chw, **kwargs)
     [legacy, composed]
   end
@@ -810,6 +1157,14 @@ class TestHVACCreatorComposers < Minitest::Test
     assert_equal(1, composed.getCoilCoolingDXTwoSpeeds.size)
     assert_equal(1, composed.getCoilHeatingDXSingleSpeeds.size)
     assert_equal(1, composed.getCoilHeatingElectrics.size)
+  end
+
+  # The LargeHotel prototype maps set an explicit supply fan maximum flow rate.
+  def test_doas_fan_maximum_flow_rate_parity
+    legacy, composed = build_doas_pair(fan_maximum_flow_rate: 4346.24464)
+    assert_model_parity(legacy, composed)
+    fan = composed.getFanConstantVolumeByName('DOAS Supply Fan').get
+    assert_in_delta(OpenStudio.convert(4346.24464, 'cfm', 'm^3/s').get, fan.maximumFlowRate.get, 1e-6)
   end
 
   def test_doas_vav_parity
@@ -926,11 +1281,11 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_cold_supply_pair(zone_count: 2, with_hw: false, with_chw: false, **kwargs)
     legacy, legacy_zones = model_with_oa_zones(zone_count)
     composed, composed_zones = model_with_oa_zones(zone_count)
-    legacy_hw = with_hw ? @hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
+    legacy_hw = with_hw ? legacy_hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
     composed_hw = with_hw ? @hvac.model_add_hw_loop(composed, 'NaturalGas') : nil
-    legacy_chw = with_chw ? @hvac.model_add_chw_loop(legacy, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled') : nil
+    legacy_chw = with_chw ? legacy_hvac.model_add_chw_loop(legacy, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled') : nil
     composed_chw = with_chw ? @hvac.model_add_chw_loop(composed, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled') : nil
-    @hvac.model_add_doas_cold_supply(legacy, legacy_zones, hot_water_loop: legacy_hw, chilled_water_loop: legacy_chw, **kwargs)
+    legacy_hvac.model_add_doas_cold_supply(legacy, legacy_zones, hot_water_loop: legacy_hw, chilled_water_loop: legacy_chw, **kwargs)
     @composers.doas_cold_supply(composed, composed_zones, hot_water_loop: composed_hw, chilled_water_loop: composed_chw, **kwargs)
     [legacy, composed]
   end
@@ -951,6 +1306,14 @@ class TestHVACCreatorComposers < Minitest::Test
     assert_model_parity(legacy, composed)
     assert_equal(1, composed.getCoilHeatingWaters.size)
     assert_equal(1, composed.getCoilCoolingWaters.size)
+  end
+
+  # The three LargeHotel geometry maps set this on their 'DOAS Cold Supply' system.
+  def test_cold_supply_fan_maximum_flow_rate_parity
+    legacy, composed = build_cold_supply_pair(fan_maximum_flow_rate: 4346.24464)
+    assert_model_parity(legacy, composed)
+    fan = composed.getFanConstantVolumeByName('DOAS Supply Fan').get
+    assert_in_delta(OpenStudio.convert(4346.24464, 'cfm', 'm^3/s').get, fan.maximumFlowRate.get, 1e-6)
   end
 
   def test_cold_supply_custom_name_and_temps_parity
@@ -997,7 +1360,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_crac_pair(zone_count: 1, climate_zone: 'ASHRAE 169-2013-5A', **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_crac(legacy, legacy_zones, climate_zone, **kwargs)
+    legacy_hvac.model_add_crac(legacy, legacy_zones, climate_zone, **kwargs)
     @composers.crac(composed, composed_zones, climate_zone, **kwargs)
     [legacy, composed]
   end
@@ -1069,9 +1432,9 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_crah_pair(zone_count: 2, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    legacy_chw = @hvac.model_add_chw_loop(legacy, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled')
+    legacy_chw = legacy_hvac.model_add_chw_loop(legacy, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled')
     composed_chw = @hvac.model_add_chw_loop(composed, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled')
-    @hvac.model_add_crah(legacy, legacy_zones, chilled_water_loop: legacy_chw, **kwargs)
+    legacy_hvac.model_add_crah(legacy, legacy_zones, chilled_water_loop: legacy_chw, **kwargs)
     @composers.crah(composed, composed_zones, chilled_water_loop: composed_chw, **kwargs)
     [legacy, composed]
   end
@@ -1134,11 +1497,11 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_data_center_pair(zone_count: 1, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    legacy_hw = @hvac.model_add_hw_loop(legacy, 'NaturalGas')
-    legacy_hp = @hvac.model_add_hp_loop(legacy, heating_fuel: 'NaturalGas', cooling_fuel: 'Electricity', cooling_type: 'EvaporativeFluidCooler')
+    legacy_hw = legacy_hvac.model_add_hw_loop(legacy, 'NaturalGas')
+    legacy_hp = legacy_hvac.model_add_hp_loop(legacy, heating_fuel: 'NaturalGas', cooling_fuel: 'Electricity', cooling_type: 'EvaporativeFluidCooler')
     composed_hw = @hvac.model_add_hw_loop(composed, 'NaturalGas')
     composed_hp = @hvac.model_add_hp_loop(composed, heating_fuel: 'NaturalGas', cooling_fuel: 'Electricity', cooling_type: 'EvaporativeFluidCooler')
-    @hvac.model_add_data_center_hvac(legacy, legacy_zones, legacy_hw, legacy_hp, **kwargs)
+    legacy_hvac.model_add_data_center_hvac(legacy, legacy_zones, legacy_hw, legacy_hp, **kwargs)
     @composers.data_center_hvac(composed, composed_zones, composed_hw, composed_hp, **kwargs)
     [legacy, composed]
   end
@@ -1199,9 +1562,9 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_ptac_pair(zone_count: 1, with_hw: false, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    legacy_hw = with_hw ? @hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
+    legacy_hw = with_hw ? legacy_hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
     composed_hw = with_hw ? @hvac.model_add_hw_loop(composed, 'NaturalGas') : nil
-    @hvac.model_add_ptac(legacy, legacy_zones, hot_water_loop: legacy_hw, **kwargs)
+    legacy_hvac.model_add_ptac(legacy, legacy_zones, hot_water_loop: legacy_hw, **kwargs)
     @composers.ptac(composed, composed_zones, hot_water_loop: composed_hw, **kwargs)
     [legacy, composed]
   end
@@ -1291,7 +1654,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_pthp_pair(zone_count: 1, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_pthp(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_pthp(legacy, legacy_zones, **kwargs)
     @composers.pthp(composed, composed_zones, **kwargs)
     [legacy, composed]
   end
@@ -1335,9 +1698,9 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_unitheater_pair(zone_count: 1, with_hw: false, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    legacy_hw = with_hw ? @hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
+    legacy_hw = with_hw ? legacy_hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
     composed_hw = with_hw ? @hvac.model_add_hw_loop(composed, 'NaturalGas') : nil
-    @hvac.model_add_unitheater(legacy, legacy_zones, hot_water_loop: legacy_hw, **kwargs)
+    legacy_hvac.model_add_unitheater(legacy, legacy_zones, hot_water_loop: legacy_hw, **kwargs)
     @composers.unitheater(composed, composed_zones, hot_water_loop: composed_hw, **kwargs)
     [legacy, composed]
   end
@@ -1378,11 +1741,11 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_fcu_pair(zone_count: 1, with_hw: false, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    legacy_chw = @hvac.model_add_chw_loop(legacy, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled')
+    legacy_chw = legacy_hvac.model_add_chw_loop(legacy, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled')
     composed_chw = @hvac.model_add_chw_loop(composed, chw_pumping_configuration: 'constant primary', chiller_cooling_type: 'AirCooled')
-    legacy_hw = with_hw ? @hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
+    legacy_hw = with_hw ? legacy_hvac.model_add_hw_loop(legacy, 'NaturalGas') : nil
     composed_hw = with_hw ? @hvac.model_add_hw_loop(composed, 'NaturalGas') : nil
-    @hvac.model_add_four_pipe_fan_coil(legacy, legacy_zones, legacy_chw, hot_water_loop: legacy_hw, **kwargs)
+    legacy_hvac.model_add_four_pipe_fan_coil(legacy, legacy_zones, legacy_chw, hot_water_loop: legacy_hw, **kwargs)
     @composers.four_pipe_fan_coil(composed, composed_zones, composed_chw, hot_water_loop: composed_hw, **kwargs)
     [legacy, composed]
   end
@@ -1443,7 +1806,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def test_baseboard_electric_parity
     legacy, legacy_zones = model_with_zones(2)
     composed, composed_zones = model_with_zones(2)
-    @hvac.model_add_baseboard(legacy, legacy_zones)
+    legacy_hvac.model_add_baseboard(legacy, legacy_zones)
     @composers.baseboard(composed, composed_zones)
     assert_model_parity(legacy, composed)
     assert_equal(2, composed.getZoneHVACBaseboardConvectiveElectrics.size)
@@ -1452,9 +1815,9 @@ class TestHVACCreatorComposers < Minitest::Test
   def test_baseboard_hydronic_parity
     legacy, legacy_zones = model_with_zones(2)
     composed, composed_zones = model_with_zones(2)
-    legacy_hw = @hvac.model_add_hw_loop(legacy, 'NaturalGas')
+    legacy_hw = legacy_hvac.model_add_hw_loop(legacy, 'NaturalGas')
     composed_hw = @hvac.model_add_hw_loop(composed, 'NaturalGas')
-    @hvac.model_add_baseboard(legacy, legacy_zones, hot_water_loop: legacy_hw)
+    legacy_hvac.model_add_baseboard(legacy, legacy_zones, hot_water_loop: legacy_hw)
     @composers.baseboard(composed, composed_zones, hot_water_loop: composed_hw)
     assert_model_parity(legacy, composed)
     assert_equal(2, composed.getZoneHVACBaseboardConvectiveWaters.size)
@@ -1473,7 +1836,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def test_window_ac_parity
     legacy, legacy_zones = model_with_zones(2)
     composed, composed_zones = model_with_zones(2)
-    @hvac.model_add_window_ac(legacy, legacy_zones)
+    legacy_hvac.model_add_window_ac(legacy, legacy_zones)
     @composers.window_ac(composed, composed_zones)
     assert_model_parity(legacy, composed)
     assert_equal(2, composed.getZoneHVACPackagedTerminalAirConditioners.size)
@@ -1498,7 +1861,7 @@ class TestHVACCreatorComposers < Minitest::Test
     legacy_cond.setName('Ambient Loop')
     composed_cond = OpenStudio::Model::PlantLoop.new(composed)
     composed_cond.setName('Ambient Loop')
-    @hvac.model_add_water_source_hp(legacy, legacy_zones, legacy_cond, **kwargs)
+    legacy_hvac.model_add_water_source_hp(legacy, legacy_zones, legacy_cond, **kwargs)
     @composers.water_source_hp(composed, composed_zones, composed_cond, **kwargs)
     [legacy, composed]
   end
@@ -1530,7 +1893,7 @@ class TestHVACCreatorComposers < Minitest::Test
     builder = oa ? :model_with_oa_zones : :model_with_zones
     legacy, legacy_zones = send(builder, zone_count)
     composed, composed_zones = send(builder, zone_count)
-    @hvac.model_add_ideal_air_loads(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_ideal_air_loads(legacy, legacy_zones, **kwargs)
     @composers.ideal_air_loads(composed, composed_zones, **kwargs)
     [legacy, composed]
   end
@@ -1590,7 +1953,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_high_temp_radiant_pair(zone_count: 1, **kwargs)
     legacy, legacy_zones = model_with_thermostat_zones(zone_count)
     composed, composed_zones = model_with_thermostat_zones(zone_count)
-    @hvac.model_add_high_temp_radiant(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_high_temp_radiant(legacy, legacy_zones, **kwargs)
     @composers.high_temp_radiant(composed, composed_zones, **kwargs)
     [legacy, composed]
   end
@@ -1634,7 +1997,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_split_ac_pair(zone_count: 2, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_split_ac(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_split_ac(legacy, legacy_zones, **kwargs)
     @composers.split_ac(composed, composed_zones, **kwargs)
     [legacy, composed]
   end
@@ -1690,7 +2053,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_minisplit_pair(zone_count: 1, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_minisplit_hp(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_minisplit_hp(legacy, legacy_zones, **kwargs)
     @composers.minisplit_hp(composed, composed_zones, **kwargs)
     [legacy, composed]
   end
@@ -1745,10 +2108,10 @@ class TestHVACCreatorComposers < Minitest::Test
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
     if oa.nil?
-      @hvac.model_add_residential_erv(legacy, legacy_zones)
+      legacy_hvac.model_add_residential_erv(legacy, legacy_zones)
       @composers.residential_erv(composed, composed_zones)
     else
-      @hvac.model_add_residential_erv(legacy, legacy_zones, oa)
+      legacy_hvac.model_add_residential_erv(legacy, legacy_zones, oa)
       @composers.residential_erv(composed, composed_zones, oa)
     end
     [legacy, composed]
@@ -1798,12 +2161,169 @@ class TestHVACCreatorComposers < Minitest::Test
   def test_residential_ventilator_parity
     legacy, legacy_zones = model_with_zones(2)
     composed, composed_zones = model_with_zones(2)
-    @hvac.model_add_residential_ventilator(legacy, legacy_zones)
+    legacy_hvac.model_add_residential_ventilator(legacy, legacy_zones)
     @composers.residential_ventilator(composed, composed_zones)
     assert_model_parity(legacy, composed)
     assert_equal(2, composed.getZoneHVACUnitVentilators.size)
     # each zone gets a disconnected zone exhaust fan
     assert_equal(2, composed.getFanZoneExhausts.size)
+  end
+
+  # ---- ground heat exchanger loop ----
+
+  def test_ground_hx_loop_parity
+    legacy = OpenStudio::Model::Model.new
+    composed = OpenStudio::Model::Model.new
+    legacy_hvac.model_add_ground_hx_loop(legacy)
+    @composers.ground_hx_loop(composed)
+    assert_model_parity(legacy, composed)
+  end
+
+  def test_ground_hx_loop_checklist
+    model = OpenStudio::Model::Model.new
+    loop = @composers.ground_hx_loop(model)
+    assert_equal("Ground HX Loop", loop.name.get)
+    assert_in_delta(5.0, loop.minimumLoopTemperature, 1e-9)
+    assert_in_delta(80.0, loop.maximumLoopTemperature, 1e-9)
+    source = model.getPlantComponentTemperatureSources.first
+    assert_equal("Ground HX", source.name.get)
+    assert_equal("Scheduled", source.temperatureSpecificationType)
+    assert_equal("Ground HX Temp Sch", source.sourceTemperatureSchedule.get.name.get)
+    assert_equal(1, model.getScheduleConstants.size, "one shared constant schedule")
+    assert_equal(1, model.getEnergyManagementSystemPrograms.size)
+  end
+
+  # The EMS reset line must match the legacy program text, not just its object count.
+  def test_ground_hx_loop_ems_program_body_parity
+    legacy = OpenStudio::Model::Model.new
+    composed = OpenStudio::Model::Model.new
+    legacy_hvac.model_add_ground_hx_loop(legacy)
+    @composers.ground_hx_loop(composed)
+    reset_line = lambda do |model|
+      body = model.getEnergyManagementSystemPrograms.first.body
+      body.lines.map(&:strip).find { |line| line.start_with?("SET Tout") }
+    end
+    assert_equal(reset_line.call(legacy), reset_line.call(composed))
+  end
+
+  def test_district_ambient_loop_parity
+    legacy = OpenStudio::Model::Model.new
+    composed = OpenStudio::Model::Model.new
+    legacy_hvac.model_add_district_ambient_loop(legacy)
+    @composers.district_ambient_loop(composed)
+    assert_model_parity(legacy, composed)
+  end
+
+  def test_district_ambient_loop_checklist
+    model = OpenStudio::Model::Model.new
+    loop = @composers.district_ambient_loop(model)
+    assert_equal("Ambient Loop", loop.name.get)
+    assert_in_delta(OpenStudio.convert(102.2, "F", "C").get, loop.sizingPlant.designLoopExitTemperature, 1e-6)
+    assert_equal(1, model.getDistrictCoolings.size)
+    spm = model.getSetpointManagerScheduledDualSetpoints.first
+    assert_equal("Ambient Loop Supply Water Setpoint Manager", spm.name.get)
+    assert_equal("Ambient Loop High Temp - 90F", spm.highSetpointSchedule.get.name.get)
+    assert_equal("Ambient Loop Low Temp - 41F", spm.lowSetpointSchedule.get.name.get)
+    assert_in_delta(1_000_000_000_000, model.getDistrictCoolings.first.nominalCapacity.get, 1.0)
+  end
+
+  # ---- exhaust fans and zone ventilation ----
+
+  def build_exhaust_fan_pair(zone_count: 2, **kwargs)
+    legacy, legacy_zones = model_with_zones(zone_count)
+    composed, composed_zones = model_with_zones(zone_count)
+    legacy_hvac.model_add_exhaust_fan(legacy, legacy_zones, **kwargs)
+    @composers.exhaust_fan(composed, composed_zones, **kwargs)
+    [legacy, composed]
+  end
+
+  def test_exhaust_fan_parity
+    legacy, composed = build_exhaust_fan_pair(flow_rate: 0.5)
+    assert_model_parity(legacy, composed)
+    assert_equal(2, composed.getFanZoneExhausts.size)
+  end
+
+  def test_exhaust_fan_checklist
+    _legacy, composed = build_exhaust_fan_pair(zone_count: 1, flow_rate: 0.5)
+    fan = composed.getFanZoneExhausts.first
+    assert_equal('Zone 1 Exhaust Fan', fan.name.get)
+    assert_in_delta(0.5, fan.maximumFlowRate.get, 1e-9)
+    assert_equal('Decoupled', fan.systemAvailabilityManagerCouplingMode)
+    assert(fan.thermalZone.is_initialized)
+  end
+
+  # A per-zone array assigns each flow rate to the zone at the same index.
+  def test_exhaust_fan_flow_rate_array_parity
+    legacy, composed = build_exhaust_fan_pair(flow_rate: [0.25, 0.75])
+    assert_model_parity(legacy, composed)
+    flows = composed.getFanZoneExhausts.map { |f| f.maximumFlowRate.get }.sort
+    assert_in_delta(0.25, flows.first, 1e-9)
+    assert_in_delta(0.75, flows.last, 1e-9)
+  end
+
+  def test_exhaust_fan_schedules_parity
+    legacy, legacy_zones = model_with_zones(1)
+    composed, composed_zones = model_with_zones(1)
+    [[legacy, legacy_zones], [composed, composed_zones]].each do |model, zones|
+      fraction = OpenStudio::Model::ScheduleConstant.new(model)
+      fraction.setName('Exhaust Fraction')
+      balanced = OpenStudio::Model::ScheduleConstant.new(model)
+      balanced.setName('Balanced Fraction')
+      args = { flow_rate: 0.5, flow_fraction_schedule: fraction, balanced_exhaust_fraction_schedule: balanced }
+      if model == legacy
+        legacy_hvac.model_add_exhaust_fan(model, zones, **args)
+      else
+        @composers.exhaust_fan(model, zones, **args)
+      end
+    end
+    assert_model_parity(legacy, composed)
+    fan = composed.getFanZoneExhausts.first
+    assert_equal('Exhaust Fraction', fan.flowFractionSchedule.get.name.get)
+    assert_equal('Balanced Fraction', fan.balancedExhaustFractionSchedule.get.name.get)
+  end
+
+  def build_zone_ventilation_pair(zone_count: 2, **kwargs)
+    legacy, legacy_zones = model_with_zones(zone_count)
+    composed, composed_zones = model_with_zones(zone_count)
+    legacy_hvac.model_add_zone_ventilation(legacy, legacy_zones, **kwargs)
+    @composers.zone_ventilation(composed, composed_zones, **kwargs)
+    [legacy, composed]
+  end
+
+  def test_zone_ventilation_exhaust_parity
+    legacy, composed = build_zone_ventilation_pair(ventilation_type: 'Exhaust', flow_rate: 0.1)
+    assert_model_parity(legacy, composed)
+    assert_equal(2, composed.getZoneVentilationDesignFlowRates.size)
+  end
+
+  def test_zone_ventilation_natural_parity
+    legacy, composed = build_zone_ventilation_pair(ventilation_type: 'Natural', flow_rate: 0.1)
+    assert_model_parity(legacy, composed)
+  end
+
+  def test_zone_ventilation_intake_parity
+    legacy, composed = build_zone_ventilation_pair(ventilation_type: 'Intake', flow_rate: 0.002)
+    assert_model_parity(legacy, composed)
+  end
+
+  # Each ventilation type carries its own fan and control-temperature envelope.
+  def test_zone_ventilation_intake_checklist
+    _legacy, composed = build_zone_ventilation_pair(zone_count: 1, ventilation_type: 'Intake', flow_rate: 0.002)
+    vent = composed.getZoneVentilationDesignFlowRates.first
+    assert_equal('Zone 1 Ventilation', vent.name.get)
+    assert_equal('Intake', vent.ventilationType)
+    assert_in_delta(0.002, vent.flowRateperZoneFloorArea, 1e-9)
+    assert_in_delta(49.8, vent.fanPressureRise, 1e-9)
+    assert_in_delta(0.53625, vent.fanTotalEfficiency, 1e-9)
+    assert_in_delta(7.5, vent.minimumIndoorTemperature, 1e-9)
+    assert_in_delta(-27.5, vent.deltaTemperature, 1e-9)
+    assert_in_delta(-30.0, vent.minimumOutdoorTemperature, 1e-9)
+    assert_in_delta(6.0, vent.maximumWindSpeed, 1e-9)
+  end
+
+  def test_zone_ventilation_requires_a_flow_rate
+    model, zones = model_with_zones(1)
+    assert_raises(ArgumentError) { @composers.zone_ventilation(model, zones, ventilation_type: 'Exhaust') }
   end
 
   def test_residential_ventilator_checklist
@@ -1828,7 +2348,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_evap_pair(zone_count: 1)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_evap_cooler(legacy, legacy_zones)
+    legacy_hvac.model_add_evap_cooler(legacy, legacy_zones)
     @composers.evap_cooler(composed, composed_zones)
     [legacy, composed]
   end
@@ -1903,7 +2423,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_zone_erv_pair(zone_count: 1)
     legacy, legacy_zones = model_with_floor_oa_zones(zone_count)
     composed, composed_zones = model_with_floor_oa_zones(zone_count)
-    @hvac.model_add_zone_erv(legacy, legacy_zones)
+    legacy_hvac.model_add_zone_erv(legacy, legacy_zones)
     @composers.zone_erv(composed, composed_zones)
     [legacy, composed]
   end
@@ -1947,7 +2467,7 @@ class TestHVACCreatorComposers < Minitest::Test
   def build_vrf_pair(zone_count: 2, **kwargs)
     legacy, legacy_zones = model_with_zones(zone_count)
     composed, composed_zones = model_with_zones(zone_count)
-    @hvac.model_add_vrf(legacy, legacy_zones, **kwargs)
+    legacy_hvac.model_add_vrf(legacy, legacy_zones, **kwargs)
     @composers.vrf(composed, composed_zones, **kwargs)
     [legacy, composed]
   end

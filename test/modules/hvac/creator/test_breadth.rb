@@ -62,7 +62,16 @@ class TestHVACCreatorBreadth < Minitest::Test
     ['SingleZoneCooling', 'SetpointManagerSingleZoneCooling', { control_zone_name: 'Zone 1', min_setpt_f: 55.0 }],
     ['SingleZoneHeating', 'SetpointManagerSingleZoneHeating', { control_zone_name: 'Zone 1', max_setpt_f: 120.0 }],
     ['OutdoorAirReset', 'SetpointManagerOutdoorAirReset', { oat_low_f: 20.0, setpoint_at_oat_low_f: 150.0, oat_high_f: 70.0, setpoint_at_oat_high_f: 120.0 }],
-    ['FollowOutdoorAir', 'SetpointManagerFollowOutdoorAirTemperature', { ref_temp: 'OutdoorAirWetBulb', offset_temp_r: 5.0 }]
+    ['FollowOutdoorAir', 'SetpointManagerFollowOutdoorAirTemperature', { ref_temp: 'OutdoorAirWetBulb', offset_temp_r: 5.0 }],
+    ['SingleZoneHumidityMinimum', 'SetpointManagerSingleZoneHumidityMinimum', { control_zone_name: 'Zone 1' }],
+    ['SingleZoneHumidityMaximum', 'SetpointManagerSingleZoneHumidityMaximum', { control_zone_name: 'Zone 1' }],
+    ['MultiZoneHumidityMaximum', 'SetpointManagerMultiZoneHumidityMaximum', {}],
+    ['MultiZoneHeatingAverage', 'SetpointManagerMultiZoneHeatingAverage', { min_setpt_f: 68.0, max_setpt_f: 120.0 }],
+    ['WarmestTemperatureFlow', 'SetpointManagerWarmestTemperatureFlow', { strategy: 'TemperatureFirst', min_turndown: 0.2, max_setpt_f: 65.0 }],
+    ['FollowSystemNode', 'SetpointManagerFollowSystemNodeTemperature', { ref_temp: 'NodeDryBulb', offset_temp_r: 2.0 }],
+    ['OAPretreat', 'SetpointManagerOutdoorAirPretreat', { ctrl_var: 'Temperature' }],
+    ['Scheduled', 'SetpointManagerScheduled', { spm_temp_f: 55.0 }],
+    ['SingleZoneReheat', 'SetpointManagerSingleZoneReheat', { control_zone_name: 'Zone 1' }]
   ].freeze
 
   def test_all_components_build
@@ -89,6 +98,13 @@ class TestHVACCreatorBreadth < Minitest::Test
       end
     end
     assert(failures.empty?, "setpoint manager build failures:\n#{failures.join("\n")}")
+  end
+
+  def test_setpoint_manager_registry_covers_schema_enum
+    schema = JSON.parse(File.read(@factory::SCHEMA_PATH))
+    enum = schema['$defs']['setpointManager']['properties']['spm_type']['enum']
+    unregistered = enum.reject { |t| @spm.registered?(t) }
+    assert(unregistered.empty?, "every schema spm_type must be registered; missing: #{unregistered.join(', ')}")
   end
 
   def test_registry_covers_schema_enum

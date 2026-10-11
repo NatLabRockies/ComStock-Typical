@@ -1,0 +1,65 @@
+{
+  "schema_version": "0.1.0",
+  "custom_system_type": "VRF with DOAS",
+  "description": "A variable refrigerant flow system: one air-cooled heat-recovery condensing unit with a terminal in each zone, ventilated by a dedicated outdoor air system. Shows the vrf_info section, which builds condensing units before the air systems and zones so a terminal can name the unit it belongs to.",
+
+  "vrf_info": [
+    {
+      "name": "VRF-1",
+      "condenser_type": "AirCooled",
+      "cooling_cop": 4.0,
+      "heating_cop": 4.2,
+      "heat_recovery": true
+    }
+  ],
+
+  "air_system_info": [
+    {
+      "name": "DOAS",
+      "design_info": {
+        "des_cool_sat_f": 55.0,
+        "des_heat_sat_f": 60.0,
+        "all_outdoor_air": true
+      },
+      "availability": { "schedule_name": "AlwaysOn" },
+      "oa_control": { "ventilation": { "min_oa_frac_sch_name": "AlwaysOn" } },
+      "supply_components": [
+        { "obj_type": "CoilHeatingGas", "name": "DOAS Htg Coil", "eff_percent": 80.0 },
+        { "obj_type": "CoilCoolingDXSingleSpeed", "name": "DOAS Clg Coil", "rated_cop": 3.5 },
+        { "obj_type": "FanConstantVolume", "name": "DOAS Fan", "pressure_rise_inh2o": 3.0 }
+      ],
+      "controls": [
+        { "spm_type": "Scheduled", "name": "DOAS Setpoint Manager", "spm_temp_f": 65.0 }
+      ]
+    }
+  ],
+
+  "zone_info": [
+    {
+      "zone_name": "Zone 1",
+      "air_loop_name": "DOAS",
+      "air_terminal_info": { "air_terminal_type": "AirTerminalSingleDuctConstantVolumeNoReheat" },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACTerminalUnitVariableRefrigerantFlow",
+          "name": "Zone 1 VRF Terminal",
+          "cu_name": "VRF-1",
+          "no_ventilation": true
+        }
+      ]
+    },
+    {
+      "zone_name": "Zone 2",
+      "air_loop_name": "DOAS",
+      "air_terminal_info": { "air_terminal_type": "AirTerminalSingleDuctConstantVolumeNoReheat" },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACTerminalUnitVariableRefrigerantFlow",
+          "name": "Zone 2 VRF Terminal",
+          "cu_name": "VRF-1",
+          "no_ventilation": true
+        }
+      ]
+    }
+  ]
+}

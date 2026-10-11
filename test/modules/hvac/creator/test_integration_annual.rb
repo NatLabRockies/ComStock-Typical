@@ -1,4 +1,5 @@
 require_relative '../../../helpers/minitest_helper'
+require_relative '../../../helpers/hvac_system_test_helper'
 
 # Integration test: build an HVAC system entirely from a creator spec via apply_hvac, then run a
 # sizing run and a full annual EnergyPlus simulation on real geometry, and confirm the model is
@@ -18,7 +19,7 @@ class TestHVACCreatorIntegrationAnnual < Minitest::Test
 
     # Reuse cached results when present.
     model = nil
-    unless File.exist?("#{output_dir}/AR/run/eplusout.sql")
+    if rerun_simulations? || !File.exist?("#{output_dir}/AR/run/eplusout.sql")
       model = build_and_run(standard, output_dir)
     end
     if model.nil?

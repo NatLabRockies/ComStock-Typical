@@ -125,6 +125,7 @@ module OpenstudioStandards
   require_relative 'openstudio-standards/hvac/creator/zone_builder'
   require_relative 'openstudio-standards/hvac/creator/post_steps'
   require_relative 'openstudio-standards/hvac/creator/ems_builder'
+  require_relative 'openstudio-standards/hvac/creator/validation'
   require_relative 'openstudio-standards/hvac/creator/apply_hvac'
   require_relative 'openstudio-standards/hvac/creator/composers'
   require_relative 'openstudio-standards/hvac/helpers'

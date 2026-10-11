@@ -30,6 +30,7 @@ lib/openstudio-standards/weather/**/*.rb
 docs/Home.md
 docs/UserQuickStartGuide.md
 docs/CustomBuildings.md
+docs/HVACCreator.md
 docs/Features.md
 docs/DeveloperInformation.md
 docs/RepositoryStructure.md

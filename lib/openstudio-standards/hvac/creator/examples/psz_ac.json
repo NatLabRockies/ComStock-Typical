@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.1.0",
+  "custom_system_type": "PSZ-AC",
+  "description": "One packaged single-zone air conditioner per zone: a constant-volume fan, single-speed DX cooling and a gas furnace inside a unitary system, with an outdoor air economizer and night cycling. The simplest complete air system the schema expresses, and the place to start reading.",
+
+  "air_system_info": [
+    {
+      "name": "Zone 1 PSZ-AC",
+      "design_info": {
+        "des_cool_sat_f": 55.0,
+        "des_heat_sat_f": 122.0,
+        "min_sys_airflow_ratio": 1.0
+      },
+      "availability": {
+        "schedule_name": "AlwaysOn",
+        "night_cycle": { "control_type": "CycleOnAny", "run_time_s": 1800 }
+      },
+      "oa_control": {
+        "ventilation": { "min_oa_sch_name": "AlwaysOn" },
+        "economizer": { "type": "DifferentialDryBulb" }
+      },
+      "supply_components": [
+        {
+          "obj_type": "AirLoopHVACUnitarySystem",
+          "name": "Zone 1 PSZ-AC Unitary",
+          "control_zone_name": "Zone 1",
+          "fan_operation": { "placement": "DrawThrough", "op_mode_sch_name": "AlwaysOn" },
+          "components": [
+            { "obj_type": "FanConstantVolume", "name": "Zone 1 PSZ-AC Fan", "fan_total_eff": 0.6, "pressure_rise_inh2o": 2.5 },
+            { "obj_type": "CoilCoolingDXSingleSpeed", "name": "Zone 1 PSZ-AC DX Clg Coil", "preset": "PSZ-AC", "rated_cop": 3.5 },
+            { "obj_type": "CoilHeatingGas", "name": "Zone 1 PSZ-AC Gas Htg Coil", "eff_percent": 80.0 }
+          ]
+        }
+      ],
+      "controls": [
+        {
+          "spm_type": "SingleZoneReheat",
+          "name": "Zone 1 PSZ-AC Setpoint Manager",
+          "control_zone_name": "Zone 1",
+          "min_setpt_f": 55.0,
+          "max_setpt_f": 122.0
+        }
+      ]
+    }
+  ],
+
+  "zone_info": [
+    {
+      "zone_name": "Zone 1",
+      "air_loop_name": "Zone 1 PSZ-AC",
+      "air_terminal_info": { "air_terminal_type": "AirTerminalSingleDuctConstantVolumeNoReheat" },
+      "zone_sizing": { "clg_dsgn_sup_air_temp_f": 55.0, "htg_dsgn_sup_air_temp_f": 122.0 }
+    }
+  ]
+}

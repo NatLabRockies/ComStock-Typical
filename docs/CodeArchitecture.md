@@ -25,6 +25,13 @@ documentation for the methods.
 	refrigeration       utilities           ventilation
 	weather
 
+HVAC is the largest module. Every HVAC builder — the plant loops, the air systems, the zone
+equipment, the `model_add_hvac_system` dispatcher and the CBECS mapping — is a module function on
+`OpenstudioStandards::HVAC`, and each builder is a thin call into `hvac/creator/`, the factory that
+builds systems from a declarative spec (see the {file:docs/HVACCreator.md HVAC Creator page}). The
+`Standard` class keeps the vintage-dependent side of HVAC: efficiencies, controls, sizing
+parameters and the prototype assumptions.
+
 Module methods are called on the module, not on a model:
 
 ```ruby

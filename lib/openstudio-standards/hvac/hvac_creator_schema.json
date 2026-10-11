@@ -24,6 +24,11 @@
       "default": false,
       "description": "When true and this input is applied while creating a typical building, route the result through the standard sizing and efficiency logic (sizing parameters, sizing run, multizone outdoor air sizing, prototype HVAC assumptions, and the efficiency standard). Standards-applied sizes and efficiencies then override any specified here."
     },
+    "schedules": {
+      "type": "array",
+      "description": "Constant schedules this input needs. Created before anything else, so any later section may name one. Use this when two objects must follow the same schedule - a setpoint manager and the temperature source an EMS program actuates, for example - which naming a value on each object separately could not express.",
+      "items": { "$ref": "#/$defs/scheduleDef" }
+    },
     "plant_loop_info": {
       "type": "array",
       "description": "Plant loop definitions. Created first, in listed order, so downstream air and zone equipment may reference them by name.",
@@ -91,6 +96,7 @@
       "unevaluatedProperties": false,
       "description": "Supply and outdoor airflows by operating mode. Each mode accepts a CFM or m3/s value.",
       "properties": {
+        "autosize": { "type": "boolean", "description": "Size the cooling, heating, and no-load supply airflows from the design run when no value is given for them." },
         "cooling_cfm": { "type": "number" },
         "cooling_m3s": { "type": "number" },
         "heating_cfm": { "type": "number" },
@@ -131,8 +137,7 @@
 
     "setpoint_range": {
       "type": "object",
-      "unevaluatedProperties": false,
-      "description": "Minimum and maximum setpoint temperature limits.",
+      "description": "Minimum and maximum setpoint temperature limits. Mixed into the setpoint manager hashes; carries no unevaluatedProperties of its own.",
       "properties": {
         "min_setpt_f": { "type": "number" },
         "min_setpt_c": { "type": "number" },
@@ -143,8 +148,7 @@
 
     "oat_reset": {
       "type": "object",
-      "unevaluatedProperties": false,
-      "description": "Setpoint reset as a linear function of outdoor air temperature.",
+      "description": "Setpoint reset as a linear function of outdoor air temperature. Mixed into the outdoor air reset setpoint manager hash and used directly by plant and radiant reset controls; carries no unevaluatedProperties of its own.",
       "properties": {
         "setpoint_at_oat_low_f": { "type": "number", "description": "Setpoint at the outdoor low temperature (F)" },
         "setpoint_at_oat_low_c": { "type": "number" },
@@ -165,6 +169,21 @@
         { "$ref": "#/$defs/userCurve" }
       ]
     },
+
+"scheduleDef": {
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": ["name"],
+  "description": "A constant-value schedule created before the systems that reference it. Constant is the only form here: a schedule with a daily or seasonal profile belongs in the model already, and is referenced by name.",
+  "properties": {
+    "name": { "type": "string", "description": "Name other sections reference this schedule by" },
+    "value": { "type": "number", "description": "The constant value, in whatever unit the referencing field expects" },
+    "value_f": { "type": "number", "description": "The constant value as a temperature (F)" },
+    "value_c": { "type": "number", "description": "The constant value as a temperature (C)" },
+    "type_limits": { "type": "string", "description": "Schedule type limits to apply", "examples": ["Temperature", "Fraction", "OnOff", "Dimensionless"] },
+    "constant_object": { "type": "boolean", "description": "Create a Schedule:Constant rather than a schedule ruleset. Required when an EnergyManagementSystem actuator drives the schedule, which a ruleset cannot be." }
+  }
+},
 
     "userCurve": {
       "type": "object",
@@ -192,7 +211,7 @@
         "motor_eff": { "type": "number", "description": "Motor efficiency (0-1)", "default": 0.9 },
         "motor_airstream_frac": { "type": "number", "description": "Fraction of motor heat entering the airstream (0-1)", "default": 1.0 },
         "pressure_rise_inh2o": { "type": "number", "description": "Fan pressure rise (in. H2O)" },
-        "pressure_rise_override_inh2o": { "type": "number", "description": "Explicit fan pressure rise (in. H2O) set after a preset fan is built (create_typical_fan ignores its pressure_rise argument for non-exhaust fans)" },
+        "pressure_rise_override_inh2o": { "type": "number", "description": "Explicit fan pressure rise (in. H2O), replacing the pressure rise a preset carries. Use this rather than pressure_rise when the fan takes a preset, whose packaged pressure rise otherwise wins." },
         "pressure_rise_override_pa": { "type": "number", "description": "Explicit fan pressure rise (Pa) set after a preset fan is built" },
         "pressure_rise_pa": { "type": "number", "description": "Fan pressure rise (Pa)" },
         "max_airflow_cfm": { "type": "number", "description": "Maximum air flow rate (CFM)" },
@@ -363,6 +382,8 @@
         "demand_components": { "type": "array", "items": { "$ref": "#/$defs/plantComponent" }, "description": "Components placed on the demand side of this loop (for example the load side of a fluid-to-fluid heat exchanger). Coils connect to the demand side implicitly by naming this loop, and are not listed here." },
         "demand_inlet_components": { "type": "array", "items": { "$ref": "#/$defs/plantComponent" }, "description": "Series components on the demand inlet, in flow order (for example a variable-speed secondary pump in a primary-secondary common-pipe configuration)." },
         "controls": { "type": "array", "items": { "$ref": "#/$defs/setpointManager" }, "description": "Setpoint managers placed on the loop." },
+        "loop_pipes": { "type": "boolean", "description": "Whether the loop carries the conventional adiabatic bypass and outlet pipes (default true)." },
+        "additional_properties": { "type": "object", "description": "Name/value pairs recorded on the loop as OpenStudio additional properties, for downstream code that keys off them.", "additionalProperties": { "type": ["string", "number", "boolean"] } },
         "supply_bypass_name": { "type": "string", "description": "Name for the supply-equipment bypass pipe (defaults to \"<loop> Supply Equipment Bypass\")." },
         "demand_bypass_name": { "type": "string", "description": "Name for the demand (coil) bypass pipe (defaults to \"<loop> Coil Bypass\")." },
         "fluid_type": { "type": "string", "enum": ["Water", "Steam", "PropyleneGlycol", "EthyleneGlycol"] },
@@ -926,7 +947,11 @@
     "fanZoneExhaustObj": {
       "description": "FanZoneExhaust.",
       "allOf": [ { "$ref": "#/$defs/fanCommon" } ],
-      "properties": {}
+      "properties": {
+        "flow_fraction_sch_name": { "type": "string", "description": "Schedule fraction applied to the maximum flow rate" },
+        "balanced_exhaust_fraction_sch_name": { "type": "string", "description": "Schedule of the exhaust fraction balanced by simultaneous outdoor air intake" },
+        "system_availability_coupling_mode": { "type": "string", "enum": ["Coupled", "Decoupled"], "description": "Whether the fan follows the air loop system availability manager" }
+      }
     },
 
     "hxAirToAirObj": {
@@ -1326,14 +1351,14 @@
     },
 
     "uhObj": {
-      "description": "ZoneHVACUnitHeater. With components, the fan and coil are built from the sub-hashes; without them, typical sub-components are synthesized from heating_type.",
+      "description": "ZoneHVACUnitHeater. With components, the fan and coil are built from the sub-hashes; without them, a constant-volume fan (taking fan_pressure_rise and max_airflow) and a heating coil from heating_type are synthesized.",
       "properties": {
         "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Fan and heating coil" },
-        "heating_type": { "type": "string", "description": "Synthesized heating coil fuel", "examples": ["NaturalGas", "Electricity", "DistrictHeating"] },
-        "hot_water_loop_name": { "type": "string", "description": "Hot water loop for a synthesized water heating coil" },
+        "heating_type": { "type": "string", "description": "Synthesized heating coil fuel: Water or a district-heating type gives a hot-water coil on hot_water_loop_name; NaturalGas gives gas; anything else electric. Defaults to Water when hot_water_loop_name is given, otherwise Electricity.", "examples": ["Water", "NaturalGas", "Electricity"] },
+        "hot_water_loop_name": { "type": "string", "description": "Hot water loop for a synthesized water heating coil. Selects a hot-water coil on its own when heating_type is absent." },
         "fan_pressure_rise_inh2o": { "type": "number", "description": "Synthesized fan pressure rise (in. H2O)" },
         "fan_pressure_rise_pa": { "type": "number" },
-        "max_airflow_cfm": { "type": "number" },
+        "max_airflow_cfm": { "type": "number", "description": "Maximum supply air flow rate (CFM), applied to the unit and its synthesized fan; autosized when absent" },
         "max_airflow_m3s": { "type": "number" },
         "control_type": { "type": "string", "description": "Fan control type", "examples": ["OnOff", "Continuous"] },
         "schedule_name": { "type": "string" }
@@ -1357,8 +1382,8 @@
       "description": "ZoneHVACPackagedTerminalAirConditioner. Sub-components are either an explicit components list or synthesized from the type selections.",
       "properties": {
         "components": { "type": "array", "items": { "$ref": "#/$defs/subComponent" }, "description": "Explicit sub-components: fan, cooling coil, heating coil" },
-        "heating_type": { "type": "string", "description": "Heating coil fuel (synthesized form)", "examples": ["NaturalGas", "Electricity", "Water"] },
-        "hot_water_loop_name": { "type": "string", "description": "Hot water loop when heating_type is Water" },
+        "heating_type": { "type": "string", "description": "Heating coil fuel (synthesized form). Defaults to Water when hot_water_loop_name is given, otherwise Electricity.", "examples": ["NaturalGas", "Electricity", "Water"] },
+        "hot_water_loop_name": { "type": "string", "description": "Hot water loop for a Water heating coil. Selects a hot-water coil on its own when heating_type is absent." },
         "cooling_type": { "type": "string", "examples": ["Single Speed DX AC", "Two Speed DX AC"] },
         "fan_type": { "type": "string", "examples": ["Cycling", "ConstantVolume"] },
         "fan_placement": { "type": "string", "enum": ["DrawThrough", "BlowThrough"] },
@@ -1489,8 +1514,27 @@
       "required": ["ventilation_type"],
       "properties": {
         "ventilation_type": { "type": "string", "enum": ["Exhaust", "Natural", "Intake"] },
-        "flow_rate": { "type": "number", "description": "Flow rate: per zone floor area (m3/s-m2) for Exhaust and Intake, absolute (m3/s) for Natural" },
-        "availability_schedule_name": { "type": "string" }
+        "design_flow_m3s": { "type": "number", "description": "Design flow rate (m3/s)" },
+        "design_flow_cfm": { "type": "number" },
+        "flow_per_area_m3s": { "type": "number", "description": "Flow rate per zone floor area (m3/s-m2)" },
+        "schedule_name": { "type": "string", "description": "Name of the schedule the ventilation follows" },
+        "fan_pressure_rise_pa": { "type": "number", "description": "Fan pressure rise (Pa)" },
+        "fan_pressure_rise_inh2o": { "type": "number" },
+        "fan_total_eff": { "type": "number", "description": "Fan total efficiency (0-1)" },
+        "constant_term_coeff": { "type": "number", "description": "Constant term of the ventilation rate correlation" },
+        "velocity_term_coeff": { "type": "number", "description": "Wind speed term of the ventilation rate correlation" },
+        "temperature_term_coeff": { "type": "number", "description": "Indoor-outdoor temperature difference term of the ventilation rate correlation" },
+        "min_indoor_temp_c": { "type": "number", "description": "Indoor temperature below which ventilation shuts off" },
+        "min_indoor_temp_f": { "type": "number" },
+        "max_indoor_temp_c": { "type": "number", "description": "Indoor temperature above which ventilation shuts off" },
+        "max_indoor_temp_f": { "type": "number" },
+        "min_outdoor_temp_c": { "type": "number" },
+        "min_outdoor_temp_f": { "type": "number" },
+        "max_outdoor_temp_c": { "type": "number" },
+        "max_outdoor_temp_f": { "type": "number" },
+        "delta_temp_k": { "type": "number", "description": "Indoor-minus-outdoor temperature below which ventilation shuts off" },
+        "delta_temp_r": { "type": "number" },
+        "max_wind_speed_m_per_s": { "type": "number", "description": "Wind speed above which ventilation shuts off (m/s)" }
       }
     },
 
@@ -1634,7 +1678,15 @@
         "water_flow_m3s": { "type": "number" },
         "air_flow_cfm": { "type": "number" },
         "air_flow_m3s": { "type": "number" },
-        "fan_power_w": { "type": "number" }
+        "fan_power_w": { "type": "number" },
+        "design_range_temp_r": { "type": "number", "description": "Design range: loop supply-return temperature difference (delta F)" },
+        "design_range_temp_k": { "type": "number" },
+        "design_approach_temp_r": { "type": "number", "description": "Design approach: leaving water above entering air wet bulb (delta F)" },
+        "design_approach_temp_k": { "type": "number" },
+        "free_convection_capacity_frac": { "type": "number", "description": "Fraction of tower capacity in the free convection regime (0-1)" },
+        "fan_power_ratio_curve": { "$ref": "#/$defs/curveRef", "description": "Fan power ratio as a function of air flow rate ratio" },
+        "sizing_factor": { "type": "number" },
+        "num_cells": { "type": "integer" }
       }
     },
 
@@ -1794,6 +1846,7 @@
             "OAPretreat"
           ]
         },
+        "name": { "type": "string", "description": "Setpoint manager name override" },
         "spm_node": {
           "type": "string",
           "description": "Placement override. Supply = supply outlet node; Mixed = mixed air node; any other string is matched first against a component name on the loop, then against a component IDD type, and the manager is placed at that component's outlet. When omitted, the manager is placed at its natural default node (mixed air node for MixedAir, supply outlet otherwise)."
@@ -1928,7 +1981,7 @@
       "allOf": [ { "$ref": "#/$defs/setpoint_range" } ],
       "properties": {
         "ctrl_var": { "type": "string", "enum": ["Temperature", "MaximumTemperature", "MinimumTemperature"] },
-        "ref_temp": { "type": "string", "enum": ["OutdoorDryBulb", "OutdoorWetBulb"] },
+        "ref_temp": { "type": "string", "enum": ["OutdoorAirDryBulb", "OutdoorAirWetBulb"], "description": "Reference temperature type. Default OutdoorAirWetBulb." },
         "offset_temp_r": { "type": "number", "description": "Offset temperature difference (R)" },
         "offset_temp_k": { "type": "number" }
       }

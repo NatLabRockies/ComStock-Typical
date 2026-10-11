@@ -1,4 +1,5 @@
 require_relative '../../../helpers/minitest_helper'
+require_relative '../../../helpers/hvac_system_test_helper'
 
 # Integration test: build a hydronic low-temperature radiant floor system (with a DOAS for
 # ventilation) entirely from a creator spec via apply_hvac, then run a sizing run and a full annual
@@ -19,7 +20,7 @@ class TestHVACCreatorIntegrationAnnualRadiant < Minitest::Test
     # always build the model (fast) so build-time artifacts (constructions) are checkable; run
     # EnergyPlus only when the annual results are not already cached.
     model = build_model(standard)
-    unless File.exist?("#{output_dir}/AR/run/eplusout.sql")
+    if rerun_simulations? || !File.exist?("#{output_dir}/AR/run/eplusout.sql")
       assert(standard.model_run_sizing_run(model, "#{output_dir}/SR"), 'sizing run failed')
       assert(standard.model_run_simulation_and_log_errors(model, "#{output_dir}/AR"), 'annual run failed')
     end

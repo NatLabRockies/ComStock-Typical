@@ -1,0 +1,142 @@
+{
+  "schema_version": "0.1.0",
+  "custom_system_type": "VAV Reheat with Chilled and Hot Water Plants",
+  "description": "A multi-zone VAV reheat system on a chilled water plant with two parallel chillers on a condenser loop, and a hot water plant serving the preheat and reheat coils. Shows the build order the schema depends on: plant loops first, then the air system whose coils name them, then the zones. The waterside economizer is a deferred cross-loop pass, applied after every loop exists.",
+
+  "plant_loop_info": [
+    {
+      "name": "Condenser Water Loop",
+      "design_info": { "loop_type": "Condenser", "supply_temp_f": 85.0, "temp_delta_r": 10.0 },
+      "supply_inlet_components": [
+        { "obj_type": "PumpConstantSpeed", "name": "Condenser Water Loop Pump", "pump_head_fth2o": 49.7 }
+      ],
+      "supply_branches": [
+        [{ "obj_type": "CoolingTowerTwoSpeed", "name": "Cooling Tower" }]
+      ],
+      "controls": [
+        {
+          "spm_type": "FollowOutdoorAir",
+          "name": "Condenser Water Loop Setpoint Manager",
+          "ref_temp": "OutdoorAirWetBulb",
+          "offset_temp_r": 7.0,
+          "max_setpt_f": 85.0,
+          "min_setpt_f": 70.0
+        }
+      ]
+    },
+    {
+      "name": "Hot Water Loop",
+      "design_info": { "loop_type": "Heating", "supply_temp_f": 180.0, "temp_delta_r": 20.0 },
+      "supply_inlet_components": [
+        { "obj_type": "PumpVariableSpeed", "name": "Hot Water Loop Pump", "pump_head_fth2o": 60.0 }
+      ],
+      "supply_branches": [
+        [{ "obj_type": "BoilerHotWater", "name": "Boiler", "fuel_type": "NaturalGas", "eff": 0.8 }]
+      ],
+      "controls": [
+        { "spm_type": "Scheduled", "name": "Hot Water Loop Setpoint Manager", "spm_temp_f": 180.0 }
+      ]
+    },
+    {
+      "name": "Chilled Water Loop",
+      "design_info": { "loop_type": "Cooling", "supply_temp_f": 44.0, "temp_delta_r": 10.1 },
+      "supply_inlet_components": [
+        { "obj_type": "PumpVariableSpeed", "name": "Chilled Water Loop Pump", "pump_head_fth2o": 60.0 }
+      ],
+      "supply_branches": [
+        [{
+          "obj_type": "ChillerElectricEIR",
+          "name": "Chiller 1",
+          "condenser_type": "WaterCooled",
+          "condenser_loop_name": "Condenser Water Loop",
+          "cop": 5.5,
+          "sizing_factor": 0.5
+        }],
+        [{
+          "obj_type": "ChillerElectricEIR",
+          "name": "Chiller 2",
+          "condenser_type": "WaterCooled",
+          "condenser_loop_name": "Condenser Water Loop",
+          "cop": 5.5,
+          "sizing_factor": 0.5
+        }]
+      ],
+      "controls": [
+        { "spm_type": "Scheduled", "name": "Chilled Water Loop Setpoint Manager", "spm_temp_f": 44.0 }
+      ],
+      "waterside_economizer": { "condenser_loop_name": "Condenser Water Loop", "integrated": true }
+    }
+  ],
+
+  "air_system_info": [
+    {
+      "name": "VAV",
+      "design_info": { "des_cool_sat_f": 55.0, "des_heat_sat_f": 55.0, "min_sys_airflow_ratio": 0.3 },
+      "availability": { "schedule_name": "AlwaysOn" },
+      "oa_control": {
+        "ventilation": { "min_oa_sch_name": "AlwaysOn" },
+        "economizer": { "type": "DifferentialDryBulb" }
+      },
+      "supply_components": [
+        {
+          "obj_type": "CoilCoolingWater",
+          "name": "VAV Clg Coil",
+          "plant_loop_name": "Chilled Water Loop"
+        },
+        {
+          "obj_type": "CoilHeatingWater",
+          "name": "VAV Preheat Coil",
+          "plant_loop_name": "Hot Water Loop",
+          "ewt_f": 180.0,
+          "lwt_f": 160.0
+        },
+        {
+          "obj_type": "FanVariableVolume",
+          "name": "VAV Fan",
+          "fan_total_eff": 0.6,
+          "pressure_rise_inh2o": 4.0
+        }
+      ],
+      "controls": [
+        { "spm_type": "Scheduled", "name": "VAV Setpoint Manager", "spm_temp_f": 55.0 }
+      ]
+    }
+  ],
+
+  "zone_info": [
+    {
+      "zone_name": "Zone 1",
+      "air_loop_name": "VAV",
+      "air_terminal_info": {
+        "air_terminal_type": "AirTerminalSingleDuctVAVReheat",
+        "vav": { "min_flow_frac": 0.3, "damper_action": "Reverse" },
+        "reheat": {
+          "coil_info": {
+            "obj_type": "CoilHeatingWater",
+            "name": "Zone 1 Reheat Coil",
+            "plant_loop_name": "Hot Water Loop",
+            "ewt_f": 180.0,
+            "lwt_f": 160.0
+          }
+        }
+      }
+    },
+    {
+      "zone_name": "Zone 2",
+      "air_loop_name": "VAV",
+      "air_terminal_info": {
+        "air_terminal_type": "AirTerminalSingleDuctVAVReheat",
+        "vav": { "min_flow_frac": 0.3, "damper_action": "Reverse" },
+        "reheat": {
+          "coil_info": {
+            "obj_type": "CoilHeatingWater",
+            "name": "Zone 2 Reheat Coil",
+            "plant_loop_name": "Hot Water Loop",
+            "ewt_f": 180.0,
+            "lwt_f": 160.0
+          }
+        }
+      }
+    }
+  ]
+}

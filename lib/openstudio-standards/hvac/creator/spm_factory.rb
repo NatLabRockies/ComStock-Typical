@@ -153,6 +153,83 @@ module OpenstudioStandards
         manager
       end
 
+      # @param spec [Hash] a WarmestTemperatureFlow spec (+strategy+ selects temperature-first or
+      #   flow-first; +min_turndown+ is the minimum system airflow ratio)
+      # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+      # @return [OpenStudio::Model::SetpointManagerWarmestTemperatureFlow] the setpoint manager
+      def self.build_warmest_temperature_flow(spec, context)
+        manager = OpenStudio::Model::SetpointManagerWarmestTemperatureFlow.new(context.model)
+        manager.setStrategy(spec[:strategy]) if spec[:strategy]
+        manager.setMinimumTurndownRatio(spec[:min_turndown]) if spec[:min_turndown]
+        apply_setpoint_limits(manager, spec)
+        manager
+      end
+
+      # @param spec [Hash] a SingleZoneHumidityMaximum spec
+      # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+      # @return [OpenStudio::Model::SetpointManagerSingleZoneHumidityMaximum] the setpoint manager
+      def self.build_single_zone_humidity_maximum(spec, context)
+        manager = OpenStudio::Model::SetpointManagerSingleZoneHumidityMaximum.new(context.model)
+        manager.setControlZone(context.zone(spec[:control_zone_name])) if spec[:control_zone_name]
+        manager
+      end
+
+      # @param spec [Hash] a MultiZoneHumidityMaximum spec
+      # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+      # @return [OpenStudio::Model::SetpointManagerMultiZoneHumidityMaximum] the setpoint manager
+      def self.build_multizone_humidity_maximum(spec, context)
+        OpenStudio::Model::SetpointManagerMultiZoneHumidityMaximum.new(context.model)
+      end
+
+      # @param spec [Hash] a MultiZoneHeatingAverage spec
+      # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+      # @return [OpenStudio::Model::SetpointManagerMultiZoneHeatingAverage] the setpoint manager
+      def self.build_multizone_heating_average(spec, context)
+        manager = OpenStudio::Model::SetpointManagerMultiZoneHeatingAverage.new(context.model)
+        apply_setpoint_limits(manager, spec)
+        manager
+      end
+
+      # Follows the temperature at another node, so the setpoint tracks a point elsewhere in the
+      # system rather than a zone or the outdoor air.
+      #
+      # @param spec [Hash] a FollowSystemNode spec (+reference_node+ names the node followed)
+      # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+      # @return [OpenStudio::Model::SetpointManagerFollowSystemNodeTemperature] the setpoint manager
+      def self.build_follow_system_node(spec, context)
+        manager = OpenStudio::Model::SetpointManagerFollowSystemNodeTemperature.new(context.model)
+        manager.setControlVariable(spec[:ctrl_var]) if spec[:ctrl_var]
+        manager.setReferenceTemperatureType(spec[:ref_temp]) if spec[:ref_temp]
+        offset = Quantities.resolve(spec, 'offset_temp', :temperature_difference)
+        manager.setOffsetTemperatureDifference(offset) unless offset.nil?
+        apply_setpoint_limits(manager, spec)
+        manager
+      end
+
+      # @param spec [Hash] an OAPretreat spec
+      # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+      # @return [OpenStudio::Model::SetpointManagerOutdoorAirPretreat] the setpoint manager
+      def self.build_outdoor_air_pretreat(spec, context)
+        manager = OpenStudio::Model::SetpointManagerOutdoorAirPretreat.new(context.model)
+        manager.setControlVariable(spec[:ctrl_var]) if spec[:ctrl_var]
+        apply_setpoint_limits(manager, spec)
+        manager
+      end
+
+      # The maximum and minimum setpoint temperatures a manager may request, applied wherever the
+      # manager class accepts them.
+      #
+      # @param manager [OpenStudio::Model::SetpointManager] the manager
+      # @param spec [Hash] the setpoint manager spec
+      # @return [void]
+      def self.apply_setpoint_limits(manager, spec)
+        maximum = Quantities.resolve(spec, 'max_setpt', :temperature)
+        manager.setMaximumSetpointTemperature(maximum) if !maximum.nil? && manager.respond_to?(:setMaximumSetpointTemperature)
+        minimum = Quantities.resolve(spec, 'min_setpt', :temperature)
+        manager.setMinimumSetpointTemperature(minimum) if !minimum.nil? && manager.respond_to?(:setMinimumSetpointTemperature)
+        nil
+      end
+
       # @return [OpenStudio::Model::SetpointManagerFollowOutdoorAirTemperature] the setpoint manager
       def self.build_follow_outdoor_air(spec, context)
         manager = OpenStudio::Model::SetpointManagerFollowOutdoorAirTemperature.new(context.model)
@@ -297,7 +374,13 @@ module OpenstudioStandards
         'Warmest' => ->(spec, context) { SetpointManagerFactory.build_warmest(spec, context) },
         'OutdoorAirReset' => ->(spec, context) { SetpointManagerFactory.build_outdoor_air_reset(spec, context) },
         'FollowOutdoorAir' => ->(spec, context) { SetpointManagerFactory.build_follow_outdoor_air(spec, context) },
-        'SingleZoneHumidityMinimum' => ->(spec, context) { SetpointManagerFactory.build_single_zone_humidity_minimum(spec, context) }
+        'SingleZoneHumidityMinimum' => ->(spec, context) { SetpointManagerFactory.build_single_zone_humidity_minimum(spec, context) },
+        'SingleZoneHumidityMaximum' => ->(spec, context) { SetpointManagerFactory.build_single_zone_humidity_maximum(spec, context) },
+        'MultiZoneHumidityMaximum' => ->(spec, context) { SetpointManagerFactory.build_multizone_humidity_maximum(spec, context) },
+        'MultiZoneHeatingAverage' => ->(spec, context) { SetpointManagerFactory.build_multizone_heating_average(spec, context) },
+        'WarmestTemperatureFlow' => ->(spec, context) { SetpointManagerFactory.build_warmest_temperature_flow(spec, context) },
+        'FollowSystemNode' => ->(spec, context) { SetpointManagerFactory.build_follow_system_node(spec, context) },
+        'OAPretreat' => ->(spec, context) { SetpointManagerFactory.build_outdoor_air_pretreat(spec, context) }
       }.freeze
     end
   end

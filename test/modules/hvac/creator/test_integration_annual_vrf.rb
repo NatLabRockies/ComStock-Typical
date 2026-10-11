@@ -1,4 +1,5 @@
 require_relative '../../../helpers/minitest_helper'
+require_relative '../../../helpers/hvac_system_test_helper'
 
 # Integration test: build a variable refrigerant flow (VRF) heat-recovery system with a dedicated
 # outdoor air system for ventilation, entirely from a creator spec via apply_hvac, then run a
@@ -17,7 +18,7 @@ class TestHVACCreatorIntegrationAnnualVRF < Minitest::Test
     standard = Standard.build('90.1-2013')
 
     model = nil
-    unless File.exist?("#{output_dir}/AR/run/eplusout.sql")
+    if rerun_simulations? || !File.exist?("#{output_dir}/AR/run/eplusout.sql")
       model = build_and_run(standard, output_dir)
     end
     if model.nil?

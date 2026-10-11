@@ -41,6 +41,15 @@ direction. The test tree is not: Phases 1–3 gave the kept tests their own fixt
 `test/90_1_prm/` and `data/geometry/`, none of which exist here), so a patch that touches both
 a library file and its test usually needs the test hunk placed by hand.
 
+The HVAC layout differs from `develop`. The `hvac_refac` port moved every HVAC builder from
+`Standard` to `OpenstudioStandards::HVAC` (`hvac/create_hvac_system.rb`, the queries in
+`hvac/air_loop_information.rb` and `hvac/plant_loop_information.rb`, the fan helpers in
+`hvac/components/fan.rb`) and put the spec-driven creator under `hvac/creator/`. That is the
+layout of openstudio-standards `v1.0.0-alpha` (PR #2072), not of `develop`, so an HVAC patch
+flows to or from `v1.0.0-alpha`; a `develop` patch to `Prototype.hvac_systems.rb` or to the
+moved queries has to be re-targeted by hand. `Standards.HVACCompatibility.rb` keeps six of the
+old `Standard` receivers for one cycle because ComStock's measures call them.
+
 Two library signatures also differ, because the NECB removal took the `necb_ref_hp` parameter
 with it: `coil_dx_find_search_criteria`, `coil_{cooling,heating}_dx_single_speed_standard_minimum_cop`,
 `coil_{cooling,heating}_dx_single_speed_apply_efficiency_and_curves` and

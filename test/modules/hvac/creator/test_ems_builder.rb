@@ -49,6 +49,17 @@ class TestHVACCreatorEmsBuilder < Minitest::Test
     assert_equal('New Sch', @model.getEnergyManagementSystemActuators.first.actuatedComponent.get.name.get)
   end
 
+  # The actuator's schedule type limit reaches the created schedule, and the limits object is made
+  # if the model does not already carry it.
+  def test_actuator_constant_schedule_applies_type_limit
+    @ems.build({ actuators: [{ name: 'A', component_name: 'Typed Sch', component_type: 'Schedule:Constant',
+                               control_type: 'Schedule Value', create_schedule_constant: 3.0,
+                               schedule_type_limit: 'Temperature' }] }, @ctx)
+    schedule = @model.getScheduleConstantByName('Typed Sch').get
+    assert(schedule.scheduleTypeLimits.is_initialized)
+    assert_equal('Temperature', schedule.scheduleTypeLimits.get.name.get)
+  end
+
   def test_actuator_targets_named_component
     existing = OpenStudio::Model::ScheduleConstant.new(@model)
     existing.setName('Existing Sch')

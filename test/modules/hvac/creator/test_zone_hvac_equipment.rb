@@ -56,6 +56,40 @@ class TestHVACCreatorZoneHVACEquipment < Minitest::Test
     assert(uh.heatingCoil.to_CoilHeatingWater.is_initialized)
   end
 
+  # A hot water loop alone means hot-water heat; the fuel need not be repeated.
+  def test_unit_heater_hot_water_inferred_from_loop
+    uh = @factory.build({ obj_type: 'ZoneHVACUnitHeater', hot_water_loop_name: 'HW Loop' }, @ctx).to_ZoneHVACUnitHeater.get
+    assert(uh.heatingCoil.to_CoilHeatingWater.is_initialized)
+    assert(@ctx.plant_loop('HW Loop').demandComponents.any? { |c| c.to_CoilHeatingWater.is_initialized })
+  end
+
+  def test_unit_heater_water_without_loop_raises
+    error = assert_raises(ArgumentError) do
+      @factory.build({ obj_type: 'ZoneHVACUnitHeater', name: 'UH', heating_type: 'Water' }, @ctx)
+    end
+    assert_match(/hot_water_loop_name/, error.message)
+  end
+
+  def test_unit_heater_synthesized_fan_takes_pressure_rise_and_airflow
+    uh = @factory.build({ obj_type: 'ZoneHVACUnitHeater', hot_water_loop_name: 'HW Loop',
+                          fan_pressure_rise_inh2o: 0.2, max_airflow_cfm: 500.0 }, @ctx).to_ZoneHVACUnitHeater.get
+    fan = uh.supplyAirFan.to_FanConstantVolume.get
+    assert_in_delta(OpenStudio.convert(0.2, 'inH_{2}O', 'Pa').get, fan.pressureRise, 0.1)
+    expected_flow = OpenStudio.convert(500.0, 'cfm', 'm^3/s').get
+    assert_in_delta(expected_flow, fan.maximumFlowRate.get, 1e-6)
+    assert_in_delta(expected_flow, uh.maximumSupplyAirFlowRate.get, 1e-6)
+  end
+
+  def test_unit_heater_autosizes_airflow_when_not_given
+    uh = @factory.build({ obj_type: 'ZoneHVACUnitHeater', heating_type: 'Electricity' }, @ctx).to_ZoneHVACUnitHeater.get
+    assert(uh.isMaximumSupplyAirFlowRateAutosized)
+  end
+
+  def test_ptac_hot_water_heat_inferred_from_loop
+    ptac = @factory.build({ obj_type: 'ZoneHVACPackagedTerminalAirConditioner', hot_water_loop_name: 'HW Loop', fan_type: 'Cycling' }, @ctx).to_ZoneHVACPackagedTerminalAirConditioner.get
+    assert(ptac.heatingCoil.to_CoilHeatingWater.is_initialized)
+  end
+
   def test_ptac_gas_heat
     ptac = @factory.build({ obj_type: 'ZoneHVACPackagedTerminalAirConditioner', heating_type: 'Gas', fan_type: 'Cycling' }, @ctx).to_ZoneHVACPackagedTerminalAirConditioner.get
     assert(ptac.coolingCoil.to_CoilCoolingDXSingleSpeed.is_initialized)

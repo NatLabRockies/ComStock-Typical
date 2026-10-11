@@ -43,6 +43,11 @@ Fifty of the tests run EnergyPlus, and they are most of the suite's runtime. Set
 SKIP_SIMULATION_TESTS=true openstudio execute_ruby_script test/baseline_run.rb
 ```
 
+The HVAC system tests and the creator's annual integration tests reuse a case's `eplusout.sql`
+when one is present, so a re-run after a code change can silently compare the new code against
+old results. Set `RERUN_SIMULATIONS=true` to force every case to simulate again, or delete the
+`output/` directory beside the test first.
+
 That covers 34 tests worth about 73 of the 108 minutes. It does **not** skip every test that runs
 EnergyPlus: fourteen other files run a sizing run of their own and are not guarded, so a run with
 this set is still tens of minutes of simulation.

@@ -22,14 +22,23 @@ module OpenstudioStandards
         apply_sizing(loop, spec[:design_info] || {})
         apply_loop_settings(loop, spec)
 
+        # Loop-level setpoint managers go on before the equipment, as the legacy creators do: a
+        # component may read the loop's setpoint at build time (the central air-source heat pump's
+        # EMS sensor takes its key from the supply outlet node's scheduled manager, and silently
+        # gets an empty key — an EnergyPlus fatal — if no manager is there yet). Managers that name
+        # an spm_node wait until that component exists.
+        loop_controls, node_controls = (spec[:controls] || []).partition { |spm_spec| spm_spec[:spm_node].nil? }
+        place_controls(loop, loop_controls, context)
+
         place_series_on_node(build_all(spec[:supply_inlet_components], context), loop.supplyInletNode)
         (spec[:supply_branches] || []).each { |branch| place_branch(loop, build_all(branch, context)) }
         place_series_on_node(build_all(spec[:supply_outlet_components], context), loop.supplyOutletNode)
         build_all(spec[:demand_components], context).each { |component| loop.addDemandBranchForComponent(component) }
         place_series_on_node(build_all(spec[:demand_inlet_components], context), loop.demandInletNode)
 
-        add_loop_pipes(loop, context, spec[:supply_bypass_name], spec[:demand_bypass_name])
-        place_controls(loop, spec[:controls] || [], context)
+        # Most loops carry the conventional adiabatic bypass and outlet pipes; a loop may opt out.
+        add_loop_pipes(loop, context, spec[:supply_bypass_name], spec[:demand_bypass_name]) unless spec[:loop_pipes] == false
+        place_controls(loop, node_controls, context)
         apply_ground_hx(loop, spec, context) if spec[:ground_hx_loop]
 
         context.register_plant_loop(loop.name.get, loop)
@@ -69,6 +78,11 @@ module OpenstudioStandards
         loop.setMinimumLoopTemperature(min_temp) unless min_temp.nil?
         max_temp = Quantities.resolve(spec, 'max_loop_temp', :temperature)
         loop.setMaximumLoopTemperature(max_temp) unless max_temp.nil?
+        # Additional properties are how downstream standards code recognizes a loop's role, so they
+        # are part of the loop's declared identity rather than a side note.
+        (spec[:additional_properties] || {}).each do |key, value|
+          loop.additionalProperties.setFeature(key.to_s, value)
+        end
         nil
       end
 
@@ -246,27 +260,27 @@ module OpenstudioStandards
       # @return [void]
       def self.install_ground_hx_ems(loop, source, schedule, slope, intercept, context)
         name = OpenstudioStandards::HVAC.ems_friendly_name(source.name.get)
-        model = context.model
 
-        inlet_sensor = OpenStudio::Model::EnergyManagementSystemSensor.new(model, 'System Node Temperature')
-        inlet_sensor.setName("#{name} Inlet Temp Sensor")
-        inlet_sensor.setKeyName(loop.supplyInletNode.handle.to_s)
+        # Built through the EMS builder so this pass creates its objects the same way a declared
+        # ems_info section does, including its name-based reuse of sensors and actuators.
+        inlet_sensor = EmsBuilder.build_sensor({ name: "#{name} Inlet Temp Sensor",
+                                                 variable: 'System Node Temperature',
+                                                 keyname: loop.supplyInletNode.handle.to_s }, context)
+        actuator = EmsBuilder.build_actuator({ name: "#{name} Outlet Temp Actuator",
+                                               component_name: schedule.name.get,
+                                               component_type: 'Schedule:Constant',
+                                               control_type: 'Schedule Value' }, context)
 
-        actuator = OpenStudio::Model::EnergyManagementSystemActuator.new(schedule, 'Schedule:Constant', 'Schedule Value')
-        actuator.setName("#{name} Outlet Temp Actuator")
-
-        program = OpenStudio::Model::EnergyManagementSystemProgram.new(model)
-        program.setName("#{name} Temperature Control")
-        program.setBody(<<-EMS)
+        body = <<-EMS
           SET Tin = #{inlet_sensor.handle}
-          SET Tout = #{slope.round(3)} * Tin + #{intercept.round(2)}
+          SET Tout = #{slope.round(2)} * Tin + #{intercept.round(1)}
           SET #{actuator.handle} = Tout
         EMS
+        program = EmsBuilder.build_program({ name: "#{name} Temperature Control", body: body }, context)
 
-        calling_manager = OpenStudio::Model::EnergyManagementSystemProgramCallingManager.new(model)
-        calling_manager.setName("#{program.name.get} Calling Manager")
-        calling_manager.setCallingPoint('InsideHVACSystemIterationLoop')
-        calling_manager.addProgram(program)
+        EmsBuilder.build_calling_manager({ name: "#{program.name.get} Calling Manager",
+                                           calling_point: 'InsideHVACSystemIterationLoop',
+                                           program_names: [program.name.get] }, context)
         nil
       end
 

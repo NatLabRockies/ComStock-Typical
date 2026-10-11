@@ -15,6 +15,14 @@ module OpenstudioStandards
       spec = ComponentFactory.deep_symbolize(spec)
       context = BuildContext.new(model)
 
+      # Structural check first, so a malformed spec fails naming the offending path instead of
+      # deep inside a builder with an OpenStudio-level message.
+      Validation.check(spec).each { |warning| context.warn(warning) }
+
+      # Schedules first: any section may name one, including the loop-level setpoint managers that
+      # are placed before their loop's equipment exists.
+      (spec[:schedules] || []).each { |schedule_spec| build_schedule(schedule_spec, context) }
+
       (spec[:plant_loop_info] || []).each { |loop_spec| PlantLoopBuilder.build(loop_spec, context) }
       (spec[:vrf_info] || []).each { |vrf_spec| VrfBuilder.build(vrf_spec, context) }
       (spec[:air_system_info] || []).each { |air_spec| AirLoopBuilder.build(air_spec, context) }
@@ -28,6 +36,29 @@ module OpenstudioStandards
 
       write_building_properties(model, spec)
       context
+    end
+
+    # Create one constant schedule a spec declares.
+    #
+    # A Schedule:Constant is a distinct class from a schedule ruleset, and only it can be the target
+    # of an EnergyManagementSystem actuator, so +constant_object+ selects which is built.
+    #
+    # @param spec [Hash] a schedules entry
+    # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+    # @return [OpenStudio::Model::Schedule] the schedule
+    def self.build_schedule(spec, context)
+      value = Quantities.resolve(spec, 'value', :temperature) || spec[:value]
+      raise ArgumentError, "schedule '#{spec[:name]}' needs a value" if value.nil?
+
+      if spec[:constant_object]
+        OpenstudioStandards::Schedules.create_schedule_constant(context.model, value,
+                                                                name: spec[:name],
+                                                                schedule_type_limit: spec[:type_limits])
+      else
+        OpenstudioStandards::Schedules.create_constant_schedule_ruleset(context.model, value,
+                                                                        name: spec[:name],
+                                                                        schedule_type_limit: spec[:type_limits])
+      end
     end
 
     # Record the spec identity on the Building additional properties.

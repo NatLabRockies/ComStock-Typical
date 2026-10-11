@@ -32,8 +32,25 @@ module OpenstudioStandards
         place_controls(air_loop, spec[:controls] || [], context)
         apply_availability(air_loop, spec[:availability], context) if spec[:availability]
 
-        context.register_air_loop(air_loop.name.get, air_loop)
+        register_air_loop(air_loop, spec, context)
         air_loop
+      end
+
+      # Register the loop under the name the spec declared as well as the name it ended up with.
+      # OpenStudio uniquifies a duplicate name, so a second system composed with the same name
+      # becomes 'Name 1' in the model; without this, a zone entry naming 'Name' would resolve
+      # through the model and attach itself to the first system's loop.
+      #
+      # @param air_loop [OpenStudio::Model::AirLoopHVAC] the loop
+      # @param spec [Hash] the airLoop spec
+      # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
+      # @return [void]
+      def self.register_air_loop(air_loop, spec, context)
+        actual = air_loop.name.get
+        context.register_air_loop(actual, air_loop)
+        declared = spec[:name]
+        context.register_air_loop(declared, air_loop) if declared && declared.to_s != actual
+        nil
       end
 
       # Apply a retrofit entry to an air loop already present in the model, matched by name. No new
@@ -261,8 +278,10 @@ module OpenstudioStandards
       # @return [void]
       def self.apply_oa_control(controller, oa_control, context)
         ventilation = oa_control[:ventilation] || {}
+        # The minimum outdoor air flow autosizes when the spec does not give one: a controller left at
+        # the OpenStudio default carries a hard zero, which is not the same system.
         min_flow = Quantities.resolve(ventilation, 'min_oa_flow', :air_flow)
-        controller.setMinimumOutdoorAirFlowRate(min_flow) unless min_flow.nil?
+        min_flow.nil? ? controller.autosizeMinimumOutdoorAirFlowRate : controller.setMinimumOutdoorAirFlowRate(min_flow)
         max_flow = Quantities.resolve(ventilation, 'max_oa_flow', :air_flow)
         controller.setMaximumOutdoorAirFlowRate(max_flow) unless max_flow.nil?
         controller.setMinimumOutdoorAirSchedule(context.schedule(ventilation[:min_oa_sch_name])) if ventilation[:min_oa_sch_name]

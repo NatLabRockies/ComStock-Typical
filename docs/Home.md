@@ -34,7 +34,8 @@ For a high-level overview of what the library does, see the {file:docs/Features.
 If you are a user, see the {file:docs/UserQuickStartGuide.md User Quick Start Guide}.
 
 To build a model of your own mix of space types, see the
-{file:docs/CustomBuildings.md Custom Buildings page}.
+{file:docs/CustomBuildings.md Custom Buildings page}. To describe an HVAC system as a single
+declarative input instead of a sequence of builder calls, see {file:docs/HVACCreator.md The HVAC Creator}.
 
 ## Developer Information
 

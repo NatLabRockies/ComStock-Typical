@@ -72,6 +72,7 @@ modules/hvac/creator/test_context.rb
 modules/hvac/creator/test_doas_builder.rb
 modules/hvac/creator/test_dx_multispeed_coils.rb
 modules/hvac/creator/test_ems_builder.rb
+modules/hvac/creator/test_examples.rb
 modules/hvac/creator/test_integration_annual.rb
 modules/hvac/creator/test_integration_annual_fcu_doas.rb
 modules/hvac/creator/test_integration_annual_radiant.rb
@@ -81,6 +82,9 @@ modules/hvac/creator/test_plant_demand.rb
 modules/hvac/creator/test_plant_loop_builder.rb
 modules/hvac/creator/test_post_steps.rb
 modules/hvac/creator/test_quantities.rb
+modules/hvac/creator/test_schema.rb
+modules/hvac/creator/test_units.rb
+modules/hvac/creator/test_validation.rb
 modules/hvac/creator/test_vrf.rb
 modules/hvac/creator/test_zone_builder.rb
 modules/hvac/creator/test_zone_hvac_equipment.rb

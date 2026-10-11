@@ -1,0 +1,86 @@
+{
+  "schema_version": "0.1.0",
+  "custom_system_type": "DOAS with Four Pipe Fan Coils",
+  "description": "A 100% outdoor air system delivering ventilation to each zone through an uncontrolled diffuser, with a hydronic four-pipe fan coil meeting the zone load. Shows a zone served by an air loop and by its own zone equipment at once, and a DOAS sized on the ventilation requirement rather than the zone load.",
+
+  "plant_loop_info": [
+    {
+      "name": "Hot Water Loop",
+      "design_info": { "loop_type": "Heating", "supply_temp_f": 180.0, "temp_delta_r": 20.0 },
+      "supply_inlet_components": [
+        { "obj_type": "PumpVariableSpeed", "name": "Hot Water Loop Pump", "pump_head_fth2o": 60.0 }
+      ],
+      "supply_branches": [
+        [{ "obj_type": "BoilerHotWater", "name": "Boiler", "fuel_type": "NaturalGas", "eff": 0.9 }]
+      ],
+      "controls": [
+        { "spm_type": "Scheduled", "name": "Hot Water Loop Setpoint Manager", "spm_temp_f": 180.0 }
+      ]
+    },
+    {
+      "name": "Chilled Water Loop",
+      "design_info": { "loop_type": "Cooling", "supply_temp_f": 44.0, "temp_delta_r": 10.1 },
+      "supply_inlet_components": [
+        { "obj_type": "PumpVariableSpeed", "name": "Chilled Water Loop Pump", "pump_head_fth2o": 60.0, "vsd_control_type": "VSD DP Reset" }
+      ],
+      "supply_branches": [
+        [{ "obj_type": "ChillerElectricEIR", "name": "Chiller", "condenser_type": "AirCooled", "cop": 3.1 }]
+      ],
+      "controls": [
+        { "spm_type": "Scheduled", "name": "Chilled Water Loop Setpoint Manager", "spm_temp_f": 44.0 }
+      ]
+    }
+  ],
+
+  "air_system_info": [
+    {
+      "name": "DOAS",
+      "design_info": {
+        "des_cool_sat_f": 55.0,
+        "des_heat_sat_f": 60.0,
+        "all_outdoor_air": true
+      },
+      "availability": { "schedule_name": "AlwaysOn" },
+      "oa_control": { "ventilation": { "min_oa_frac_sch_name": "AlwaysOn" } },
+      "supply_components": [
+        { "obj_type": "CoilHeatingWater", "name": "DOAS Htg Coil", "plant_loop_name": "Hot Water Loop" },
+        { "obj_type": "CoilCoolingWater", "name": "DOAS Clg Coil", "plant_loop_name": "Chilled Water Loop" },
+        { "obj_type": "FanConstantVolume", "name": "DOAS Fan", "pressure_rise_inh2o": 3.0 }
+      ],
+      "controls": [
+        { "spm_type": "Scheduled", "name": "DOAS Setpoint Manager", "spm_temp_f": 65.0 }
+      ]
+    }
+  ],
+
+  "zone_info": [
+    {
+      "zone_name": "Zone 1",
+      "air_loop_name": "DOAS",
+      "air_terminal_info": { "air_terminal_type": "AirTerminalSingleDuctConstantVolumeNoReheat" },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACFourPipeFanCoil",
+          "name": "Zone 1 Fan Coil",
+          "chilled_water_loop_name": "Chilled Water Loop",
+          "hot_water_loop_name": "Hot Water Loop",
+          "capacity_ctrl_method": "CyclingFan"
+        }
+      ]
+    },
+    {
+      "zone_name": "Zone 2",
+      "air_loop_name": "DOAS",
+      "air_terminal_info": { "air_terminal_type": "AirTerminalSingleDuctConstantVolumeNoReheat" },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACFourPipeFanCoil",
+          "name": "Zone 2 Fan Coil",
+          "chilled_water_loop_name": "Chilled Water Loop",
+          "hot_water_loop_name": "Hot Water Loop",
+          "capacity_ctrl_method": "CyclingFan"
+        }
+      ]
+    }
+  ]
+}

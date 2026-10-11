@@ -112,7 +112,7 @@ class TestAddHVACSystems < Minitest::Test
       # {model_test_name: 'WSHP_ashp_clg_twr', system_type: 'Water Source Heat Pumps', main_heat_fuel: 'AirSourceHeatPump', cool_fuel: 'Electricity', heat_pump_loop_cooling_type: 'CoolingTower'},
       # @todo fix failing sizing run
       {model_test_name: 'WSHP_ambient_clg_twr', system_type: 'Water Source Heat Pumps', main_heat_fuel: 'DistrictHeating', cool_fuel: 'Electricity', heat_pump_loop_cooling_type: 'CoolingTower'},
-      {model_test_name: 'WSHP_ambient_clg_twr', system_type: 'Water Source Heat Pumps', main_heat_fuel: 'AmbientLoop', cool_fuel: 'AmbientLoop', heat_pump_loop_cooling_type: 'CoolingTower'},
+      {model_test_name: 'WSHP_ambient_ambient_clg_twr', system_type: 'Water Source Heat Pumps', main_heat_fuel: 'AmbientLoop', cool_fuel: 'AmbientLoop', heat_pump_loop_cooling_type: 'CoolingTower'},
       # {model_test_name: 'WSHP_ambient_fld_clr', system_type: 'Water Source Heat Pumps', main_heat_fuel: 'AmbientLoop', cool_fuel: 'AmbientLoop', heat_pump_loop_cooling_type: 'FluidCooler'}
       # @todo this test is failing the sizing run
     ]

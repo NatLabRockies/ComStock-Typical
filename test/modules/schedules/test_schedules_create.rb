@@ -72,6 +72,36 @@ class TestSchedulesCreate < Minitest::Test
     assert(result['max'] == 42.0)
   end
 
+  def test_create_schedule_constant
+    model = OpenStudio::Model::Model.new
+    schedule = @sch.create_schedule_constant(model, 24.0,
+                                             name: 'Test Constant Schedule',
+                                             schedule_type_limit: 'Temperature')
+    assert_equal('Test Constant Schedule', schedule.name.get)
+    assert_in_delta(24.0, schedule.value, 1.0e-6)
+    assert(schedule.scheduleTypeLimits.is_initialized)
+    assert_equal('Temperature', schedule.scheduleTypeLimits.get.name.get)
+  end
+
+  # A named constant schedule is reused rather than duplicated, so repeated calls converge on one
+  # object - an EMS actuator must drive a single schedule.
+  def test_create_schedule_constant_reuses_by_name
+    model = OpenStudio::Model::Model.new
+    first = @sch.create_schedule_constant(model, 24.0, name: 'Ground HX Temp Sch')
+    second = @sch.create_schedule_constant(model, 24.0, name: 'Ground HX Temp Sch')
+    assert_equal(first.handle.to_s, second.handle.to_s)
+    assert_equal(1, model.getScheduleConstants.size)
+  end
+
+  # An unrecognized limit name is reported by create_schedule_type_limits; the schedule is still
+  # returned, without limits, rather than failing on the false it returns.
+  def test_create_schedule_constant_unknown_type_limit
+    model = OpenStudio::Model::Model.new
+    schedule = @sch.create_schedule_constant(model, 24.0, name: 'Test Sch', schedule_type_limit: 'Not A Limit')
+    assert_in_delta(24.0, schedule.value, 1.0e-6)
+    refute(schedule.scheduleTypeLimits.is_initialized)
+  end
+
   def test_create_simple_schedule
     model = new_model
     test_options = {

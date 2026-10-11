@@ -1,5 +1,18 @@
 # A set of methods for testing hvac system methods
 
+# Whether cached simulation results should be ignored and every case re-simulated.
+#
+# These tests reuse a case's eplusout.sql when one is present, which makes a re-run after a code
+# change silently compare the new code against the old results - the test still passes because it
+# never ran. Set RERUN_SIMULATIONS=true to force a fresh run without hunting down and deleting the
+# output directory.
+#
+# @return [Boolean] true when RERUN_SIMULATIONS is set to something other than false/0/no
+def rerun_simulations?
+  value = ENV.fetch('RERUN_SIMULATIONS', nil).to_s.strip.downcase
+  !value.empty? && !%w[false 0 no].include?(value)
+end
+
 # write errors to a log file
 def log_hvac_test_errors(errs)
   File.open("#{__dir__}/../os_stds_methods/output/test_add_hvac_systems.log", 'a') do |file|
@@ -74,7 +87,7 @@ def model_hvac_test(hvac_arguments)
 
   # Load the model if already created
   annual_run_success = false
-  if File.exist?("#{model_dir}/AR/run/eplusout.sql")
+  if File.exist?("#{model_dir}/AR/run/eplusout.sql") && !rerun_simulations?
     puts "test: '#{model_test_name}' results already available. Not re-rerunning energy simulation."
     model = OpenStudio::Model::Model.new
     sql = OpenstudioStandards::SqlFile.sql_file_safe_load("#{model_dir}/AR/run/eplusout.sql")
@@ -311,7 +324,7 @@ def model_radiant_system_test(arguments)
 
   # Load the model if already created
   annual_run_success = false
-  if File.exist?("#{model_dir}/AR/run/eplusout.sql")
+  if File.exist?("#{model_dir}/AR/run/eplusout.sql") && !rerun_simulations?
     puts "test: '#{model_test_name}' results already available. Not re-rerunning energy simulation."
     model = OpenStudio::Model::Model.new
     sql = OpenstudioStandards::SqlFile.sql_file_safe_load("#{model_dir}/AR/run/eplusout.sql")

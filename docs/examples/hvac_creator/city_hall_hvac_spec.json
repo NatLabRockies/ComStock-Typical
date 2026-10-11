@@ -1,0 +1,436 @@
+{
+  "schema_version": "0.1.0",
+  "custom_system_type": "NYC City Hall - District Steam Hot Water, Hybrid District/Local Chilled Water, Central AHUs with Four-Pipe Fan Coils",
+  "description": "HVAC systems of New York City Hall (54,800 sq ft, 1812 landmark, major MEP renovation 2015) as described in the 2018 Local Law 87 Energy Efficiency Report (see city_hall_system_description.md and city_hall_audit_review.md). Heating: high-pressure district steam (160-180 psi) is reduced at the Tweed Courthouse and feeds two B&G SU-106-2 steam-to-hot-water heat exchangers HX SB-01/02 (3,208 lb/hr steam each, about 3.05 MMBtu/h each) in the sub-basement, modeled as two parallel district hot water sources; two 15 HP, 420 GPM, 70 ft B&G 1510 pumps (lead/standby) on differential-pressure control; 180 F supply with a 30 F coil design temperature difference (the loop was measured at 10 F because the pumps were left in manual at 40 Hz with the bypass open, which RCM 03 requires correcting); outdoor-air reset 180 F at 35 F OA to 125 F at 50 F OA and a 65 F outdoor-air lockout applied by EMS. A 941 MBH, 94.1 percent Lochinvar SBN-1000 condensing boiler installed for redundancy has never been commissioned and is not modeled. Cooling: chilled water from the Manhattan Municipal Building central plant (44 F via the campus dual-temperature loop, weekdays 6 AM-6 PM, May-October) supplemented after hours by a 100-ton Clima-Cool modular chiller (three modules, 2015) and a 76-ton Carrier 30HX screw chiller (2010), both water-cooled through two BAC VTL-103-K cooling towers (103 tons nominal each, 10 HP VFD fans) on the roof; 20 HP, 500 GPM, 75 ft B&G 1510 pumps (one CHW, one CW, one shared standby). The district source is listed first under sequential load distribution; its weekday-hours availability is not expressible declaratively and is noted here. Air side: fifteen AHUs (37,400 CFM supply, 14,310 CFM design outdoor air, 1,125 MBH heating and 1,586 MBH cooling coils, 57.5 HP of supply fans, twelve return fans, MERV 8 pleated filters) with VFD supply and return fans, demand-controlled ventilation, airflow stations, and economizers, represented by two multizone loops: an assembly loop standing in for AHU-EA-05/06/07 and AHU-WA-01 (council chamber, committee lounge, bullpen; 23,000 CFM, 4,700 CFM OA) and an office loop for the other eleven units (about 14,400 CFM, 9,610 CFM OA). Terminals are VAV without reheat; the supply air temperature follows an outdoor-air reset from 75 F at 30 F outdoors to 55 F at 70 F, which reproduces the 67-77 F supply temperatures measured in February and the 51 F council-chamber supply in November. Loops operate 5 AM-11 PM with night cycling to hold the 60 F / 85 F setbacks. Steam humidifier sections exist but were unused and are not modeled. Zone equipment: 95 Trane four-pipe fan coil units with DDC controls (basement 21, first floor 44, second floor 19, third floor 11, including six in corridors) in office, assembly, cafeteria, and corridor spaces (continuous fan, ventilation from the AHUs; fifteen basement units are stand-alone on wall thermostats and run continuously); fifteen Trane S-A18 hot water unit heaters (14.2 MBH, 500 CFM each) in the attics, sub-basement mechanical and storage rooms, and the refrigeration room; hot water heat only in restrooms; ten DX split systems totaling 216 kBtu/h serving server, UPS, broadcast, pantry, and elevator machine rooms, represented by a packaged DX unit in the mechanical zone. Exhaust from the inventory: five toilet exhaust fans (2,440 CFM) on a 6 AM-11 PM time clock; two kitchenette fans (400 CFM), copy-room, storage, refrigeration-machine-room, elevator-machine-room, and basement office exhaust interlocked with the supply fans. Not modeled: the 8 kW basement electric air curtain, the 275 CFM smoke exhaust fan, domestic hot water (730 MBH PVI steam heater with 1,250 MBH condensate heat recovery), the 100 kW fuel cell, and the 10.45 kW rooftop PV. Zones are named for the space functions in the report's Table 10 (Office, Corridor, Multiuse Assembly, Cafeteria, Restroom, Stairwell, Storage, Mechanical Space) and must exist in the model, with thermostats at the reported 72 F heating / 76 F cooling occupied setpoints. Two profile schedules must also exist in the model: 'City Hall HVAC Availability' (5 AM-11 PM) and 'City Hall Toilet Exhaust Schedule' (6 AM-11 PM).",
+
+  "plant_loop_info": [
+    {
+      "name": "Condenser Water Loop",
+      "design_info": { "loop_type": "Condenser", "supply_temp_f": 85.0, "temp_delta_r": 10.0 },
+      "supply_inlet_components": [
+        {
+          "obj_type": "PumpVariableSpeed",
+          "name": "CWP-B-01 Condenser Water Pump",
+          "pump_head_fth2o": 75.0,
+          "pump_flow_gpm": 500.0,
+          "motor_efficiency": 0.9,
+          "vsd_control_type": "VSD No Reset",
+          "pump_ctrl_type": "Intermittent"
+        }
+      ],
+      "supply_branches": [
+        [{ "obj_type": "CoolingTowerVariableSpeed", "name": "CT-R-01 BAC Cooling Tower", "fan_power_w": 7457.0, "sizing_factor": 0.5 }],
+        [{ "obj_type": "CoolingTowerVariableSpeed", "name": "CT-R-02 BAC Cooling Tower", "fan_power_w": 7457.0, "sizing_factor": 0.5 }]
+      ],
+      "controls": [
+        {
+          "spm_type": "FollowOutdoorAir",
+          "ref_temp": "OutdoorAirWetBulb",
+          "offset_temp_r": 7.0,
+          "min_setpt_f": 70.0,
+          "max_setpt_f": 85.0
+        }
+      ]
+    },
+    {
+      "name": "Hot Water Loop",
+      "design_info": { "loop_type": "Heating", "supply_temp_f": 180.0, "temp_delta_r": 30.0 },
+      "supply_inlet_components": [
+        {
+          "obj_type": "PumpVariableSpeed",
+          "name": "HWP-SB-01 Hot Water Pump",
+          "pump_head_fth2o": 70.0,
+          "pump_flow_gpm": 420.0,
+          "motor_efficiency": 0.9,
+          "vsd_control_type": "VSD DP Reset",
+          "pump_ctrl_type": "Intermittent"
+        }
+      ],
+      "supply_branches": [
+        [{ "obj_type": "DistrictHeatingWater", "name": "HX SB-01 Steam to Hot Water Heat Exchanger", "capacity_btuh": 3050000.0 }],
+        [{ "obj_type": "DistrictHeatingWater", "name": "HX SB-02 Steam to Hot Water Heat Exchanger", "capacity_btuh": 3050000.0 }]
+      ],
+      "controls": [
+        {
+          "spm_type": "OutdoorAirReset",
+          "setpoint_at_oat_low_f": 180.0,
+          "oat_low_f": 35.0,
+          "setpoint_at_oat_high_f": 125.0,
+          "oat_high_f": 50.0
+        }
+      ]
+    },
+    {
+      "name": "Chilled Water Loop",
+      "design_info": { "loop_type": "Cooling", "supply_temp_f": 44.0, "temp_delta_r": 10.0 },
+      "load_distribution_scheme": "SequentialLoad",
+      "supply_inlet_components": [
+        {
+          "obj_type": "PumpVariableSpeed",
+          "name": "CHWP-B-01 Chilled Water Pump",
+          "pump_head_fth2o": 75.0,
+          "pump_flow_gpm": 500.0,
+          "motor_efficiency": 0.9,
+          "vsd_control_type": "VSD DP Reset",
+          "pump_ctrl_type": "Intermittent"
+        }
+      ],
+      "supply_branches": [
+        [{ "obj_type": "DistrictCooling", "name": "Manhattan Municipal Building Chilled Water" }],
+        [{
+          "obj_type": "ChillerElectricEIR",
+          "name": "CH-B-01 Clima-Cool Modular Chiller",
+          "condenser_type": "WaterCooled",
+          "condenser_loop_name": "Condenser Water Loop",
+          "capacity_btuh": 1200000.0,
+          "cop": 4.9,
+          "leaving_chw_temp_f": 44.0,
+          "entering_cw_temp_f": 85.0
+        }],
+        [{
+          "obj_type": "ChillerElectricEIR",
+          "name": "CH-2 Carrier 30HX Screw Chiller",
+          "condenser_type": "WaterCooled",
+          "condenser_loop_name": "Condenser Water Loop",
+          "capacity_btuh": 912000.0,
+          "cop": 5.2,
+          "leaving_chw_temp_f": 44.0,
+          "entering_cw_temp_f": 85.0
+        }]
+      ],
+      "controls": [
+        { "spm_type": "Scheduled", "spm_temp_f": 44.0 }
+      ]
+    }
+  ],
+
+  "air_system_info": [
+    {
+      "name": "Office AHU",
+      "availability": {
+        "schedule_name": "City Hall HVAC Availability",
+        "night_cycle": { "control_type": "CycleOnAny", "run_time_s": 1800 }
+      },
+      "design_info": {
+        "des_supply_airflow_cfm": 14400.0,
+        "des_cool_sat_f": 55.0,
+        "des_heat_sat_f": 75.0,
+        "min_sys_airflow_ratio": 0.3,
+        "sizing_option": "NonCoincident"
+      },
+      "oa_control": {
+        "ventilation": { "min_oa_sch_name": "AlwaysOn", "min_oa_flow_cfm": 9610.0, "dcv": true, "sys_oa_method": "ZoneSum" },
+        "economizer": { "type": "DifferentialEnthalpy" }
+      },
+      "supply_components": [
+        {
+          "obj_type": "CoilHeatingWater",
+          "name": "Office AHU Heating Coil",
+          "plant_loop_name": "Hot Water Loop",
+          "capacity_btuh": 628000.0,
+          "ewt_f": 180.0,
+          "lwt_f": 150.0
+        },
+        {
+          "obj_type": "CoilCoolingWater",
+          "name": "Office AHU Cooling Coil",
+          "plant_loop_name": "Chilled Water Loop"
+        },
+        {
+          "obj_type": "FanVariableVolume",
+          "name": "Office AHU Supply Fan",
+          "fan_total_eff": 0.6,
+          "motor_eff": 0.9,
+          "pressure_rise_inh2o": 4.0
+        }
+      ],
+      "return_components": [
+        {
+          "obj_type": "FanVariableVolume",
+          "name": "Office AHU Return Fan",
+          "fan_total_eff": 0.55,
+          "motor_eff": 0.85,
+          "pressure_rise_inh2o": 1.0
+        }
+      ],
+      "controls": [
+        {
+          "spm_type": "OutdoorAirReset",
+          "setpoint_at_oat_low_f": 75.0,
+          "oat_low_f": 30.0,
+          "setpoint_at_oat_high_f": 55.0,
+          "oat_high_f": 70.0
+        }
+      ]
+    },
+    {
+      "name": "Assembly AHU",
+      "availability": {
+        "schedule_name": "City Hall HVAC Availability",
+        "night_cycle": { "control_type": "CycleOnAny", "run_time_s": 1800 }
+      },
+      "design_info": {
+        "des_supply_airflow_cfm": 23000.0,
+        "des_cool_sat_f": 55.0,
+        "des_heat_sat_f": 75.0,
+        "min_sys_airflow_ratio": 0.3,
+        "sizing_option": "NonCoincident"
+      },
+      "oa_control": {
+        "ventilation": { "min_oa_sch_name": "AlwaysOn", "min_oa_flow_cfm": 4700.0, "dcv": true, "sys_oa_method": "ZoneSum" },
+        "economizer": { "type": "DifferentialEnthalpy" }
+      },
+      "supply_components": [
+        {
+          "obj_type": "CoilHeatingWater",
+          "name": "Assembly AHU Heating Coil",
+          "plant_loop_name": "Hot Water Loop",
+          "capacity_btuh": 497000.0,
+          "ewt_f": 180.0,
+          "lwt_f": 150.0
+        },
+        {
+          "obj_type": "CoilCoolingWater",
+          "name": "Assembly AHU Cooling Coil",
+          "plant_loop_name": "Chilled Water Loop"
+        },
+        {
+          "obj_type": "FanVariableVolume",
+          "name": "Assembly AHU Supply Fan",
+          "fan_total_eff": 0.6,
+          "motor_eff": 0.9,
+          "pressure_rise_inh2o": 4.0
+        }
+      ],
+      "return_components": [
+        {
+          "obj_type": "FanVariableVolume",
+          "name": "Assembly AHU Return Fan",
+          "fan_total_eff": 0.55,
+          "motor_eff": 0.85,
+          "pressure_rise_inh2o": 1.0
+        }
+      ],
+      "controls": [
+        {
+          "spm_type": "OutdoorAirReset",
+          "setpoint_at_oat_low_f": 75.0,
+          "oat_low_f": 30.0,
+          "setpoint_at_oat_high_f": 55.0,
+          "oat_high_f": 70.0
+        }
+      ]
+    }
+  ],
+
+  "zone_info": [
+    {
+      "zone_name": "Office",
+      "air_loop_name": "Office AHU",
+      "air_terminal_info": {
+        "air_terminal_type": "AirTerminalSingleDuctVAVNoReheat",
+        "vav": { "min_flow_input_method": "Constant", "min_flow_frac": 0.3 }
+      },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACFourPipeFanCoil",
+          "name": "Office Fan Coil Units",
+          "chilled_water_loop_name": "Chilled Water Loop",
+          "hot_water_loop_name": "Hot Water Loop",
+          "capacity_ctrl_method": "ConstantFanVariableFlow",
+          "no_ventilation": true
+        },
+        {
+          "obj_type": "FanZoneExhaust",
+          "name": "Office Area Exhaust Fans EF-WA-01/02/03",
+          "max_airflow_cfm": 2600.0,
+          "pressure_rise_inh2o": 0.5,
+          "fan_total_eff": 0.5,
+          "system_availability_coupling_mode": "Coupled"
+        }
+      ]
+    },
+    {
+      "zone_name": "Corridor",
+      "air_loop_name": "Office AHU",
+      "air_terminal_info": {
+        "air_terminal_type": "AirTerminalSingleDuctVAVNoReheat",
+        "vav": { "min_flow_input_method": "Constant", "min_flow_frac": 0.3 }
+      },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACFourPipeFanCoil",
+          "name": "Corridor Fan Coil Units",
+          "chilled_water_loop_name": "Chilled Water Loop",
+          "hot_water_loop_name": "Hot Water Loop",
+          "capacity_ctrl_method": "ConstantFanVariableFlow",
+          "no_ventilation": true
+        }
+      ]
+    },
+    {
+      "zone_name": "Stairwell",
+      "air_loop_name": "Office AHU",
+      "air_terminal_info": {
+        "air_terminal_type": "AirTerminalSingleDuctVAVNoReheat",
+        "vav": { "min_flow_input_method": "Constant", "min_flow_frac": 0.3 }
+      }
+    },
+    {
+      "zone_name": "Storage",
+      "air_loop_name": "Office AHU",
+      "air_terminal_info": {
+        "air_terminal_type": "AirTerminalSingleDuctVAVNoReheat",
+        "vav": { "min_flow_input_method": "Constant", "min_flow_frac": 0.3 }
+      },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACUnitHeater",
+          "name": "Storage Hot Water Unit Heaters UH-SB-03/04",
+          "max_airflow_cfm": 1000.0,
+          "control_type": "OnOff",
+          "components": [
+            { "obj_type": "FanConstantVolume", "name": "Storage Unit Heater Fan", "pressure_rise_inh2o": 0.2, "max_airflow_cfm": 1000.0 },
+            { "obj_type": "CoilHeatingWater", "name": "Storage Unit Heater Coil", "plant_loop_name": "Hot Water Loop", "capacity_btuh": 28400.0 }
+          ]
+        },
+        {
+          "obj_type": "FanZoneExhaust",
+          "name": "Storage and Copy Room Exhaust Fans EF-SB-01/02",
+          "max_airflow_cfm": 1050.0,
+          "pressure_rise_inh2o": 0.5,
+          "fan_total_eff": 0.5,
+          "system_availability_coupling_mode": "Coupled"
+        }
+      ]
+    },
+    {
+      "zone_name": "Multiuse Assembly",
+      "air_loop_name": "Assembly AHU",
+      "air_terminal_info": {
+        "air_terminal_type": "AirTerminalSingleDuctVAVNoReheat",
+        "vav": { "min_flow_input_method": "Constant", "min_flow_frac": 0.3 }
+      },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACFourPipeFanCoil",
+          "name": "Council Chamber Fan Coil Units",
+          "chilled_water_loop_name": "Chilled Water Loop",
+          "hot_water_loop_name": "Hot Water Loop",
+          "capacity_ctrl_method": "ConstantFanVariableFlow",
+          "no_ventilation": true
+        }
+      ]
+    },
+    {
+      "zone_name": "Cafeteria",
+      "air_loop_name": "Assembly AHU",
+      "air_terminal_info": {
+        "air_terminal_type": "AirTerminalSingleDuctVAVNoReheat",
+        "vav": { "min_flow_input_method": "Constant", "min_flow_frac": 0.3 }
+      },
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACFourPipeFanCoil",
+          "name": "Cafeteria Fan Coil Units",
+          "chilled_water_loop_name": "Chilled Water Loop",
+          "hot_water_loop_name": "Hot Water Loop",
+          "capacity_ctrl_method": "ConstantFanVariableFlow",
+          "no_ventilation": true
+        },
+        {
+          "obj_type": "FanZoneExhaust",
+          "name": "Kitchenette Exhaust Fans TF-B-01/02",
+          "max_airflow_cfm": 400.0,
+          "pressure_rise_inh2o": 0.5,
+          "fan_total_eff": 0.5,
+          "system_availability_coupling_mode": "Coupled"
+        }
+      ]
+    },
+    {
+      "zone_name": "Restroom",
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACBaseboardConvectiveWater",
+          "name": "Restroom Hot Water Heat",
+          "hot_water_loop_name": "Hot Water Loop"
+        },
+        {
+          "obj_type": "FanZoneExhaust",
+          "name": "Toilet Exhaust Fans TX-3-01/02 TX-WA-01/02/03",
+          "schedule_name": "City Hall Toilet Exhaust Schedule",
+          "max_airflow_cfm": 2440.0,
+          "pressure_rise_inh2o": 0.5,
+          "fan_total_eff": 0.5,
+          "system_availability_coupling_mode": "Decoupled"
+        }
+      ]
+    },
+    {
+      "zone_name": "Mechanical Space",
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACUnitHeater",
+          "name": "Mechanical Space Hot Water Unit Heaters",
+          "max_airflow_cfm": 7000.0,
+          "control_type": "OnOff",
+          "equipment_list_position": { "heat_priority": 1, "cool_priority": 2 },
+          "components": [
+            { "obj_type": "FanConstantVolume", "name": "Mechanical Space Unit Heater Fans", "pressure_rise_inh2o": 0.2, "max_airflow_cfm": 7000.0 },
+            { "obj_type": "CoilHeatingWater", "name": "Mechanical Space Unit Heater Coils", "plant_loop_name": "Hot Water Loop", "capacity_btuh": 199000.0 }
+          ]
+        },
+        {
+          "obj_type": "ZoneHVACPackagedTerminalAirConditioner",
+          "name": "Server, UPS, Broadcast and Elevator Machine Room DX Split Units AC-1 to AC-10",
+          "no_ventilation": true,
+          "equipment_list_position": { "heat_priority": 2, "cool_priority": 1 },
+          "components": [
+            { "obj_type": "FanOnOff", "name": "DX Split Unit Fans" },
+            { "obj_type": "CoilCoolingDXSingleSpeed", "name": "DX Split Unit Cooling Coils", "rated_capacity_btuh": 216000.0 },
+            { "obj_type": "CoilHeatingElectric", "name": "DX Split Unit Electric Heat" }
+          ]
+        },
+        {
+          "obj_type": "FanZoneExhaust",
+          "name": "Refrigeration and Elevator Machine Room Exhaust Fans EF-WA-04 EF-3-05",
+          "schedule_name": "City Hall HVAC Availability",
+          "max_airflow_cfm": 900.0,
+          "pressure_rise_inh2o": 0.5,
+          "fan_total_eff": 0.5,
+          "system_availability_coupling_mode": "Decoupled"
+        }
+      ]
+    }
+  ],
+
+  "ems_info": [
+    {
+      "sensors": [
+        { "name": "CityHall_OAT", "keyname": "Environment", "variable": "Site Outdoor Air Drybulb Temperature" }
+      ],
+      "actuators": [
+        {
+          "name": "CityHall_HWLoop_Avail",
+          "component_name": "Hot Water Loop",
+          "component_type": "Plant Loop Overall",
+          "control_type": "On/Off Supervisory"
+        }
+      ],
+      "programs": [
+        {
+          "name": "CityHall_HW_Loop_OAT_Lockout",
+          "body": "IF CityHall_OAT > 18.33\nSET CityHall_HWLoop_Avail = 0\nELSE\nSET CityHall_HWLoop_Avail = 1\nENDIF"
+        }
+      ],
+      "calling_managers": [
+        {
+          "name": "CityHall_HW_Loop_OAT_Lockout_Manager",
+          "calling_point": "BeginTimestepBeforePredictor",
+          "program_names": ["CityHall_HW_Loop_OAT_Lockout"]
+        }
+      ]
+    }
+  ]
+}

@@ -92,6 +92,35 @@ class TestHVACCreatorPlantDemand < Minitest::Test
     end
   end
 
+  # A hot-water coil that names only its loop takes the loop's design exit temperature as its
+  # entering water temperature, and that less the loop design difference as its leaving temperature.
+  def test_heating_water_coil_water_temperatures_default_from_loop
+    @plant.build(hw_loop_spec.merge(design_info: { loop_type: 'Heating', supply_temp_f: 180.0, temp_delta_r: 30.0 }), @ctx)
+    coil = @factory.build({ obj_type: 'CoilHeatingWater', plant_loop_name: 'HW Loop' }, @ctx).to_CoilHeatingWater.get
+    assert_in_delta(OpenStudio.convert(180.0, 'F', 'C').get, coil.ratedInletWaterTemperature, 0.01)
+    assert_in_delta(OpenStudio.convert(150.0, 'F', 'C').get, coil.ratedOutletWaterTemperature, 0.01)
+  end
+
+  def test_heating_water_coil_leaving_temperature_defaults_from_given_entering
+    @plant.build(hw_loop_spec.merge(design_info: { loop_type: 'Heating', supply_temp_f: 180.0, temp_delta_r: 30.0 }), @ctx)
+    coil = @factory.build({ obj_type: 'CoilHeatingWater', plant_loop_name: 'HW Loop', ewt_f: 170.0 }, @ctx).to_CoilHeatingWater.get
+    assert_in_delta(OpenStudio.convert(170.0, 'F', 'C').get, coil.ratedInletWaterTemperature, 0.01)
+    assert_in_delta(OpenStudio.convert(140.0, 'F', 'C').get, coil.ratedOutletWaterTemperature, 0.01)
+  end
+
+  def test_heating_water_coil_capacity_and_ua
+    @plant.build(hw_loop_spec, @ctx)
+    coil = @factory.build({ obj_type: 'CoilHeatingWater', plant_loop_name: 'HW Loop', capacity_btuh: 100_000.0, ua_ip: 1000.0 }, @ctx).to_CoilHeatingWater.get
+    assert_in_delta(29_307.1, coil.ratedCapacity.get, 1.0)
+    assert_in_delta(527.5, coil.uFactorTimesAreaValue.get, 0.5)
+  end
+
+  def test_heating_water_coil_autosizes_capacity_when_not_given
+    @plant.build(hw_loop_spec, @ctx)
+    coil = @factory.build({ obj_type: 'CoilHeatingWater', plant_loop_name: 'HW Loop' }, @ctx).to_CoilHeatingWater.get
+    assert(coil.isRatedCapacityAutosized)
+  end
+
   def test_district_cooling_autosizes_without_capacity
     district = @factory.build({ obj_type: 'DistrictCooling' }, @ctx)
     assert(district.to_DistrictCooling.is_initialized)

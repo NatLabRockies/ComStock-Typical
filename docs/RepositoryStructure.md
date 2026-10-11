@@ -36,7 +36,7 @@ most of them hold a `data/` folder of the vintage-agnostic typical data that mod
 | `equipment` | Typical plug loads and electrical transformers |
 | `exterior_lighting` | Typical exterior lighting |
 | `geometry` | Create, modify and query model geometry, including `create_bar` |
-| `hvac` | Create, modify and query HVAC systems, including the CBECS system mapping |
+| `hvac` | Create, modify and query HVAC systems: the builders in `create_hvac_system.rb`, the CBECS mapping, and under `creator/` the spec-driven factory with its schema `hvac_creator_schema.json` and example specs |
 | `infiltration` | Infiltration, including the NIST infiltration method |
 | `interior_lighting` | Typical interior lighting |
 | `occupancy` | Typical occupancy |

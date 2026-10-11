@@ -1,0 +1,88 @@
+{
+  "schema_version": "0.1.0",
+  "custom_system_type": "Water Source Heat Pumps on a Ground Loop",
+  "description": "Water-source heat pumps in each zone, exchanging heat with a ground loop. The loop's supply is a temperature source standing in for the ground heat exchanger; ground_hx_loop drives its source schedule from the loop inlet temperature with an EMS program, and ems_params gives the control-temperature envelope the linear reset is derived from. The loop also opts out of the conventional bypass and outlet pipes.",
+  "schedules": [
+    {
+      "name": "Ground HX Temp Sch",
+      "value_c": 24.0,
+      "constant_object": true,
+      "type_limits": "Temperature"
+    }
+  ],
+  "plant_loop_info": [
+    {
+      "name": "Ground HX Loop",
+      "design_info": {
+        "loop_type": "Heating",
+        "supply_temp_f": 78.0,
+        "temp_delta_r": 12.0
+      },
+      "min_loop_temp_c": 5.0,
+      "max_loop_temp_c": 80.0,
+      "loop_pipes": false,
+      "ground_hx_loop": true,
+      "ems_params": {
+        "min_inlet_temp_f": 30.0,
+        "max_inlet_temp_f": 90.0,
+        "min_outlet_temp_f": 42.0,
+        "max_outlet_temp_f": 78.0
+      },
+      "supply_inlet_components": [
+        {
+          "obj_type": "PumpConstantSpeed",
+          "name": "Ground HX Loop Pump",
+          "pump_head_fth2o": 60.0,
+          "pump_ctrl_type": "Intermittent"
+        }
+      ],
+      "supply_branches": [
+        [
+          {
+            "obj_type": "PlantComponentTemperatureSource",
+            "name": "Ground HX",
+            "temp_spec_type": "Scheduled",
+            "source_temp_schedule_name": "Ground HX Temp Sch"
+          }
+        ]
+      ],
+      "controls": [
+        {
+          "spm_type": "Scheduled",
+          "name": "Ground HX Supply Outlet Setpoint",
+          "spm_sch_name": "Ground HX Temp Sch",
+          "spm_node": "Ground HX"
+        },
+        {
+          "spm_type": "Scheduled",
+          "name": "Ground HX Loop Supply Outlet Setpoint",
+          "spm_sch_name": "Ground HX Temp Sch"
+        }
+      ]
+    }
+  ],
+  "zone_info": [
+    {
+      "zone_name": "Zone 1",
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACWaterToAirHeatPump",
+          "name": "Zone 1 WSHP",
+          "condenser_loop_name": "Ground HX Loop",
+          "no_ventilation": true
+        }
+      ]
+    },
+    {
+      "zone_name": "Zone 2",
+      "zone_equipment": [
+        {
+          "obj_type": "ZoneHVACWaterToAirHeatPump",
+          "name": "Zone 2 WSHP",
+          "condenser_loop_name": "Ground HX Loop",
+          "no_ventilation": true
+        }
+      ]
+    }
+  ]
+}

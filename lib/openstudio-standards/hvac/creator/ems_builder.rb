@@ -93,17 +93,9 @@ module OpenstudioStandards
       # @param context [OpenstudioStandards::HVAC::BuildContext] the build context
       # @return [OpenStudio::Model::ScheduleConstant] the schedule
       def self.constant_schedule(spec, context)
-        existing = context.model.getScheduleConstantByName(spec[:component_name])
-        return existing.get if existing.is_initialized
-
-        schedule = OpenStudio::Model::ScheduleConstant.new(context.model)
-        schedule.setName(spec[:component_name])
-        schedule.setValue(spec[:create_schedule_constant])
-        if spec[:schedule_type_limit]
-          limits = context.model.getScheduleTypeLimitsByName(spec[:schedule_type_limit])
-          schedule.setScheduleTypeLimits(limits.get) if limits.is_initialized
-        end
-        schedule
+        OpenstudioStandards::Schedules.create_schedule_constant(context.model, spec[:create_schedule_constant],
+                                                                name: spec[:component_name],
+                                                                schedule_type_limit: spec[:schedule_type_limit])
       end
 
       # Build a program from its newline-separated runtime-language body.
