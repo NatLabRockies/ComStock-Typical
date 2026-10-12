@@ -2481,6 +2481,31 @@ class Standard
     return true
   end
 
+  # Whether any space in a zone has its outdoor air set in air changes per hour, as the ASHRAE 170
+  # health care rooms (patient, exam, operating, emergency, imaging, recovery) are. The space's own
+  # outdoor air object is read first, then its space type's.
+  #
+  # @param zone [OpenStudio::Model::ThermalZone] thermal zone
+  # @return [Boolean] true if any space in the zone has air-change outdoor air
+  def thermal_zone_air_change_ventilated?(zone)
+    zone.spaces.any? do |space|
+      dsoa = space.designSpecificationOutdoorAir
+      dsoa = space.spaceType.get.designSpecificationOutdoorAir if dsoa.empty? && space.spaceType.is_initialized
+      dsoa.is_initialized && dsoa.get.outdoorAirFlowAirChangesperHour > 0.0
+    end
+  end
+
+  # Whether a model contains any zone whose outdoor air is set in air changes per hour. Such a
+  # building is a health care facility, whose ventilation was designed and inspected to health
+  # facility guidelines across the facility, so templates that model older ventilation controls
+  # leave its air loops on the modern ones.
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio model object
+  # @return [Boolean] true if any zone in the model has air-change outdoor air
+  def model_air_change_ventilated?(model)
+    model.getThermalZones.any? { |zone| thermal_zone_air_change_ventilated?(zone) }
+  end
+
   # Determine if the air loop is a unitary system
   #
   # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
