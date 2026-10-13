@@ -1652,6 +1652,11 @@ module OpenstudioStandards
       start_time_offset = space_type_properties[:start_time_offset].nil? ? 0.0 : space_type_properties[:start_time_offset]
       end_time_offset = space_type_properties[:end_time_offset].nil? ? 0.0 : space_type_properties[:end_time_offset]
       follows_building_hours = space_type_properties[:follows_building_hours] != false
+      # An occupancy override may say so too, where one building type's use of a space type keeps
+      # its own clock - a hospital's nurses station staffed around the clock, where an outpatient
+      # clinic's follows the building's day - without a schedule set of its own.
+      occupancy_override = overrides[:occupancy].is_a?(Hash) ? overrides[:occupancy] : {}
+      follows_building_hours = occupancy_override[:follows_building_hours] != false if occupancy_override.key?(:follows_building_hours)
       occ_params = {}
       if follows_building_hours
         unless wkdy_start_time.nil? || wkdy_duration.nil?
@@ -1667,9 +1672,9 @@ module OpenstudioStandards
       end
 
       # An occupancy override wins over building hours + offsets and the standards.
-      # :schedule names which schedule to draw from, handled by schedule_name_for below; the
-      # rest of the section are expansion parameters
-      occ_params = occ_params.merge(overrides[:occupancy].reject { |field, _| field == :schedule }) if overrides[:occupancy].is_a?(Hash)
+      # :schedule names which schedule to draw from, handled by schedule_name_for below, and
+      # :follows_building_hours was read above; the rest of the section are expansion parameters
+      occ_params = occ_params.merge(occupancy_override.reject { |field, _| %i[schedule follows_building_hours].include?(field) })
 
       # A keep_standard_design_level people load override adjusts the occupancy schedule peak
       # instead of the design occupancy level (see CreateTypical.space_type_apply_load_overrides).
