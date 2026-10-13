@@ -836,6 +836,10 @@
           "minimum": 0,
           "maximum": 1,
           "description": "The base as a fraction of the peak on Saturday and Sunday. Falls back to base_peak_ratio."
+        },
+        "follows_building_hours": {
+          "type": "boolean",
+          "description": "Occupancy only. false expands the occupancy schedule, and the loads timed from it, at its authored hours whatever operating hours the building drew, as a schedule set with follows_building_hours false does; for a space a building type uses around the clock, such as a hospital nurses station."
         }
       },
       "additionalProperties": true

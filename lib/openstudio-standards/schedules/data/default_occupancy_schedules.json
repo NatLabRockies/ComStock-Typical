@@ -10779,6 +10779,111 @@
     ]
   },
   {
+    "name": "extended occupancy",
+    "rationale": "Extended-hours profile for hospital spaces in use around the clock: the nurses station, exam/treatment and kitchen, which the prototype hospital puts on Hospital BLDG_OCC_EXTD_SCH with its patient rooms (NurseStn, ICU_NurseStn, ER_NurseStn, ER_Exam, ICU_Open, Kitchen): 0.4 overnight every day, 0.8 weekday peak, 0.6 weekend. Control points repeat 'patient room occupancy', the fit of that schedule (4699 EFLH against 4712). Named by the Hospital schedule_overrides in the ComStock building spec with follows_building_hours false; the space types' own profiles (outpatient clinic and restaurant kitchen fits) stay for other buildings. 2026-10-13.",
+    "day_types": "Sun|Hol",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.4,
+    "peak_std": 0.6,
+    "st_std": 8,
+    "et_std": 16,
+    "control_points": [
+      ["st-8", "base"],
+      ["st-1", "base"],
+      ["st", "peak"],
+      ["et-1", "peak"],
+      ["et", "base"],
+      ["et+8", "base"]
+    ]
+  },
+  {
+    "name": "extended occupancy",
+    "rationale": "Extended-hours profile for hospital spaces in use around the clock: the nurses station, exam/treatment and kitchen, which the prototype hospital puts on Hospital BLDG_OCC_EXTD_SCH with its patient rooms (NurseStn, ICU_NurseStn, ER_NurseStn, ER_Exam, ICU_Open, Kitchen): 0.4 overnight every day, 0.8 weekday peak, 0.6 weekend. Control points repeat 'patient room occupancy', the fit of that schedule (4699 EFLH against 4712). Named by the Hospital schedule_overrides in the ComStock building spec with follows_building_hours false; the space types' own profiles (outpatient clinic and restaurant kitchen fits) stay for other buildings. 2026-10-13.",
+    "day_types": "Sat",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.4,
+    "peak_std": 0.6,
+    "st_std": 7,
+    "et_std": 19,
+    "control_points": [
+      ["st-7", "base"],
+      ["st-1", "base"],
+      ["st+1", "peak"],
+      ["et-3", "peak"],
+      ["et", "base"],
+      ["et+5", "base"]
+    ]
+  },
+  {
+    "name": "extended occupancy",
+    "rationale": "Extended-hours profile for hospital spaces in use around the clock: the nurses station, exam/treatment and kitchen, which the prototype hospital puts on Hospital BLDG_OCC_EXTD_SCH with its patient rooms (NurseStn, ICU_NurseStn, ER_NurseStn, ER_Exam, ICU_Open, Kitchen): 0.4 overnight every day, 0.8 weekday peak, 0.6 weekend. Control points repeat 'patient room occupancy', the fit of that schedule (4699 EFLH against 4712). Named by the Hospital schedule_overrides in the ComStock building spec with follows_building_hours false; the space types' own profiles (outpatient clinic and restaurant kitchen fits) stay for other buildings. 2026-10-13.",
+    "day_types": "Default",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.4,
+    "peak_std": 0.8,
+    "st_std": 9,
+    "et_std": 17,
+    "control_points": [
+      ["st-9", "base"],
+      ["st-3", "base"],
+      ["st-1", "range*0.5"],
+      ["st", "peak"],
+      ["et-1", "peak"],
+      ["et", "range*0.5"],
+      ["et+1", "range*0.25"],
+      ["et+3", "base"],
+      ["et+7", "base"]
+    ]
+  },
+  {
+    "name": "extended occupancy",
+    "rationale": "Extended-hours profile for hospital spaces in use around the clock: the nurses station, exam/treatment and kitchen, which the prototype hospital puts on Hospital BLDG_OCC_EXTD_SCH with its patient rooms (NurseStn, ICU_NurseStn, ER_NurseStn, ER_Exam, ICU_Open, Kitchen): 0.4 overnight every day, 0.8 weekday peak, 0.6 weekend. Control points repeat 'patient room occupancy', the fit of that schedule (4699 EFLH against 4712). Named by the Hospital schedule_overrides in the ComStock building spec with follows_building_hours false; the space types' own profiles (outpatient clinic and restaurant kitchen fits) stay for other buildings. 2026-10-13.",
+    "day_types": "SmrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      ["st", "peak"],
+      ["et", "peak"]
+    ]
+  },
+  {
+    "name": "extended occupancy",
+    "rationale": "Extended-hours profile for hospital spaces in use around the clock: the nurses station, exam/treatment and kitchen, which the prototype hospital puts on Hospital BLDG_OCC_EXTD_SCH with its patient rooms (NurseStn, ICU_NurseStn, ER_NurseStn, ER_Exam, ICU_Open, Kitchen): 0.4 overnight every day, 0.8 weekday peak, 0.6 weekend. Control points repeat 'patient room occupancy', the fit of that schedule (4699 EFLH against 4712). Named by the Hospital schedule_overrides in the ComStock building spec with follows_building_hours false; the space types' own profiles (outpatient clinic and restaurant kitchen fits) stay for other buildings. 2026-10-13.",
+    "day_types": "WntrDsn",
+    "start_date": "2018-01-01T00:00:00+00:00",
+    "end_date": "2018-12-31T00:00:00+00:00",
+    "category": "Occupancy",
+    "units": null,
+    "type": "parametric",
+    "base_std": 0.0,
+    "peak_std": 1.0,
+    "st_std": 0,
+    "et_std": 24,
+    "control_points": [
+      ["st", "base"],
+      ["et", "base"]
+    ]
+  },
+  {
     "name": "pharmacy occupancy",
     "day_types": "Default",
     "start_date": "2018-01-01T00:00:00+00:00",
