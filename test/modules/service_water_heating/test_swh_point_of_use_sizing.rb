@@ -80,6 +80,32 @@ class TestSwhPointOfUseSizing < Minitest::Test
     assert_in_epsilon(4 * 1.053 * (6.0 / 40.0)**(2.0 / 3.0), heater.offCycleLossCoefficienttoAmbientTemperature.get, 0.01)
   end
 
+  # The efficiency pass looks up the standard by one tank's capacity and volume, then has to give
+  # the object the loss of every tank it stands for. 90.1-2013 sets an electric tank under 20 gal
+  # to EF 0.93 - 0.00132 V, so a 6 gal tank is EF 0.922 and UA 41,094 (1/EF - 1) / (24 x 67.5),
+  # 2.14 Btu/hr-F or about 1.131 W/K.
+  def ua_after_efficiency_standard(multiplier)
+    model = OpenStudio::Model::Model.new
+    spaces_of(model, 'retail', [multiplier])
+    heater = heater_of(@swh.create_typical_service_water_heating(model).first)
+    Standard.build('90.1-2013').model_apply_hvac_efficiency_standard(model, 'ASHRAE 169-2013-4A')
+    heater
+  end
+
+  def test_the_efficiency_standard_keeps_the_loss_of_every_tank
+    energy_factor = 0.93 - (0.00132 * 6.0)
+    ua_one_tank_w_per_k = OpenStudio.convert(41_094 * ((1 / energy_factor) - 1) / (24 * 67.5), 'Btu/hr*R', 'W/K').get
+    assert_in_epsilon(1.131, ua_one_tank_w_per_k, 0.001)
+
+    one = ua_after_efficiency_standard(1)
+    four = ua_after_efficiency_standard(4)
+    assert_in_epsilon(ua_one_tank_w_per_k, one.offCycleLossCoefficienttoAmbientTemperature.get, 0.01)
+    assert_in_epsilon(4 * ua_one_tank_w_per_k, four.offCycleLossCoefficienttoAmbientTemperature.get, 0.01)
+    assert_in_epsilon(four.offCycleLossCoefficienttoAmbientTemperature.get, four.onCycleLossCoefficienttoAmbientTemperature.get, 1e-9)
+    # the efficiency is a per-tank rating and does not depend on how many tanks there are
+    assert_in_epsilon(one.heaterThermalEfficiency.get, four.heaterThermalEfficiency.get, 1e-9)
+  end
+
   def test_dwelling_units_keep_their_residential_tank
     model = OpenStudio::Model::Model.new
     space_type = OpenStudio::Model::SpaceType.new(model)

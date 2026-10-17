@@ -311,7 +311,10 @@ module OpenstudioStandards
             water_heater_volume_m3 = sizing[:water_heater_volume]
           end
 
-          # one object stands for every tank on the loop, and loses heat as all of them
+          # One object stands for every tank on the loop, and loses heat as all of them. This is
+          # the standby loss before a standard is applied: water_heater_mixed_apply_efficiency
+          # replaces it with the template's per-tank UA times component_quantity, so it stands
+          # only where no standard is applied or the template has no matching water heater.
           volume_gal_per_heater = OpenStudio.convert(water_heater_volume_m3, 'm^3', 'gal').get / num_water_heaters
           loss_coefficient_w_per_k = OpenstudioStandards::ServiceWaterHeating.tank_loss_coefficient_w_per_k(volume_gal_per_heater, num_water_heaters, dedicated_water_heating_fuel)
 
