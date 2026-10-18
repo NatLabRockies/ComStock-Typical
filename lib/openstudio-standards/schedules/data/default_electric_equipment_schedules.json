@@ -396,6 +396,30 @@
     "summer_design_day_peak": 1.0
   },
   {
+    "name": "classroom/lecture/training - primary school electric equipment",
+    "category": "Equipment",
+    "derivation_type": "exponential-inverse",
+    "base": 0.2502,
+    "peak": 0.9575,
+    "response": 3.0,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
+    "name": "classroom/lecture/training - secondary school electric equipment",
+    "category": "Equipment",
+    "derivation_type": "exponential-inverse",
+    "base": 0.2502,
+    "peak": 0.9575,
+    "response": 3.0,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
     "name": "computer room electric equipment",
     "category": "Equipment",
     "derivation_type": "linear",
@@ -818,7 +842,7 @@
   {
     "name": "corridor - primary school electric equipment",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
     "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
@@ -940,7 +964,7 @@
   {
     "name": "corridor - secondary school electric equipment",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
     "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
@@ -2087,11 +2111,11 @@
     "name": "guest room electric equipment",
     "category": "Equipment",
     "diurnal_profile": "sleep awake",
-    "base": 0.35,
-    "peak": 0.75,
+    "base": 0.2,
+    "peak": 0.4,
     "derivation_type": "logistic",
     "midpoint": 0.15,
-    "steepness": 3.0,
+    "steepness": 5.0,
     "diurnal_weight": 0.9,
     "winter_design_day_base": 0.0,
     "winter_design_day_peak": 0.0,
@@ -3371,7 +3395,7 @@
   {
     "name": "restroom - primary school electric equipment",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
     "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
@@ -3468,7 +3492,7 @@
   {
     "name": "restroom - secondary school electric equipment",
     "day_types": "Wkdy",
-    "start_date": "2018-07-01T00:00:00+00:00",
+    "start_date": "2018-06-01T00:00:00+00:00",
     "end_date": "2018-09-01T00:00:00+00:00",
     "category": "Equipment",
     "units": null,
@@ -3576,6 +3600,18 @@
   },
   {
     "name": "retail - mall concourse electric equipment",
+    "category": "Equipment",
+    "derivation_type": "exponential",
+    "base": 0.05,
+    "peak": 0.9,
+    "response": 0.05,
+    "winter_design_day_base": 0.0,
+    "winter_design_day_peak": 0.0,
+    "summer_design_day_base": 1.0,
+    "summer_design_day_peak": 1.0
+  },
+  {
+    "name": "retail - mass merchandising electric equipment",
     "category": "Equipment",
     "derivation_type": "exponential",
     "base": 0.05,

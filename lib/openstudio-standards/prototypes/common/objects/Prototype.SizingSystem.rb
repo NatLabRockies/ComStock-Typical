@@ -105,4 +105,26 @@ class Standard
 
     return true
   end
+
+  # Size a zone's design air flow with a floor, for a zone served by a unit of its own.
+  #
+  # Sizing:Zone's DesignDay method takes the air flow from the design load alone, so a zone
+  # with no design heating or cooling load gets none, and a per-zone unit (a residential
+  # furnace and central AC, a central air source heat pump) then has no air flow to size its
+  # fan: EnergyPlus stops with "Unable to determine fan air flow rate". A 2026-09 small hotel
+  # did this with an interior, ground-contact restroom whose lighting gain went to the slab
+  # and its neighbours. The cooling method DesignDayWithLimit takes the larger of the
+  # design-load flow and the zone's cooling minimum air flow per floor area (the Sizing:Zone
+  # default, 0.000762 m3/s-m2, that is 0.15 cfm/ft2, unless set), so the flow is never zero;
+  # the unit's single supply flow follows it. Only the method changes; the minimum stays
+  # whatever the zone carries. The heating method is left at DesignDay, as in the VAV
+  # builders: its "maximum" fields cap the heating flow rather than floor it.
+  #
+  # @param thermal_zone [OpenStudio::Model::ThermalZone] OpenStudio ThermalZone object
+  # @return [OpenStudio::Model::SizingZone] the zone's sizing object
+  def thermal_zone_apply_residential_air_flow_floor(thermal_zone)
+    sizing_zone = thermal_zone.sizingZone
+    sizing_zone.setCoolingDesignAirFlowMethod('DesignDayWithLimit')
+    sizing_zone
+  end
 end

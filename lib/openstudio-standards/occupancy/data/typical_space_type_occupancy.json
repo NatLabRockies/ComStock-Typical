@@ -106,7 +106,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -116,11 +115,13 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
+        "ComStock 90.1-2019",
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
       "occupancy_per_area": 150.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Public Assembly Spaces | Auditorium seating area"
+      "source": "ASHRAE 62.1 | Public Assembly Spaces | Auditorium seating area; ASHRAE 62.1-2004 default density (150 ppl/1000 ft2) | prototype: 90.1-2004 SecondarySchool Auditorium"
     },
     {
       "templates": [
@@ -129,9 +130,9 @@
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 150.0,
+      "occupancy_per_area": 92.94,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Theaters | Auditorium"
+      "source": "prototype density (92.94 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: DOE Ref SecondarySchool Auditorium"
     }
   ],
   "baggage_carousel_ventilation": [
@@ -235,7 +236,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -253,23 +253,32 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "occupancy_per_area": 50.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Education | Classroom"
-    },
-    {
-      "templates": [
         "ZE AEDG Multifamily",
         "NREL ZNE Ready 2017"
       ],
       "occupancy_per_area": 35.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "spc_typ | Office | Classroom"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 25.0,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (25 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 PrimarySchool Classroom"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 23.22,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (23.22 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref PrimarySchool Classroom"
     }
   ],
   "computer_room_ventilation": [
@@ -312,7 +321,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -327,6 +335,15 @@
       "occupancy_per_area": 25.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "ASHRAE 62.1 | Educational Facilities | Computer lab"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 35.0,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (35 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 SecondarySchool ComputerRoom"
     }
   ],
   "conference_meeting_multipurpose_ventilation": [
@@ -369,7 +386,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -377,14 +393,13 @@
         "90.1-2013",
         "ComStock 90.1-2013",
         "90.1-2016",
-        "ComStock 90.1-2016"
-      ],
-      "occupancy_per_area": 50.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | General | Conference/meeting"
-    },
-    {
-      "templates": [
+        "ComStock 90.1-2016",
+        "90.1-2019",
+        "ComStock 90.1-2019",
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -392,25 +407,7 @@
       ],
       "occupancy_per_area": 50.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Offices | Conference rooms"
-    },
-    {
-      "templates": [
-        "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "occupancy_per_area": 50.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Food and Beverage Service, General | Conference/meeting"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "occupancy_per_area": 50.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Office | Conference"
+      "source": "ASHRAE 62.1 | General | Conference/meeting; ASHRAE 62.1 | Food and Beverage Service, General | Conference/meeting; spc_typ | Office | Conference; ASHRAE 62.1-2004 default density (50 ppl/1000 ft2) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office SmallOffice - Conference"
     }
   ],
   "confinement_cells_ventilation": [
@@ -698,14 +695,13 @@
         "90.1-2013",
         "ComStock 90.1-2013",
         "90.1-2016",
-        "ComStock 90.1-2016"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | General | Corridors"
-    },
-    {
-      "templates": [
+        "ComStock 90.1-2016",
+        "90.1-2019",
+        "ComStock 90.1-2019",
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -713,33 +709,7 @@
       ],
       "occupancy_per_area": 0.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Public Spaces | Corridors and utilities"
-    },
-    {
-      "templates": [
-        "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Food and Beverage Service, General | Corridors"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | LargeHotel | Corridor"
-    },
-    {
-      "templates": [
-        "90.1-2004"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-2007 | General | Corridors"
+      "source": "ASHRAE 62.1 | General | Corridors; ASHRAE 62.1 | Food and Beverage Service, General | Corridors; spc_typ | LargeHotel | Corridor; no occupants (most common of several prototype values) | prototype: 90.1-2004 SecondarySchool Corridor; DOE Ref Office SmallOffice - Corridor"
     }
   ],
   "courtroom_ventilation": [
@@ -813,7 +783,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -823,11 +792,13 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
+        "ComStock 90.1-2019",
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
       "occupancy_per_area": 0.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | None | None"
+      "source": "ASHRAE 62.1 | None | None; no occupants | prototype: 90.1-2004 Office OfficeLarge Main Data Center"
     }
   ],
   "datacenterlowite_ventilation": [
@@ -870,7 +841,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -880,11 +850,24 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
+        "ComStock 90.1-2019",
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
       "occupancy_per_area": 0.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | None | None"
+      "source": "ASHRAE 62.1 | None | None; no occupants (most common of several prototype values) | prototype: 90.1-2004 Office OfficeLarge Data Center"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 4.65,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (4.65 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: DOE Ref Outpatient IT_Room"
     }
   ],
   "dining_ventilation": [
@@ -927,7 +910,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -937,11 +919,15 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
+        "ComStock 90.1-2019",
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
       "occupancy_per_area": 70.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Food and Beverage Service | Restaurant dining rooms"
+      "source": "ASHRAE 62.1 | Food and Beverage Service | Restaurant dining rooms; spc_typ | FullServiceRestaurant | Dining; ASHRAE 62.1-2004 default density (70 ppl/1000 ft2) (most common of several prototype values) | prototype: 90.1-2004 FullServiceRestaurant Dining"
     },
     {
       "templates": [
@@ -950,18 +936,9 @@
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 70.0,
+      "occupancy_per_area": 67.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Foor and Beverage Service | Dining rooms"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "occupancy_per_area": 70.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | FullServiceRestaurant | Dining"
+      "source": "prototype density (67 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref FullServiceRestaurant Dining"
     }
   ],
   "dressing_room_ventilation": [
@@ -1779,7 +1756,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -1797,31 +1773,49 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "occupancy_per_area": 0.93,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | PrimarySchool | Mechanical"
-    },
-    {
-      "templates": [
         "ZE AEDG Multifamily",
         "NREL ZNE Ready 2017"
       ],
       "occupancy_per_area": 0.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "spc_typ | LargeHotel | Mechanical"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 5.0,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (5 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 LargeHotel Basement"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 2.5,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (2.5 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref LargeHotel Basement"
     }
   ],
   "emergency_room_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
+        "90.1-2010",
+        "ComStock 90.1-2010",
+        "90.1-2013",
+        "ComStock 90.1-2013",
+        "90.1-2016",
+        "ComStock 90.1-2016",
+        "90.1-2019",
+        "ComStock 90.1-2019",
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -1829,29 +1823,7 @@
       ],
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Hospitals, Nursing and Convalescent Homes | Medical procedure"
-    },
-    {
-      "templates": [
-        "90.1-2010",
-        "ComStock 90.1-2010",
-        "90.1-2013",
-        "ComStock 90.1-2013",
-        "90.1-2016",
-        "ComStock 90.1-2016"
-      ],
-      "occupancy_per_area": 20.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-2019 | Outpatient Health Care Facilities | Urgent care examination room"
-    },
-    {
-      "templates": [
-        "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "occupancy_per_area": 20.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Outpatient Health Care Facilities | Urgent care examination room"
+      "source": "ASHRAE 62.1-1999 | Hospitals, Nursing and Convalescent Homes | Medical procedure; ASHRAE 62.1-2019 | Outpatient Health Care Facilities | Urgent care examination room; ASHRAE 62.1 | Outpatient Health Care Facilities | Urgent care examination room; ASHRAE 62-1999 default density (20 ppl/1000 ft2) | prototype: 90.1-2004 and DOE Ref Hospital ER_Triage"
     }
   ],
   "emergency_vehicle_garage_ventilation": [
@@ -1881,13 +1853,8 @@
   "exam_treatment_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
-        "ComStock 90.1-2007",
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
+        "ComStock 90.1-2007"
       ],
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
@@ -1914,12 +1881,31 @@
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "ASHRAE 62.1 | Outpatient Health Care Facilities | General examination room"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 20.02,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "ASHRAE 62-1999 default density (20.02 ppl/1000 ft2) (most common of several prototype values) | prototype: 90.1-2004 Outpatient Exam"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 18.58,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (18.58 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref Outpatient Exam"
     }
   ],
   "exercise_area_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -1937,6 +1923,17 @@
     },
     {
       "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 19.94,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "spc_typ | SmallHotel | Exercise; prototype density (19.94 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: 90.1-2004 SmallHotel Exercise"
+    },
+    {
+      "templates": [
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -1944,16 +1941,7 @@
       ],
       "occupancy_per_area": 31.33,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | SmallHotel | Exercise"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "occupancy_per_area": 19.94,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | SmallHotel | Exercise"
+      "source": "prototype density (31.33 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: DOE Ref SmallHotel Exercise"
     }
   ],
   "exhibit_ventilation": [
@@ -2135,34 +2123,17 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "occupancy_per_area": 100.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Food and Beverage Service | Cafeteria/fast-food dining"
-    },
-    {
-      "templates": [
-        "90.1-2004",
+        "ComStock 90.1-2019",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
-        "ComStock 90.1-2010"
+        "ComStock 90.1-2010",
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
       "occupancy_per_area": 100.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Food and Beverage Service | Cafeteria/fast food dining"
-    },
-    {
-      "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "occupancy_per_area": 100.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Foor and Beverage Service | Cafeteria, fast food"
+      "source": "ASHRAE 62.1 | Food and Beverage Service | Cafeteria/fast-food dining; ASHRAE 62.1 | Food and Beverage Service | Cafeteria/fast food dining; ASHRAE 62.1-2004 default density (100 ppl/1000 ft2) (most common of several prototype values) | prototype: 90.1-2004 PrimarySchool Cafeteria"
     },
     {
       "templates": [
@@ -2172,6 +2143,17 @@
       "occupancy_per_area": 70.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "spc_typ | FullServiceRestaurant | Dining"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 66.67,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (66.67 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref PrimarySchool Cafeteria"
     }
   ],
   "food_preparation_ventilation": [
@@ -2229,18 +2211,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "occupancy_per_area": 20.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Foor and Beverage Service | Kitchen (cooking)"
-    },
-    {
-      "templates": [
         "90.1-2007",
         "ComStock 90.1-2007"
       ],
@@ -2251,11 +2221,17 @@
     {
       "templates": [
         "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
       ],
       "occupancy_per_area": 5.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | FullServiceRestaurant | Kitchen"
+      "source": "spc_typ | FullServiceRestaurant | Kitchen; prototype density (5 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref FullServiceRestaurant Kitchen"
     }
   ],
   "guest_room_ventilation": [
@@ -2298,7 +2274,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -2314,17 +2289,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "occupancy_per_area": 3.97,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | SmallHotel | GuestRoom"
-    },
-    {
-      "templates": [
         "90.1-2019",
         "ComStock 90.1-2019"
       ],
@@ -2335,11 +2299,17 @@
     {
       "templates": [
         "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
       ],
       "occupancy_per_area": 3.57,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | LargeHotel | GuestRoom"
+      "source": "spc_typ | LargeHotel | GuestRoom; prototype density (3.57 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref LargeHotel GuestRoom"
     }
   ],
   "hotels_motels_resorts_dormitories_lobbies_prefunction_ventilation": [
@@ -2415,13 +2385,8 @@
   "imaging_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
-        "ComStock 90.1-2007",
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
+        "ComStock 90.1-2007"
       ],
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
@@ -2448,6 +2413,26 @@
       "occupancy_per_area": 5.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "ASHRAE 62.1 | Outpatient Health Care Facilities | Class 1 imaging rooms"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 20.02,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "ASHRAE 62-1999 default density (20.02 ppl/1000 ft2) (most common of several prototype values) | prototype: 90.1-2004 Outpatient Xray"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 18.58,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (18.58 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref Outpatient Xray"
     }
   ],
   "interior_parking_ventilation": [
@@ -2590,7 +2575,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -2608,6 +2592,8 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -2615,7 +2601,7 @@
       ],
       "occupancy_per_area": 5.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Hospital | Lab"
+      "source": "prototype density (5 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: 90.1-2004 and DOE Ref Hospital Lab"
     }
   ],
   "laundry_washing_ventilation": [
@@ -2675,17 +2661,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "occupancy_per_area": 20.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Dry Cleaners, Laundries | Coin-operated laundries"
-    },
-    {
-      "templates": [
         "ZE AEDG Multifamily",
         "NREL ZNE Ready 2017"
       ],
@@ -2695,11 +2670,16 @@
     },
     {
       "templates": [
-        "90.1-2004"
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 10.0,
+      "occupancy_per_area": 4.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-2007 | Hotels, Motels, Resorts, Dormitories | Laundry rooms, central"
+      "source": "prototype density (4 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: 90.1-2004 and DOE Ref LargeHotel Laundry"
     }
   ],
   "library_ventilation": [
@@ -2742,7 +2722,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -2750,11 +2729,15 @@
         "90.1-2013",
         "ComStock 90.1-2013",
         "90.1-2016",
-        "ComStock 90.1-2016"
+        "ComStock 90.1-2016",
+        "90.1-2019",
+        "ComStock 90.1-2019",
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
       "occupancy_per_area": 10.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Public Assembly Spaces | Libraries"
+      "source": "ASHRAE 62.1 | Public Assembly Spaces | Libraries; ASHRAE 62.1 | Public Assembly Spaces | Libraries (public assembly); ASHRAE 62.1-2004 default density (10 ppl/1000 ft2) | prototype: 90.1-2004 PrimarySchool Library"
     },
     {
       "templates": [
@@ -2763,18 +2746,9 @@
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 20.0,
+      "occupancy_per_area": 21.34,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Education | Libraries"
-    },
-    {
-      "templates": [
-        "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "occupancy_per_area": 10.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Public Assembly Spaces | Libraries (public assembly)"
+      "source": "prototype density (21.34 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: DOE Ref SecondarySchool Library"
     }
   ],
   "living_quarters_ventilation": [
@@ -2945,7 +2919,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -2955,24 +2928,19 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "occupancy_per_area": 10.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Office Buildings | Main entry lobbies"
-    },
-    {
-      "templates": [
+        "ComStock 90.1-2019",
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980",
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
+        "ComStock DOE Ref Pre-1980"
       ],
       "occupancy_per_area": 10.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Office | Lobby"
+      "source": "ASHRAE 62.1 | Office Buildings | Main entry lobbies; spc_typ | Office | Lobby; ASHRAE 62.1-2004 default density (10 ppl/1000 ft2) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office SmallOffice - Lobby"
     }
   ],
   "locker_room_ventilation": [
@@ -2993,17 +2961,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Public Spaces | Locker and dressing rooms"
-    },
-    {
-      "templates": [
         "90.1-2019",
         "ComStock 90.1-2019"
       ],
@@ -3013,11 +2970,23 @@
     },
     {
       "templates": [
-        "90.1-2004"
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
-      "occupancy_per_area": 25.0,
+      "occupancy_per_area": 15.01,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-2007 | General | Break rooms"
+      "source": "prototype density (15.01 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: 90.1-2004 Outpatient LockerRoom"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 13.93,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (13.93 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: DOE Ref Outpatient LockerRoom"
     }
   ],
   "lounge_breakroom_ventilation": [
@@ -3075,19 +3044,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980",
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "occupancy_per_area": 50.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Office | BreakRoom"
-    },
-    {
-      "templates": [
         "90.1-2019",
         "ComStock 90.1-2019"
       ],
@@ -3097,11 +3053,18 @@
     },
     {
       "templates": [
-        "90.1-2004"
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 25.0,
+      "occupancy_per_area": 50.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-2007 | General | Break rooms"
+      "source": "spc_typ | Office | BreakRoom; prototype density (50 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office BreakRoom"
     }
   ],
   "manufacturing_ventilation": [
@@ -3371,39 +3334,19 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Miscellaneous Spaces | Warehouses"
-    },
-    {
-      "templates": [
+        "ComStock 90.1-2019",
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 5.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Retail Stores, Sales Floors, and Show Room Floors | Warehouses"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
       "occupancy_per_area": 0.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | LargeHotel | Storage"
-    },
-    {
-      "templates": [
-        "90.1-2004"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-2007 | Miscellaneous Spaces | Warehouses"
+      "source": "ASHRAE 62.1 | Miscellaneous Spaces | Warehouses; spc_typ | LargeHotel | Storage; no occupants (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Warehouse Bulk"
     }
   ],
   "multifamily_ventilation": [
@@ -3528,22 +3471,23 @@
     },
     {
       "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 1.333,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (1.333 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 Hospital NurseStn"
+    },
+    {
+      "templates": [
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 18.58,
+      "occupancy_per_area": 7.14,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Outpatient | NurseStation"
-    },
-    {
-      "templates": [
-        "90.1-2004"
-      ],
-      "occupancy_per_area": 20.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Office Buildings | Reception areas"
+      "source": "prototype density (7.14 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref Hospital NurseStn"
     }
   ],
   "office_enclosed_ventilation": [
@@ -3663,7 +3607,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -3694,35 +3637,25 @@
     },
     {
       "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 7.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Offices | Office space"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
       "occupancy_per_area": 5.25,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Office | OpenOffice"
+      "source": "spc_typ | Office | OpenOffice; prototype density (5.25 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office OpenOffice"
     }
   ],
   "operating_room_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
-        "ComStock 90.1-2007",
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
+        "ComStock 90.1-2007"
       ],
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
@@ -3749,6 +3682,26 @@
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "ASHRAE 62.1 | Outpatient Health Care Facilities | Urgent care treatment room"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 5.0,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (5 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 Hospital OR"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 18.58,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (18.58 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref Outpatient OR"
     }
   ],
   "patient_room_ventilation": [
@@ -3791,13 +3744,8 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
-        "ComStock 90.1-2007",
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
+        "ComStock 90.1-2007"
       ],
       "occupancy_per_area": 10.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
@@ -3824,6 +3772,19 @@
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "ASHRAE 62.1 | Outpatient Health Care Facilities | Urgent care observation room"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 5.0,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (5 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: 90.1-2004 and DOE Ref Hospital PatRoom"
     }
   ],
   "pharmacy_ventilation": [
@@ -3849,13 +3810,8 @@
   "physical_therapy_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
-        "ComStock 90.1-2007",
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
+        "ComStock 90.1-2007"
       ],
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
@@ -3882,6 +3838,26 @@
       "occupancy_per_area": 7.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "ASHRAE 62.1 | Outpatient Health Care Facilities | Physical therapy exercise area"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 20.02,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "ASHRAE 62-1999 default density (20.02 ppl/1000 ft2) (most common of several prototype values) | prototype: 90.1-2004 Outpatient PhysicalTherapy"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 18.58,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (18.58 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref Outpatient PhysicalTherapy"
     }
   ],
   "playing_area_ventilation": [
@@ -3940,11 +3916,13 @@
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
-        "ComStock 90.1-2010"
+        "ComStock 90.1-2010",
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
       "occupancy_per_area": 30.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Sports and Entertainment | Gym, stadium (play area)"
+      "source": "ASHRAE 62.1 | Sports and Entertainment | Gym, stadium (play area); ASHRAE 62.1-2004 default density (30 ppl/1000 ft2) | prototype: 90.1-2004 SecondarySchool Gym"
     },
     {
       "templates": [
@@ -3953,17 +3931,9 @@
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 30.0,
+      "occupancy_per_area": 92.94,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Sports and Amusement | Playing floors (gymnasium)"
-    },
-    {
-      "templates": [
-        "90.1-2004"
-      ],
-      "occupancy_per_area": 30.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-2007 | Sports and Entertainment | Gym, stadium (play area)"
+      "source": "prototype density (92.94 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref SecondarySchool Gym"
     }
   ],
   "plenum_ventilation": [
@@ -4150,13 +4120,8 @@
   "recovery_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
-        "ComStock 90.1-2007",
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
+        "ComStock 90.1-2007"
       ],
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
@@ -4183,6 +4148,26 @@
       "occupancy_per_area": 20.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
       "source": "ASHRAE 62.1 | Outpatient Health Care Facilities | Urgent care observation room"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 20.02,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "ASHRAE 62-1999 default density (20.02 ppl/1000 ft2) | prototype: 90.1-2004 Outpatient PACU"
+    },
+    {
+      "templates": [
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
+      ],
+      "occupancy_per_area": 18.58,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "prototype density (18.58 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: DOE Ref Outpatient PACU"
     }
   ],
   "recreation_common_living_ventilation": [
@@ -4289,7 +4274,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -4300,6 +4284,8 @@
         "ComStock 90.1-2016",
         "90.1-2019",
         "ComStock 90.1-2019",
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -4307,7 +4293,7 @@
       ],
       "occupancy_per_area": 0.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Public Spaces | Public restrooms, cfm/wc or cfm/urinal"
+      "source": "ASHRAE 62.1-1999 | Public Spaces | Public restrooms, cfm/wc or cfm/urinal; no occupants (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office SmallOffice - Restroom"
     },
     {
       "templates": [
@@ -4532,7 +4518,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -4550,6 +4535,17 @@
     },
     {
       "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017"
+      ],
+      "occupancy_per_area": 10.45,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "spc_typ | SmallHotel | Laundry"
+    },
+    {
+      "templates": [
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
@@ -4557,16 +4553,7 @@
       ],
       "occupancy_per_area": 10.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | SmallHotel | Laundry"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "occupancy_per_area": 10.45,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | SmallHotel | Laundry"
+      "source": "prototype density (10 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: 90.1-2004 and DOE Ref SmallHotel Laundry"
     }
   ],
   "retail_pet_shops_animal_areas_ventilation": [
@@ -4692,7 +4679,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -4702,11 +4688,17 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
+        "ComStock 90.1-2019",
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
       ],
       "occupancy_per_area": 15.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Retail | Sales (except as below)"
+      "source": "ASHRAE 62.1 | Retail | Sales (except as below); spc_typ | Retail | Retail; ASHRAE 62.1-2004 default density (15 ppl/1000 ft2) | prototype: DOE Ref Retail Retail"
     },
     {
       "templates": [
@@ -4723,23 +4715,12 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
+        "90.1-2004",
+        "ComStock 90.1-2004"
       ],
-      "occupancy_per_area": 30.0,
+      "occupancy_per_area": 8.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Retail Stores, Sales Floors, and Show Room Floors | Basement and street"
-    },
-    {
-      "templates": [
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
-      ],
-      "occupancy_per_area": 15.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Retail | Retail"
+      "source": "prototype density (8 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: 90.1-2004 StripMall Strip mall - type 3"
     }
   ],
   "retail_supermarket_ventilation": [
@@ -4782,7 +4763,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -4792,11 +4772,17 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
+        "ComStock 90.1-2019",
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
       ],
       "occupancy_per_area": 8.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | Retail | Supermarket"
+      "source": "ASHRAE 62.1 | Retail | Supermarket; ASHRAE 62.1-2004 default density (8 ppl/1000 ft2) (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref SuperMarket Sales"
     },
     {
       "templates": [
@@ -4813,17 +4799,6 @@
     },
     {
       "templates": [
-        "DOE Ref 1980-2004",
-        "ComStock DOE Ref 1980-2004",
-        "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980"
-      ],
-      "occupancy_per_area": 8.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Specialty Shops | Supermarkets"
-    },
-    {
-      "templates": [
         "ZE AEDG Multifamily",
         "NREL ZNE Ready 2017"
       ],
@@ -4835,7 +4810,6 @@
   "shaft_ventilation": [
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -4845,11 +4819,17 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
+        "ComStock 90.1-2019",
+        "90.1-2004",
+        "ComStock 90.1-2004",
+        "DOE Ref 1980-2004",
+        "ComStock DOE Ref 1980-2004",
+        "DOE Ref Pre-1980",
+        "ComStock DOE Ref Pre-1980"
       ],
       "occupancy_per_area": 0.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | None | None"
+      "source": "ASHRAE 62.1 | None | None; no occupants | prototype: 90.1-2004 and DOE Ref SmallHotel ElevatorCore"
     }
   ],
   "sleeping_quarters_ventilation": [
@@ -5261,7 +5241,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -5284,9 +5263,9 @@
         "DOE Ref Pre-1980",
         "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 150.0,
+      "occupancy_per_area": 27.9,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-1999 | Sports and Amusement | Spectator areas"
+      "source": "prototype density (27.9 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) | prototype: DOE Ref SecondarySchool Gym - audience"
     }
   ],
   "sports_and_entertainment_stages_studios_ventilation": [
@@ -5485,7 +5464,6 @@
     },
     {
       "templates": [
-        "90.1-2004",
         "90.1-2007",
         "ComStock 90.1-2007",
         "90.1-2010",
@@ -5495,24 +5473,19 @@
         "90.1-2016",
         "ComStock 90.1-2016",
         "90.1-2019",
-        "ComStock 90.1-2019"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | None | None"
-    },
-    {
-      "templates": [
+        "ComStock 90.1-2019",
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2004",
+        "ComStock 90.1-2004",
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980",
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
+        "ComStock DOE Ref Pre-1980"
       ],
       "occupancy_per_area": 0.0,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Office | Stair"
+      "source": "ASHRAE 62.1 | None | None; spc_typ | Office | Stair; no occupants (most common of several prototype values) | prototype: 90.1-2004 and DOE Ref Office MediumOffice - Stair"
     }
   ],
   "storage_ventilation": [
@@ -5570,33 +5543,27 @@
     },
     {
       "templates": [
+        "ZE AEDG Multifamily",
+        "NREL ZNE Ready 2017",
+        "90.1-2007",
+        "ComStock 90.1-2007",
+        "90.1-2004",
+        "ComStock 90.1-2004"
+      ],
+      "occupancy_per_area": 0.0,
+      "occupancy_per_area_unit": "ppl/1000 ft2",
+      "source": "spc_typ | Office | Storage; ASHRAE 62.1 | General | Storage rooms; no occupants (most common of several prototype values) | prototype: 90.1-2004 Office SmallOffice - Storage"
+    },
+    {
+      "templates": [
         "DOE Ref 1980-2004",
         "ComStock DOE Ref 1980-2004",
         "DOE Ref Pre-1980",
-        "ComStock DOE Ref Pre-1980",
-        "ZE AEDG Multifamily",
-        "NREL ZNE Ready 2017"
+        "ComStock DOE Ref Pre-1980"
       ],
-      "occupancy_per_area": 0.0,
+      "occupancy_per_area": 3.33,
       "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "spc_typ | Office | Storage"
-    },
-    {
-      "templates": [
-        "90.1-2007",
-        "ComStock 90.1-2007"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1 | General | Storage rooms"
-    },
-    {
-      "templates": [
-        "90.1-2004"
-      ],
-      "occupancy_per_area": 0.0,
-      "occupancy_per_area_unit": "ppl/1000 ft2",
-      "source": "ASHRAE 62.1-2007 | General | Storage rooms"
+      "source": "prototype density (3.33 ppl/1000 ft2; DOE reference building report Table 4: AEDG TSD, IBC 2003 or engineering judgment) (most common of several prototype values) | prototype: DOE Ref Retail Back_Space"
     }
   ],
   "transportation_ventilation": [

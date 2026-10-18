@@ -58,4 +58,48 @@ class DOERefPre1980 < ASHRAE901
 
     return min_ventilation_efficiency
   end
+
+  # Determine the minimum outdoor air control for multizone VAV systems.
+  # For DOE Ref Pre-1980, the minimum outdoor air damper is set to its design position at design supply
+  # flow and left there, the common control before outdoor airflow measurement and damper reset,
+  # so outdoor air falls with the supply fan. Health care facilities are the exception: a building
+  # with air-change ventilated rooms keeps the minimum outdoor air volume at every supply flow.
+  # Hospital ventilation was designed to the HHS/AIA Guidelines for Design and Construction of
+  # Hospital and Health Care Facilities, which state licensure authorities adopted and enforced
+  # through plan review; their ventilation tables set minimum outdoor air changes by room, allowed
+  # VAV only where those minimums are held (1987), and required minimum outside air quantities to
+  # "remain constant while the system is in operation" (1996-97 Table 2 notes; 2001 Table 7.2).
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [String] 'FixedMinimum' in a building with air-change ventilated zones, otherwise 'ProportionalMinimum'
+  def air_loop_hvac_minimum_outdoor_air_limit_type(air_loop_hvac)
+    return 'FixedMinimum' if model_air_change_ventilated?(air_loop_hvac.model)
+
+    return 'ProportionalMinimum'
+  end
+
+  # Determine whether a VAV terminal's minimum is raised to cover its zone's design outdoor air.
+  # For DOE Ref Pre-1980, terminals keep their 30% minimum where ventilation is occupant driven, which a
+  # fixed minimum damper serves as a fraction of supply flow. Zones whose outdoor air is set by
+  # air changes or by floor area alone (health care rooms, laboratories) keep the raise, since that
+  # air is required whatever the load, and so does every zone of a building with air-change
+  # ventilated rooms, whose air loops keep the modern outdoor air control.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @param zone [OpenStudio::Model::ThermalZone] the zone the terminal serves
+  # @return [Boolean] true if any space in the zone has air-change or area-only outdoor air, or the
+  #   building has air-change ventilated zones
+  def air_loop_hvac_vav_terminal_minimum_covers_zone_outdoor_air?(air_loop_hvac, zone)
+    return true if model_air_change_ventilated?(air_loop_hvac.model)
+
+    zone.spaces.any? do |space|
+      dsoa = space.designSpecificationOutdoorAir
+      dsoa = space.spaceType.get.designSpecificationOutdoorAir if dsoa.empty? && space.spaceType.is_initialized
+      next false if dsoa.empty?
+
+      dsoa = dsoa.get
+      dsoa.outdoorAirFlowAirChangesperHour > 0.0 ||
+        (dsoa.outdoorAirFlowperPerson <= 0.0 && dsoa.outdoorAirFlowperFloorArea > 0.0)
+    end
+  end
 end

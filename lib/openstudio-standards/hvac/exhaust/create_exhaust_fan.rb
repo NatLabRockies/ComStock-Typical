@@ -395,12 +395,39 @@ module OpenstudioStandards
     # The makeup space types are an ordered preference list, so a school kitchen takes its own
     # cafeteria over a general dining space when both are adjacent.
     #
+    # Zones sharing a wall on the same story are searched first. When none of them holds a
+    # makeup space type, the zones stacked directly above or below are searched the same way.
+    # A two-story restaurant whose dining room fills the story over the kitchen
+    # has no same-story neighbor at all, and without this its kitchen exhausts with no makeup
+    # air. The vertical search reads surface vertices only, so the mid-story surfaces stay
+    # unmatched and adiabatic as the bar geometry leaves them.
+    #
     # @param exhaust_zone [OpenStudio::Model::ThermalZone] the zone being exhausted
     # @param makeup [Hash] as returned by {exhaust_makeup_air_source}
     # @return [OpenStudio::Model::Space, nil] the largest matching adjacent space, or nil if there is none
     def self.adjacent_makeup_air_space(exhaust_zone, makeup)
       adjacent_zones = OpenstudioStandards::Geometry.thermal_zone_get_adjacent_zones_with_shared_walls(exhaust_zone)
+      makeup_space = makeup_air_space_in_zones(adjacent_zones, makeup)
+      return makeup_space unless makeup_space.nil?
 
+      stacked = OpenstudioStandards::Geometry.thermal_zone_get_vertically_adjacent_zones(exhaust_zone)
+      return nil if stacked.empty?
+
+      makeup_space = makeup_air_space_in_zones(stacked.map(&:first), makeup)
+      unless makeup_space.nil?
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.HVAC.create_typical_exhaust',
+                           "Zone #{exhaust_zone.name} has no same-story neighbor with #{makeup[:space_types].join(' or ')}; taking makeup air from #{makeup_space.name} in #{makeup_space.thermalZone.get.name}, stacked above or below it.")
+      end
+      makeup_space
+    end
+
+    # The largest space among the given zones matching a makeup air source, honoring the
+    # source's space type preference order. See {adjacent_makeup_air_space}.
+    #
+    # @param adjacent_zones [Array<OpenStudio::Model::ThermalZone>] candidate zones
+    # @param makeup [Hash] as returned by {exhaust_makeup_air_source}
+    # @return [OpenStudio::Model::Space, nil] the largest matching space, or nil if there is none
+    def self.makeup_air_space_in_zones(adjacent_zones, makeup)
       makeup[:space_types].each do |makeup_space_type|
         makeup_space = nil
         adjacent_zones.each do |adjacent_zone|

@@ -20,8 +20,6 @@ Kitchen,LargeHotel,,,0.048,Shared,120,HotelLarge BLDG_SWH_SCH,0.2,0.05
 Laundry,LargeHotel,,,0.186428571,Shared,110,HotelLarge LaundryRoom_SWH_Sch_Post2004,0.2,0.05
 Apartment,MidriseApartment,,3.48,0.003663158,One Per Unit,110,ApartmentMidRise APT_DHW_SCH,0.2,0.05
 Restroom,Office,,,0.02,Shared,110,OfficeMedium BLDG_SWH_SCH,0.2,0.05
-Restroom,Office,,,0.02,Shared,110,OfficeMedium BLDG_SWH_SCH,0.2,0.05
-Restroom,Office,,,0.02,Shared,110,OfficeSmall BLDG_SWH_SCH,0.2,0.05
 WholeBuilding - Lg Office,Office,,,0.000516521,Shared,110,OfficeLarge BLDG_SWH_SCH,0.2,0.05
 WholeBuilding - Lg Office-basement,Office,,,0.000516521,Shared,110,OfficeLarge BLDG_SWH_SCH,0.2,0.05
 WholeBuilding - Lg Office-others,Office,,,0.000516521,Shared,110,OfficeLarge BLDG_SWH_SCH,0.2,0.05

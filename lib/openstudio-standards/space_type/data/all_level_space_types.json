@@ -340,6 +340,26 @@
     "annotation": "sub-space type of 'classroom/lecture/training'; specific value(s): electric_equipment; other values repeated from the 'classroom/lecture/training' level 1 entry"
   },
   {
+    "space_type_name": "classroom/lecture/training - primary school",
+    "lighting_space_type_name": "classroom_lecture_training_lighting",
+    "ventilation_space_type_name": "classroom_lecture_training_ventilation",
+    "electric_equipment_space_type_name": "classroom_lecture_training_all_other_electric_equipment",
+    "natural_gas_equipment_space_type_name": null,
+    "schedule_set_name": "classroom/lecture/training - primary school schedule set",
+    "critical_operation": false,
+    "annotation": "classroom in a primary school building"
+  },
+  {
+    "space_type_name": "classroom/lecture/training - secondary school",
+    "lighting_space_type_name": "classroom_lecture_training_lighting",
+    "ventilation_space_type_name": "classroom_lecture_training_ventilation",
+    "electric_equipment_space_type_name": "classroom_lecture_training_all_other_electric_equipment",
+    "natural_gas_equipment_space_type_name": null,
+    "schedule_set_name": "classroom/lecture/training - secondary school schedule set",
+    "critical_operation": false,
+    "annotation": "classroom in a secondary school building"
+  },
+  {
     "space_type_name": "computer room",
     "lighting_space_type_name": "computer_room_lighting",
     "ventilation_space_type_name": "computer_room_ventilation",
@@ -753,18 +773,18 @@
     "space_type_name": "food preparation - deli/bakery",
     "lighting_space_type_name": "food_preparation_lighting",
     "ventilation_space_type_name": "food_preparation_ventilation",
-    "electric_equipment_space_type_name": "kitchen_electric_equipment",
+    "electric_equipment_space_type_name": "deli/bakery",
     "natural_gas_equipment_space_type_name": "deli/bakery",
     "schedule_set_name": "food preparation - deli/bakery schedule set",
     "critical_operation": false,
-    "annotation": "sub-space type of 'food preparation'; specific value(s): natural_gas_equipment; other values repeated from the 'food preparation' level 1 entry; grocery service area"
+    "annotation": "sub-space type of 'food preparation'; specific value(s): electric_equipment, natural_gas_equipment; other values repeated from the 'food preparation' level 1 entry; grocery service area (deli and bakery counters with ovens, rotisseries and hot-food holding)"
   },
   {
     "space_type_name": "food preparation - primary school",
     "lighting_space_type_name": "food_preparation_lighting",
     "ventilation_space_type_name": "food_preparation_ventilation",
     "electric_equipment_space_type_name": "kitchen_electric_equipment",
-    "natural_gas_equipment_space_type_name": "kitchen",
+    "natural_gas_equipment_space_type_name": "kitchen - primary school",
     "schedule_set_name": "food preparation - primary school schedule set",
     "critical_operation": false,
     "annotation": "food preparation in a primary school building"
@@ -774,7 +794,7 @@
     "lighting_space_type_name": "food_preparation_lighting",
     "ventilation_space_type_name": "food_preparation_ventilation",
     "electric_equipment_space_type_name": "kitchen_electric_equipment",
-    "natural_gas_equipment_space_type_name": "kitchen",
+    "natural_gas_equipment_space_type_name": "kitchen - secondary school",
     "schedule_set_name": "food preparation - secondary school schedule set",
     "critical_operation": false,
     "annotation": "food preparation in a secondary school building"
@@ -1488,6 +1508,16 @@
     "schedule_set_name": "retail - mall concourse schedule set",
     "critical_operation": false,
     "annotation": "sub-space type of 'retail'; specific value(s): lighting; other values repeated from the 'retail' level 1 entry"
+  },
+  {
+    "space_type_name": "retail - mass merchandising",
+    "lighting_space_type_name": "retail_mass_merchandising_lighting",
+    "ventilation_space_type_name": "retail_sales_ventilation",
+    "electric_equipment_space_type_name": "sales_electric_equipment",
+    "natural_gas_equipment_space_type_name": null,
+    "schedule_set_name": "retail - mass merchandising schedule set",
+    "critical_operation": false,
+    "annotation": "sub-space type of 'retail'; specific value(s): lighting (mass merchandising sales area: a big-box store's open, uniformly lit sales floor); other values repeated from the 'retail' level 1 entry"
   },
   {
     "space_type_name": "retail - pet shops (animal areas)",

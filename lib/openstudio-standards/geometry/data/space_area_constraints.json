@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "description": "Realistic minimum building-total floor area per space type, and the order in which space types too small to matter are dropped, for bar geometry generated from space type ratios. Matched by case-insensitive substring of the standards space type name; the first matching category wins, so keep the list most specific first. Values in ft2. A min_area_ip of 0 disables the minimum. drop_priority: lower is dropped first. essential: never dropped while any non-essential type is under its minimum. max_area_ip is reserved for a maximum-area cap and is not enforced yet.",
+    "source": "docs/design/space_area_and_zone_load_plan.md section 3.1"
+  },
+  "default": { "min_area_ip": 100.0, "max_area_ip": null, "drop_priority": 50, "essential": false },
+  "categories": [
+    { "keywords": ["storage", "stock", "laundry"],         "min_area_ip": 40.0,  "max_area_ip": 5000.0, "drop_priority": 10, "essential": false },
+    { "keywords": ["lobby", "atrium", "entry"],            "min_area_ip": 120.0, "max_area_ip": 2000.0, "drop_priority": 20, "essential": false },
+    { "keywords": ["copy", "print", "reception"],          "min_area_ip": 60.0,  "max_area_ip": 800.0,  "drop_priority": 25, "essential": false },
+    { "keywords": ["corridor"],                            "min_area_ip": 40.0,  "max_area_ip": null,   "drop_priority": 30, "essential": false },
+    { "keywords": ["restroom", "toilet", "locker"],        "min_area_ip": 50.0,  "max_area_ip": null,   "drop_priority": 40, "essential": false },
+    { "keywords": ["mech", "elec", "util", "janitor"],     "min_area_ip": 60.0,  "max_area_ip": null,   "drop_priority": 45, "essential": false },
+    { "keywords": ["conference", "meeting"],               "min_area_ip": 150.0, "max_area_ip": null,   "drop_priority": 60, "essential": false },
+    { "keywords": ["kitchen", "food preparation", "dining", "cafeteria"], "min_area_ip": 150.0, "max_area_ip": null, "drop_priority": 65, "essential": false },
+    { "keywords": ["gym", "playing area"],                 "min_area_ip": 800.0, "max_area_ip": null,   "drop_priority": 70, "essential": false },
+    { "keywords": ["office"],                              "min_area_ip": 100.0, "max_area_ip": null,   "drop_priority": 85, "essential": false },
+    { "keywords": ["classroom", "lecture"],                "min_area_ip": 400.0, "max_area_ip": null,   "drop_priority": 90, "essential": true  },
+    { "keywords": ["patient", "patroom", "exam", "guest room"], "min_area_ip": 120.0, "max_area_ip": null, "drop_priority": 90, "essential": true },
+    { "keywords": ["retail", "sales"],                     "min_area_ip": 300.0, "max_area_ip": null,   "drop_priority": 85, "essential": true  }
+  ]
+}
