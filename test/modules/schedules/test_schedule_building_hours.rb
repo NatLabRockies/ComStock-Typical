@@ -170,9 +170,57 @@ class TestScheduleBuildingHours < Minitest::Test
     refute_equal hourly(kitchen_authored.to_ScheduleRuleset.get.defaultDaySchedule), hourly(kitchen_sched.defaultDaySchedule)
   end
 
+  def test_occupancy_override_can_name_a_schedule_that_keeps_its_own_clock
+    # a hospital nurses station: the spec names the extended profile and keeps it off the
+    # building hours, where the space type's own (outpatient clinic) profile would follow them
+    overrides = [{ space_type: 'nurses station', occupancy: { schedule: 'extended occupancy', follows_building_hours: false } }]
+    model = new_model
+    space_type = OpenStudio::Model::SpaceType.new(model)
+    space_type.setName('nurses station')
+    space_type.additionalProperties.setFeature('schedule_set', 'nurses station schedule set')
+    space_type.additionalProperties.setFeature('standards_space_type', 'nurses station')
+    lights = OpenStudio::Model::Lights.new(OpenStudio::Model::LightsDefinition.new(model))
+    lights.setSpaceType(space_type)
+    assert @sch.space_type_apply_parametric_internal_load_schedules(space_type, wkdy_start_time: 7.25, wkdy_duration: 9.0,
+                                                                     wknd_start_time: 6.25, wknd_duration: 10.5,
+                                                                     schedule_overrides: overrides)
+    sset = space_type.defaultScheduleSet.get
+    people = sset.numberofPeopleSchedule.get.to_ScheduleRuleset.get
+    authored = @sch.create_parametric_schedule_full(new_model, @sch.schedule_data(:occupancy), 'extended occupancy',
+                                                    {}, category: 'Occupancy').to_ScheduleRuleset.get
+    assert_equal hourly(authored.defaultDaySchedule), hourly(people.defaultDaySchedule)
+    assert_in_delta 0.4, hourly(people.defaultDaySchedule)[2], 1e-6, 'staffed overnight'
+    assert_in_delta(@sch.schedule_ruleset_get_equivalent_full_load_hours(authored),
+                    @sch.schedule_ruleset_get_equivalent_full_load_hours(people), 1.0)
+
+    # the lighting derived from it runs more hours than the clinic profile's at the same building hours
+    clinic = OpenStudio::Model::SpaceType.new(model)
+    clinic.setName('nurses station clinic')
+    clinic.additionalProperties.setFeature('schedule_set', 'nurses station schedule set')
+    OpenStudio::Model::Lights.new(OpenStudio::Model::LightsDefinition.new(model)).setSpaceType(clinic)
+    assert @sch.space_type_apply_parametric_internal_load_schedules(clinic, wkdy_start_time: 7.25, wkdy_duration: 9.0,
+                                                                     wknd_start_time: 6.25, wknd_duration: 10.5)
+    light_eflh = ->(st) { @sch.schedule_ruleset_get_equivalent_full_load_hours(st.defaultScheduleSet.get.lightingSchedule.get.to_ScheduleRuleset.get) }
+    assert_operator light_eflh.call(space_type), :>, light_eflh.call(clinic)
+
+    # without the override field the named profile still follows the building hours
+    moved = OpenStudio::Model::SpaceType.new(model)
+    moved.setName('nurses station moved')
+    moved.additionalProperties.setFeature('schedule_set', 'nurses station schedule set')
+    moved.additionalProperties.setFeature('standards_space_type', 'nurses station')
+    assert @sch.space_type_apply_parametric_internal_load_schedules(moved, wkdy_start_time: 7.25, wkdy_duration: 6.0,
+                                                                     schedule_overrides: [{ space_type: 'nurses station moved', occupancy: { schedule: 'extended occupancy' } }])
+    refute_equal hourly(authored.defaultDaySchedule), hourly(moved.defaultScheduleSet.get.numberofPeopleSchedule.get.to_ScheduleRuleset.get.defaultDaySchedule)
+  end
+
   def test_guest_room_keeps_its_night_under_any_building_hours
     # the room is occupied overnight and vacant by day whatever the hotel's hours, and the
-    # sleep gate keeps its lights and equipment low overnight
+    # sleep gate keeps its lights and equipment low overnight. The band is read from the
+    # authored lighting record so a retuned base or peak does not break the test.
+    record = @sch.schedule_data(:interior_lighting).find { |r| r[:name] == 'guest room lighting' }
+    base = record[:base]
+    peak = record[:peak]
+    mid = (base + peak) / 2.0
     [[8.0, 12.75], [5.0, 17.0], [9.5, 7.25]].each do |st, dur|
       model = new_model
       space_type = OpenStudio::Model::SpaceType.new(model)
@@ -186,16 +234,17 @@ class TestScheduleBuildingHours < Minitest::Test
       ltg = hourly(sset.lightingSchedule.get.to_ScheduleRuleset.get.defaultDaySchedule)
       assert_operator occ[2], :>, 0.9, "room should be occupied at 02:00 for hours #{st} + #{dur}"
       assert_operator occ[13], :<, 0.2, "room should be vacant at 13:00 for hours #{st} + #{dur}"
-      assert_operator ltg[2], :<, 0.1, "lights should be gated off at 02:00 for hours #{st} + #{dur}"
-      # lighting is authored base 0.05 / peak 0.45, so "up" means past the midpoint of that band
-      assert_operator ltg[20], :>, 0.25, "lights should be up in the evening for hours #{st} + #{dur}"
+      # "gated" means within a tenth of the band above the authored base
+      assert_operator ltg[2], :<, base + (0.1 * (peak - base)), "lights should be gated to the floor at 02:00 for hours #{st} + #{dur}"
+      # "up" means past the midpoint of the authored band
+      assert_operator ltg[20], :>, mid, "lights should be up in the evening for hours #{st} + #{dur}"
       # the gated day runs to 24:00 carrying a real derived value. The sleep ramp runs
       # 20:00 -> 26:00 and wraps across midnight, so at 24:00 it is only about four sixths of
-      # the way to full sleep and the last interval sits above the 0.05 floor rather than on
-      # it; what matters is that it stays inside the authored band.
+      # the way to full sleep and the last interval sits above the base rather than on it;
+      # what matters is that it stays inside the authored band.
       day = sset.lightingSchedule.get.to_ScheduleRuleset.get.defaultDaySchedule
       assert_equal 24.0, day.times.last.totalHours
-      assert_includes 0.05..0.45, day.values.last,
+      assert_includes base..peak, day.values.last,
                       "the last interval of a gated day should carry a derived value, not OpenStudio's default of zero"
     end
   end

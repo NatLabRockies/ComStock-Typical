@@ -152,6 +152,13 @@ class Standard
       air_loop_hvac_remove_motorized_oa_damper(air_loop_hvac)
     end
 
+    # Minimum outdoor air control on multizone VAV systems: a constant zone-sum volume, or a
+    # fixed damper position whose outdoor air follows the supply flow
+    air_loop_hvac_apply_minimum_outdoor_air_control(air_loop_hvac)
+
+    # Packaged unit supply fan during occupied hours: continuous, or cycling with the load
+    air_loop_hvac_apply_unitary_supply_fan_operating_mode(air_loop_hvac)
+
     # Optimum Start
     air_loop_hvac_enable_optimum_start(air_loop_hvac) if air_loop_hvac_optimum_start_required?(air_loop_hvac)
 
@@ -220,11 +227,58 @@ class Standard
     return opt_start_required
   end
 
-  # Adds optimum start control to the airloop.
+  # Whether the air loop's availability schedule turns the fan on at some point on every day
+  # type it can simulate, the summer and winter design days included.
+  #
+  # A loop whose fan schedule is off all day has nothing for optimum start to start early, and
+  # on EnergyPlus 25.1 and 25.2 it is worse than useless: AvailabilityManager:OptimumStart
+  # scans the fan schedule's day values for the first on-timestep with an inclusive loop bound
+  # (SystemAvailabilityManager.cc, `ts <= TimeStepsInHour`), so an all-off day reads one past
+  # the end of the array. Whatever sits there decides the fan start time; a stale positive value
+  # gives 24.24, and the zone predictor then indexes the thermostat day values at hour 26, also
+  # past the end, and hands the zone another schedule's numbers as its setpoints. The result is
+  # a DualSetPointWithDeadBand fatal with impossible setpoints on a random design day, seen on
+  # the packaged units of unoccupied warehouse storage zones in the 2026-09 Kestrel run, where
+  # the availability schedule is zero every day and the unit cycles on demand. develop fixed
+  # the bound in commit 2d3b0ca (2026-08-18); no release we run carries it.
   #
   # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
-  # @return [Boolean] returns true if successful, false if not
+  # @return [Boolean] true if every day profile has a value above zero, false otherwise
+  def air_loop_hvac_availability_schedule_turns_on?(air_loop_hvac)
+    schedule = air_loop_hvac.availabilitySchedule
+
+    if schedule.to_ScheduleRuleset.is_initialized
+      ruleset = schedule.to_ScheduleRuleset.get
+      day_schedules = [ruleset.defaultDaySchedule, ruleset.summerDesignDaySchedule, ruleset.winterDesignDaySchedule]
+      ruleset.scheduleRules.each { |rule| day_schedules << rule.daySchedule }
+      return day_schedules.all? { |day| day.values.any? { |value| value > 0.0 } }
+    end
+
+    if schedule.to_ScheduleConstant.is_initialized
+      return schedule.to_ScheduleConstant.get.value > 0.0
+    end
+
+    # other schedule types cannot be read day by day here; take the overall maximum
+    min_max = OpenstudioStandards::Schedules.schedule_get_min_max(schedule)
+    return true if min_max.nil? || min_max['max'].nil?
+
+    return min_max['max'] > 0.0
+  end
+
+  # Adds optimum start control to the airloop.
+  #
+  # Skipped, with an info message, when the loop's availability schedule never turns the fan
+  # on for some day type: there is nothing to start early, and on the EnergyPlus versions in
+  # use the manager corrupts the zone setpoints on such a loop. See
+  # air_loop_hvac_availability_schedule_turns_on?.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [Boolean] returns true if the control was added, false if not
   def air_loop_hvac_enable_optimum_start(air_loop_hvac)
+    unless air_loop_hvac_availability_schedule_turns_on?(air_loop_hvac)
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{air_loop_hvac.name}: optimum start control not enabled because the availability schedule #{air_loop_hvac.availabilitySchedule.name} never turns the fan on for at least one day type, so there is no start to optimize.")
+      return false
+    end
 
     avm_os = OpenStudio::Model::AvailabilityManagerOptimumStart.new(air_loop_hvac.model)
     avm_os.setName("#{air_loop_hvac.name.get} Optimum Start Availability Manager")
@@ -1581,7 +1635,9 @@ class Standard
   # terminals pass in heating agree. The terminal keeps its zone minimum air flow input method:
   # a 'Constant' fraction is raised, a 'FixedFlowRate' rate is raised, so tools that carry the
   # constant fraction across hard sizing keep it. Needs a sizing run first when the terminal's
-  # maximum flow is autosized.
+  # maximum flow is autosized. A template exempts zones through
+  # air_loop_hvac_vav_terminal_minimum_covers_zone_outdoor_air? (the DOE Ref templates keep the
+  # 30% minimum where ventilation is occupant driven).
   #
   # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
   # @return [Integer] the number of terminals whose minimum was raised
@@ -1595,6 +1651,7 @@ class Standard
                      equip.to_AirTerminalSingleDuctVAVNoReheat.get
                    end
         next if terminal.nil?
+        next unless air_loop_hvac_vav_terminal_minimum_covers_zone_outdoor_air?(air_loop_hvac, zone)
 
         zone_oa = OpenstudioStandards::ThermalZone.thermal_zone_get_outdoor_airflow_rate(zone)
         next unless zone_oa > 0.0
@@ -1605,7 +1662,7 @@ class Standard
         when 'FixedFlowRate'
           current = terminal.fixedMinimumAirFlowRate
           current = current.is_initialized ? current.get : 0.0
-          next unless zone_oa > current
+          next unless zone_oa > current + 1e-9 # tolerance: a value read back from the model can differ in its last digits
 
           terminal.setFixedMinimumAirFlowRate(zone_oa)
           OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{terminal.name}: raised the fixed minimum air flow rate from #{current.round(4)} to the zone outdoor air of #{zone_oa.round(4)} m^3/s.")
@@ -1622,7 +1679,7 @@ class Standard
           next unless current.is_initialized # autosized: EnergyPlus derives it from the zone outdoor air itself
 
           needed = [zone_oa / max_flow.get, 1.0].min
-          next unless needed > current.get
+          next unless needed > current.get + 1e-9
 
           terminal.setConstantMinimumAirFlowFraction(needed)
           OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{terminal.name}: raised the constant minimum air flow fraction from #{current.get.round(3)} to #{needed.round(3)} to cover the zone outdoor air of #{zone_oa.round(4)} m^3/s at a maximum flow of #{max_flow.get.round(4)} m^3/s.")
@@ -2323,6 +2380,132 @@ class Standard
     return has_erv
   end
 
+  # The minimum outdoor air control a multizone VAV system uses.
+  # 'FixedMinimum' holds the design minimum outdoor air volume at every supply flow, as an
+  # airflow station or a reset damper does; 'ProportionalMinimum' is a damper set to its design
+  # position and left there, so outdoor air falls with the supply fan.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [String] 'FixedMinimum' or 'ProportionalMinimum'
+  def air_loop_hvac_minimum_outdoor_air_limit_type(air_loop_hvac)
+    return 'FixedMinimum'
+  end
+
+  # Apply the minimum outdoor air control to a multizone VAV system.
+  # With 'ProportionalMinimum' the zone-sum mechanical ventilation controller is made unavailable,
+  # since EnergyPlus would otherwise compute and hold the zone-sum volume and override the
+  # proportional minimum; the minimum outdoor air flow (the Sizing:System design outdoor air) over
+  # the design supply flow is then the damper fraction. With 'FixedMinimum' a controller made
+  # unavailable this way is made available again, so a newer template restores what an older one
+  # removed. Other air loops are left alone.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [Boolean] returns true if successful, false if not
+  def air_loop_hvac_apply_minimum_outdoor_air_control(air_loop_hvac)
+    return true unless air_loop_hvac_multizone_vav_system?(air_loop_hvac)
+
+    oa_system = air_loop_hvac.airLoopHVACOutdoorAirSystem
+    return true unless oa_system.is_initialized
+
+    model = air_loop_hvac.model
+    controller_oa = oa_system.get.getControllerOutdoorAir
+    controller_mv = controller_oa.controllerMechanicalVentilation
+    limit_type = air_loop_hvac_minimum_outdoor_air_limit_type(air_loop_hvac)
+    controller_oa.setMinimumLimitType(limit_type)
+    if limit_type == 'ProportionalMinimum'
+      controller_mv.setAvailabilitySchedule(model.alwaysOffDiscreteSchedule)
+      OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{air_loop_hvac.name}: minimum outdoor air is a fixed damper fraction of supply flow (ProportionalMinimum); the zone-sum ventilation controller is unavailable.")
+    elsif controller_mv.availabilitySchedule == model.alwaysOffDiscreteSchedule
+      controller_mv.setAvailabilitySchedule(model.alwaysOnDiscreteSchedule)
+    end
+    return true
+  end
+
+  # Whether a packaged unit's supply fan cycles with the heating and cooling load during occupied
+  # hours, bringing in outdoor air only while it runs, instead of running continuously.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [Boolean] true if the supply fan cycles
+  def air_loop_hvac_unitary_supply_fan_cycles?(air_loop_hvac)
+    return false
+  end
+
+  # Apply the occupied-hours supply fan operating mode to the packaged units on an air loop.
+  # A cycling fan gets an always-off operating mode schedule and records the schedule it replaced
+  # in the unit's 'continuous_fan_operating_mode_schedule' additional property; a continuous fan
+  # restores that schedule, so a newer template undoes only what an older one changed. Units on a
+  # dedicated outdoor air system, which must run to ventilate, are skipped.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @return [Boolean] returns true if successful, false if not
+  def air_loop_hvac_apply_unitary_supply_fan_operating_mode(air_loop_hvac)
+    return true if air_loop_hvac.sizingSystem.typeofLoadtoSizeOn == 'VentilationRequirement'
+
+    model = air_loop_hvac.model
+    cycles = air_loop_hvac_unitary_supply_fan_cycles?(air_loop_hvac)
+    property = 'continuous_fan_operating_mode_schedule'
+    air_loop_hvac.supplyComponents.each do |component|
+      unit = case component.iddObjectType.valueName.to_s
+             when 'OS_AirLoopHVAC_UnitarySystem' then component.to_AirLoopHVACUnitarySystem.get
+             when 'OS_AirLoopHVAC_UnitaryHeatPump_AirToAir' then component.to_AirLoopHVACUnitaryHeatPumpAirToAir.get
+             when 'OS_AirLoopHVAC_UnitaryHeatPump_AirToAir_MultiSpeed' then component.to_AirLoopHVACUnitaryHeatPumpAirToAirMultiSpeed.get
+             end
+      next if unit.nil?
+
+      props = unit.additionalProperties
+      current = unit.supplyAirFanOperatingModeSchedule
+      current = current.is_initialized ? current.get : nil
+      if cycles
+        next if current == model.alwaysOffDiscreteSchedule
+
+        props.setFeature(property, current.nil? ? '' : current.name.to_s)
+        unit.setSupplyAirFanOperatingModeSchedule(model.alwaysOffDiscreteSchedule)
+        OpenStudio.logFree(OpenStudio::Info, 'openstudio.standards.AirLoopHVAC', "For #{unit.name}: supply fan cycles with the load during occupied hours.")
+      elsif props.hasFeature(property)
+        name = props.getFeatureAsString(property).get
+        restored = model.getScheduleByName(name)
+        unit.setSupplyAirFanOperatingModeSchedule(restored.is_initialized ? restored.get : air_loop_hvac.availabilitySchedule)
+        props.resetFeature(property)
+      end
+    end
+    return true
+  end
+
+  # Whether a VAV terminal's minimum airflow is raised to cover its zone's design outdoor air.
+  # See air_loop_hvac_apply_vav_terminal_minimum_outdoor_air.
+  #
+  # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
+  # @param zone [OpenStudio::Model::ThermalZone] the zone the terminal serves
+  # @return [Boolean] true if the minimum should cover the zone outdoor air
+  def air_loop_hvac_vav_terminal_minimum_covers_zone_outdoor_air?(air_loop_hvac, zone)
+    return true
+  end
+
+  # Whether any space in a zone has its outdoor air set in air changes per hour, as the ASHRAE 170
+  # health care rooms (patient, exam, operating, emergency, imaging, recovery) are. The space's own
+  # outdoor air object is read first, then its space type's.
+  #
+  # @param zone [OpenStudio::Model::ThermalZone] thermal zone
+  # @return [Boolean] true if any space in the zone has air-change outdoor air
+  def thermal_zone_air_change_ventilated?(zone)
+    zone.spaces.any? do |space|
+      dsoa = space.designSpecificationOutdoorAir
+      dsoa = space.spaceType.get.designSpecificationOutdoorAir if dsoa.empty? && space.spaceType.is_initialized
+      dsoa.is_initialized && dsoa.get.outdoorAirFlowAirChangesperHour > 0.0
+    end
+  end
+
+  # Whether a model contains any zone whose outdoor air is set in air changes per hour. Such a
+  # building is a health care facility, whose ventilation was designed and inspected to health
+  # facility guidelines across the facility, so templates that model older ventilation controls
+  # leave its air loops on the modern ones.
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio model object
+  # @return [Boolean] true if any zone in the model has air-change outdoor air
+  def model_air_change_ventilated?(model)
+    model.getThermalZones.any? { |zone| thermal_zone_air_change_ventilated?(zone) }
+  end
+
   # Determine if the air loop is a unitary system
   #
   # @param air_loop_hvac [OpenStudio::Model::AirLoopHVAC] air loop
@@ -2364,15 +2547,20 @@ class Standard
 
     # Set the control for any VAV reheat terminals on this airloop.
     control_type_set = false
-    air_loop_hvac.demandComponents.each do |equip|
-      if equip.to_AirTerminalSingleDuctVAVReheat.is_initialized
+    air_loop_hvac.thermalZones.sort.each do |zone|
+      zone.equipment.each do |equip|
+        next unless equip.to_AirTerminalSingleDuctVAVReheat.is_initialized
+
         term = equip.to_AirTerminalSingleDuctVAVReheat.get
         # Dual maximum only applies to terminals with HW reheat coils
         if damper_action == 'Dual Maximum'
           if term.reheatCoil.to_CoilHeatingWater.is_initialized
             term.setDamperHeatingAction(damper_action_eplus)
             control_type_set = true
-            term.setMaximumFlowFractionDuringReheat(0.5)
+            # 50% of the cooling maximum, or more where the zone heating design flow needs it:
+            # EnergyPlus sizes the reheat coil on this flow and cannot size it below the zone's
+            # heating airflow (see the terminal method).
+            air_terminal_single_duct_vav_reheat_apply_dual_maximum_reheat_fraction(term, zone)
           end
         else
           term.setDamperHeatingAction(damper_action_eplus)

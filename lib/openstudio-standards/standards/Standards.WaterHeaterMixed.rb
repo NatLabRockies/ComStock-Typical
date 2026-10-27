@@ -169,6 +169,11 @@ class Standard
       return false
     end
 
+    # The UA above is for one tank of the capacity and volume looked up; an object standing for
+    # comp_qty identical tanks loses heat as all of them. MidriseApartment already scales its
+    # standby-loss UA by its own 23-unit count.
+    ua_btu_per_hr_per_f *= comp_qty unless @instvarbuilding_type == 'MidriseApartment'
+
     # Convert to SI
     ua_w_per_k = OpenStudio.convert(ua_btu_per_hr_per_f, 'Btu/hr*R', 'W/K').get
     OpenStudio.logFree(OpenStudio::Debug, 'openstudio.standards.WaterHeaterMixed', "For #{water_heater_mixed.name}, skin-loss UA = #{ua_w_per_k} W/K.")

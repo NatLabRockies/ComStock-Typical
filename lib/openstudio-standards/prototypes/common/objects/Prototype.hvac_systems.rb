@@ -5402,6 +5402,13 @@ class Standard
       sizing_system.setAllOutdoorAirinCooling(true)
       sizing_system.setAllOutdoorAirinHeating(true)
 
+      # Size the zone air flow with a floor. The unit serves this zone alone, so a zone with
+      # no design heating or cooling load (an interior, ground-contact restroom in a 2026-09
+      # small hotel: its gains went to the slab and its neighbours) gives the loop no air flow
+      # at all and EnergyPlus stops with "Unable to determine fan air flow rate". With
+      # DesignDayWithLimit the zone's minimum air flow per floor area applies even at zero load.
+      thermal_zone_apply_residential_air_flow_floor(zone)
+
       # create heating coil
       htg_coil = nil
       if heating
@@ -5523,6 +5530,9 @@ class Standard
       sizing_system = adjust_sizing_system(air_loop, dsgn_temps, sizing_option: 'NonCoincident')
       sizing_system.setAllOutdoorAirinCooling(true)
       sizing_system.setAllOutdoorAirinHeating(true)
+
+      # a zone with no design load still needs air flow for its own unit, see model_add_furnace_central_ac
+      thermal_zone_apply_residential_air_flow_floor(zone)
 
       # create heating coil
       htg_coil = nil

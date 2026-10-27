@@ -577,7 +577,10 @@ module OpenstudioStandards
                                                                   new_schedule_day: new_schedule.defaultDaySchedule)
 
       # change for schedule rules: a rule made on the ruleset owns its day schedule from the
-      # start, so fill that rather than handing the constructor one to clone
+      # start, so fill that rather than handing the constructor one to clone. Each rule keeps its
+      # date range (or specific dates) and its priority: a new rule defaults to the whole year and
+      # is inserted at the highest priority, so without both a summer-only rule would apply all
+      # year and the rule order would come out reversed.
       schedule_ruleset.scheduleRules.each_with_index do |rule, i|
         old_schedule_day = rule.daySchedule
         new_rule = OpenStudio::Model::ScheduleRule.new(new_schedule)
@@ -591,6 +594,13 @@ module OpenstudioStandards
         new_rule.setApplyThursday(rule.applyThursday)
         new_rule.setApplyFriday(rule.applyFriday)
         new_rule.setApplySaturday(rule.applySaturday)
+        if rule.specificDates.empty?
+          new_rule.setStartDate(rule.startDate.get) if rule.startDate.is_initialized
+          new_rule.setEndDate(rule.endDate.get) if rule.endDate.is_initialized
+        else
+          rule.specificDates.each { |date| new_rule.addSpecificDate(date) }
+        end
+        new_schedule.setScheduleRuleIndex(new_rule, i)
       end
 
       return new_schedule
