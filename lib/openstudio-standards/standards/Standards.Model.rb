@@ -442,6 +442,12 @@ class Standard
       area_ft2 = OpenStudio.convert(area_m2, 'm^2', 'ft^2').get
       data['area_ft2'] = area_ft2
       # Get the internal loads
+      # @todo This counts electric equipment design power whatever its fraction lost, so the elevator
+      #   lift motors create_typical puts on the largest bottom story space (16-20 kW each, all heat
+      #   lost) push that zone past the 10 Btu/hr*ft^2 tolerance and onto the secondary system
+      #   (PSZ-AC under PVAV/VAV) on the 'Inferred' HVAC path. Discount heat-lost equipment here, as
+      #   OpenstudioStandards::HVAC.thermal_zone_electric_equipment_w_per_ft2 does for the CBECS path,
+      #   or in OpenstudioStandards::Space.space_get_design_internal_load if PRM users agree.
       int_load_w = OpenstudioStandards::ThermalZone.thermal_zone_get_design_internal_load(zone) * zone.multiplier
       # Normalize per-area
       int_load_w_per_m2 = int_load_w / area_m2
