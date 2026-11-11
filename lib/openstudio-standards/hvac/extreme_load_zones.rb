@@ -27,15 +27,30 @@ module OpenstudioStandards
     # system while catching every data center density.
     EXTREME_LOAD_EQUIPMENT_W_PER_FT2 = 50.0
 
-    # Design electric equipment power density of a zone.
+    # Design electric equipment heat gain density of a zone: each piece of equipment's design
+    # power, times its multiplier, less the fraction its definition marks as lost from the zone.
+    #
+    # Why not ThermalZone#electricEquipmentPowerPerFloorArea: that sums design power whatever
+    # becomes of the heat. create_typical puts every elevator lift motor in the building into the
+    # largest bottom story space with all of its heat lost, about 16-20 kW an elevator, which read
+    # as an extreme load and moved ordinary office, lobby and basement zones off the building's
+    # main system onto their own packaged units.
     #
     # @param thermal_zone [OpenStudio::Model::ThermalZone] OpenStudio ThermalZone object
     # @return [Double] W/ft2 of floor area, 0 when the zone has no floor area
     def self.thermal_zone_electric_equipment_w_per_ft2(thermal_zone)
       return 0.0 unless thermal_zone.floorArea > 0.0
 
-      w_per_m2 = thermal_zone.electricEquipmentPowerPerFloorArea
-      return OpenStudio.convert(w_per_m2, 'W/m^2', 'W/ft^2').get
+      heat_gain_w = 0.0
+      thermal_zone.spaces.each do |space|
+        equipment = space.electricEquipment.to_a
+        equipment += space.spaceType.get.electricEquipment.to_a if space.spaceType.is_initialized
+        equipment.each do |equip|
+          design_w = equip.getDesignLevel(space.floorArea, space.numberOfPeople) # includes the instance multiplier
+          heat_gain_w += design_w * (1.0 - equip.electricEquipmentDefinition.fractionLost)
+        end
+      end
+      return OpenStudio.convert(heat_gain_w / thermal_zone.floorArea, 'W/m^2', 'W/ft^2').get
     end
 
     # Whether a zone holds a data center or computer room space: a space type named as one that

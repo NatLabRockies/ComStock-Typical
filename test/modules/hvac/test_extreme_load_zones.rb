@@ -173,6 +173,36 @@ class TestExtremeLoadZones < Minitest::Test
     assert_match(/CRAC/, loop_of(data_center).name.to_s)
   end
 
+  # Elevator lift motors carry tens of kW with all of their heat lost; create_typical hangs every
+  # one in the building on the largest bottom story space. That zone stays on the main system.
+  def test_heat_lost_equipment_is_not_an_extreme_load
+    model = OpenStudio::Model::Model.new
+    model.getClimateZones.setClimateZone('ASHRAE', '5A')
+    office = add_zone(model, 'Office', 'office', 1.0, 0.0)
+    lobby = add_zone(model, 'Lobby', 'lobby', 1.0, 20.0)
+    lift = OpenStudio::Model::ElectricEquipmentDefinition.new(model)
+    lift.setDesignLevel(16_055.0)
+    lift.setFractionLatent(0.0)
+    lift.setFractionRadiant(0.0)
+    lift.setFractionLost(1.0)
+    motors = OpenStudio::Model::ElectricEquipment.new(lift)
+    motors.setMultiplier(4.0)
+    motors.setSpace(lobby.spaces.first)
+    # four hydraulic lifts, 64 kW on 1076 ft2, are 60 W/ft2 of design power on top of the lobby's 1 W/ft2
+    assert_operator(OpenStudio.convert(lobby.electricEquipmentPowerPerFloorArea, 'W/m^2', 'W/ft^2').get, :>=, @hvac::EXTREME_LOAD_EQUIPMENT_W_PER_FT2)
+    assert_in_delta(1.0, @hvac.thermal_zone_electric_equipment_w_per_ft2(lobby), 0.01)
+
+    groups = @hvac.split_extreme_load_zones([office, lobby])
+    assert_equal([office, lobby], groups[:main])
+    assert_empty(groups[:extreme])
+
+    # half the heat reaching the zone does count
+    lift.setFractionLost(0.5)
+    assert_in_delta(1.0 + (0.5 * 4 * 16_055.0 / 1076.39),@hvac.thermal_zone_electric_equipment_w_per_ft2(lobby), 0.1)
+    lift.setFractionLost(0.0)
+    assert_equal([lobby], @hvac.split_extreme_load_zones([office, lobby])[:extreme])
+  end
+
   # A building that is nothing but data center still gets served.
   def test_a_building_of_only_data_center_zones_is_served
     model = OpenStudio::Model::Model.new
