@@ -23,7 +23,7 @@ jobs:
   minitest:
     runs-on: ubuntu-latest
     container:
-      image: nrel/openstudio:3.10.0
+      image: nrel/openstudio:3.11.0
     env:
       SKIP_SIMULATION_TESTS: ${{ inputs.skip_simulation_tests || github.event_name == 'pull_request' }}
     steps:

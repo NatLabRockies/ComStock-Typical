@@ -2,8 +2,8 @@
 
 ## Setup
 
-1. Install [OpenStudio 3.10.0](https://www.openstudio.net/downloads). The CI container is
-   `nrel/openstudio:3.10.0`, and the test suite is run with that version.
+1. Install [OpenStudio 3.11.0](https://www.openstudio.net/downloads). The CI container is
+   `nrel/openstudio:3.11.0`, and the test suite is run with that version.
 2. Install the matching Ruby. OpenStudio 3.8.0 and above use Ruby 3.2.2; see the
    [OpenStudio SDK Version Compatibility Matrix](https://github.com/NREL/OpenStudio/wiki/OpenStudio-SDK-Version-Compatibility-Matrix).
    - **Windows**: [Ruby+Devkit 3.2.2](https://rubyinstaller.org/downloads/)
@@ -12,9 +12,9 @@
 3. Connect Ruby to OpenStudio by creating an `openstudio.rb` in your Ruby installation's
    `site_ruby` directory whose only content is a require of the OpenStudio SDK's own
    `openstudio.rb`. On Windows that is
-   `require "C:/openstudio-3.10.0/Ruby/openstudio.rb"` saved to
+   `require "C:/openstudio-3.11.0/Ruby/openstudio.rb"` saved to
    `C:/Ruby32-x64/lib/ruby/site_ruby/openstudio.rb`; on Mac,
-   `require "/Applications/openstudio-3.10.0/Ruby/openstudio.rb"` saved to
+   `require "/Applications/openstudio-3.11.0/Ruby/openstudio.rb"` saved to
    `/usr/lib/ruby/site_ruby/openstudio.rb`; on Linux, the equivalent under
    `/usr/local/lib/ruby/site_ruby/`.
 4. Clone [the repository](https://github.com/NatLabRockies/ComStock-Typical).
@@ -83,7 +83,7 @@ removing a test — the command is in `test/BASELINE.md`.
 ## Continuous integration
 
 `.github/workflows/tests.yml` runs every `test_*.rb` under `test/modules`, `test/90_1_general` and
-`test/os_stds_methods` in the `nrel/openstudio:3.10.0` container, one file per process, on pushes to
+`test/os_stds_methods` in the `nrel/openstudio:3.11.0` container, one file per process, on pushes to
 `main` and on pull requests.
 
 ## Development process
